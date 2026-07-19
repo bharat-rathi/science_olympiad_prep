@@ -1,0 +1,51 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app import models, schemas
+from app.db import get_db
+
+router = APIRouter(prefix="/api/topics", tags=["topics"])
+
+
+@router.get("", response_model=list[schemas.TopicOut])
+def list_topics(db: Session = Depends(get_db)):
+    return db.query(models.Topic).order_by(models.Topic.id).all()
+
+
+@router.post("", response_model=schemas.TopicOut)
+def create_topic(payload: schemas.TopicCreate, db: Session = Depends(get_db)):
+    topic = models.Topic(**payload.model_dump())
+    db.add(topic)
+    db.commit()
+    db.refresh(topic)
+    return topic
+
+
+@router.get("/{topic_id}", response_model=schemas.TopicOut)
+def get_topic(topic_id: int, db: Session = Depends(get_db)):
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    return topic
+
+
+@router.get("/{topic_id}/resources", response_model=list[schemas.ResourceOut])
+def list_resources(topic_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Resource).filter(models.Resource.topic_id == topic_id).order_by(models.Resource.id).all()
+
+
+@router.get("/{topic_id}/concepts", response_model=list[schemas.ConceptTermOut])
+def list_concepts(topic_id: int, db: Session = Depends(get_db)):
+    return db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic_id).order_by(models.ConceptTerm.id).all()
+
+
+@router.patch("/{topic_id}/concepts/{concept_id}", response_model=schemas.ConceptTermOut)
+def update_concept(topic_id: int, concept_id: int, payload: schemas.ConceptTermUpdate, db: Session = Depends(get_db)):
+    concept = db.get(models.ConceptTerm, concept_id)
+    if not concept or concept.topic_id != topic_id:
+        raise HTTPException(404, "Concept not found")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(concept, field, value)
+    db.commit()
+    db.refresh(concept)
+    return concept
