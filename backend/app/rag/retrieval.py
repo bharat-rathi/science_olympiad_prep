@@ -28,7 +28,7 @@ def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: 
         system, user = relevance_judge_prompt(
             topic_name, topic_description, candidate["metadata"]["source_type"], candidate["text"]
         )
-        judged = complete_json(system, user, RELEVANCE_SCHEMA, max_tokens=200, effort="low")
+        judged = complete_json(system, user, RELEVANCE_SCHEMA, max_tokens=400, effort="low")
         score = judged.get("score", 0)
         if score >= settings.relevance_threshold:
             relevant.append({**candidate, "relevance_score": score, "relevance_reason": judged.get("reason", "")})

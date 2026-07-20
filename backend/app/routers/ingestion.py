@@ -8,7 +8,7 @@ from app import models, schemas
 from app.db import get_db
 from app.rag.chunking import chunk_text
 from app.rag.embeddings import embed_texts
-from app.rag.transcription import FfmpegNotFoundError, save_upload_to_temp, transcribe_audio, transcribe_video
+from app.rag.transcription import save_upload_to_temp, transcribe_audio, transcribe_video
 from app.rag.vectorstore import add_chunks
 
 router = APIRouter(prefix="/api/topics", tags=["ingestion"])
@@ -69,23 +69,20 @@ async def upload_media_resource(topic_id: int, file: UploadFile, db: Session = D
     suffix = Path(filename).suffix.lower()
 
     created: list[models.Resource] = []
-    try:
-        if suffix == ".zip":
-            tmp_zip = save_upload_to_temp(filename, data)
-            with zipfile.ZipFile(tmp_zip) as zf:
-                for name in zf.namelist():
-                    ext = Path(name).suffix.lower()
-                    if ext not in VIDEO_EXTENSIONS | AUDIO_EXTENSIONS:
-                        continue
-                    with zf.open(name) as member:
-                        member_bytes = member.read()
-                    created.append(_transcribe_and_create(db, topic_id, name, member_bytes, ext))
-        elif suffix in VIDEO_EXTENSIONS | AUDIO_EXTENSIONS:
-            created.append(_transcribe_and_create(db, topic_id, filename, data, suffix))
-        else:
-            raise HTTPException(400, f"Unsupported file type: {suffix}")
-    except FfmpegNotFoundError as e:
-        raise HTTPException(500, str(e))
+    if suffix == ".zip":
+        tmp_zip = save_upload_to_temp(filename, data)
+        with zipfile.ZipFile(tmp_zip) as zf:
+            for name in zf.namelist():
+                ext = Path(name).suffix.lower()
+                if ext not in VIDEO_EXTENSIONS | AUDIO_EXTENSIONS:
+                    continue
+                with zf.open(name) as member:
+                    member_bytes = member.read()
+                created.append(_transcribe_and_create(db, topic_id, name, member_bytes, ext))
+    elif suffix in VIDEO_EXTENSIONS | AUDIO_EXTENSIONS:
+        created.append(_transcribe_and_create(db, topic_id, filename, data, suffix))
+    else:
+        raise HTTPException(400, f"Unsupported file type: {suffix}")
 
     return created
 

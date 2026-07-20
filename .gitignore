@@ -14,10 +14,19 @@ backend/data/*
 backend/.env
 frontend/.env
 
+# Machine-specific CA bundle (see README "Windows note (SSL)") — never commit
+backend/norton_root.pem
+backend/combined_ca_bundle.pem
+
 # Node / frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+
+# Local dev server logs
+backend/uvicorn.log
+frontend/vite.log
 
 # OS / editor
 .DS_Store

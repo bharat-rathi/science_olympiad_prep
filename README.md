@@ -37,7 +37,7 @@ sciolympiad-coach/
 │   │   ├── db.py, models.py, schemas.py   SQLite via SQLAlchemy
 │   │   ├── routers/         topics, ingestion, explain, assessment, attempts, tutor
 │   │   ├── rag/              chunking, embeddings, vectorstore (Chroma), transcription, retrieval
-│   │   └── llm/               Anthropic client wrapper + prompt templates
+│   │   └── llm/               Gemini client wrapper + prompt templates
 │   └── data/                 sqlite db + Chroma persistence (gitignored)
 ├── frontend/                 React + TypeScript (Vite)
 │   └── src/
@@ -51,10 +51,7 @@ sciolympiad-coach/
 **Prerequisites**
 - Python 3.11+
 - Node.js 18+
-- [ffmpeg](https://ffmpeg.org/download.html) on your `PATH` — only needed if
-  you want to upload video/audio resources (extracts audio before sending it
-  to Whisper). Everything else works without it.
-- An Anthropic API key and an OpenAI API key (see below for what each is used for)
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
 **Backend**
 
@@ -63,9 +60,42 @@ cd backend
 python -m venv venv
 venv\Scripts\activate        # Windows; use `source venv/bin/activate` on macOS/Linux
 pip install -r requirements.txt
-copy .env.example .env       # then fill in ANTHROPIC_API_KEY and OPENAI_API_KEY
+copy .env.example .env       # then fill in GEMINI_API_KEY
 uvicorn app.main:app --reload
 ```
+
+> **Windows note:** `chromadb` depends on `chroma-hnswlib`, which as of this
+> writing has no prebuilt wheel for Python 3.12 on Windows and needs the
+> Microsoft C++ Build Tools to compile from source. Workaround: install a
+> compatible prebuilt wheel first, then install chromadb without pulling its
+> pinned version back in —
+> `pip install chroma-hnswlib==0.7.5 --only-binary=:all:` followed by
+> `pip install chromadb==0.5.23 --no-deps`, then `pip install -r
+> requirements.txt` to fill in the rest (`pip check` will warn about the
+> hnswlib version mismatch; it's harmless — Chroma runs fine on 0.7.5).
+> Not needed on macOS/Linux, where a normal `pip install -r requirements.txt`
+> just works.
+
+> **Windows note (SSL):** If API calls fail with
+> `[SSL: CERTIFICATE_VERIFY_FAILED] ... unable to get local issuer certificate`,
+> your antivirus (Norton and some corporate security suites do this) is
+> intercepting HTTPS with its own certificate, which Python's default trust
+> bundle doesn't know about. Fix without touching any system/antivirus
+> settings — export the antivirus's root cert and point Python at a bundle
+> that includes it:
+> ```powershell
+> $cert = Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.Subject -like '*Norton*' } | Select-Object -First 1
+> $b64 = [System.Convert]::ToBase64String($cert.RawData, 'InsertLineBreaks')
+> Set-Content backend\norton_root.pem "-----BEGIN CERTIFICATE-----`n$b64`n-----END CERTIFICATE-----`n" -Encoding ascii
+> ```
+> ```sh
+> cat $(python -c "import certifi; print(certifi.where())") backend/norton_root.pem > backend/combined_ca_bundle.pem
+> ```
+> `app/config.py` picks up `backend/combined_ca_bundle.pem` automatically if
+> present, so once it exists `uvicorn app.main:app --reload` just works. This
+> file is machine-specific and gitignored — regenerate it per machine, and
+> swap `*Norton*` for whatever antivirus/proxy is doing the intercepting if
+> it's not Norton (check the "Issuer"/"OU" field on the invalid certificate).
 
 Backend runs at `http://localhost:8000`. A demo topic ("Roller Coaster") is
 seeded automatically on first run.
@@ -80,16 +110,20 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`.
 
-## Why two LLM providers?
+## Why Gemini for everything?
 
-- **Anthropic (Claude)** does every reasoning/generation step: judging chunk
-  relevance, writing concept explanations, generating quiz questions,
-  grading short answers, hints, and the tutor conversation. One place to swap
-  models: `backend/app/llm/client.py`.
-- **OpenAI** is used *only* for embeddings (`text-embedding-3-small`, used for
-  retrieval) and Whisper transcription of uploaded video/audio — Anthropic
-  doesn't offer an embeddings API, and this was the simplest way to get both
-  without adding a third provider.
+Every model call in this app — concept explanations, quiz generation,
+relevance judging, hints, the tutor conversation, embeddings, and video/audio
+transcription — goes through Gemini. One provider keeps setup to a single API
+key, and Gemini's native multimodal input means uploaded video/audio can be
+transcribed directly (no separate audio-extraction step). Every call is
+routed through two small wrapper modules —
+[`llm/client.py`](backend/app/llm/client.py) for generation and
+[`rag/embeddings.py`](backend/app/rag/embeddings.py) /
+[`rag/transcription.py`](backend/app/rag/transcription.py) for embeddings and
+transcription — so swapping in a different provider (or splitting
+generation/embeddings across two, as many production RAG apps do) is a
+contained, one-file change.
 
 ## Concepts you'll see in this codebase
 
@@ -117,7 +151,7 @@ abstract theory. Reading these in order roughly follows the pipeline:
    ([`rag/retrieval.py`](backend/app/rag/retrieval.py)). Similarity search
    alone will always return *something*, even if it's not actually useful.
    Before a retrieved chunk is allowed to influence an explanation, a
-   separate Claude call scores it: "does this substantively explain a
+   separate Gemini call scores it: "does this substantively explain a
    concept a student needs, or is it logistics/rules/off-topic?" This applies
    equally to video and text — it's the mechanism that keeps a video from
    dominating an explanation just because it exists, and it's what lets the
@@ -126,7 +160,7 @@ abstract theory. Reading these in order roughly follows the pipeline:
 
 5. **Grounded generation**
    ([`llm/prompts.py`](backend/app/llm/prompts.py) `explanation_prompt`) —
-   the surviving relevant chunks (labeled by source) are handed to Claude,
+   the surviving relevant chunks (labeled by source) are handed to Gemini,
    which is instructed to ground each concept explanation in them when
    possible and explicitly say so when it's using general knowledge instead.
    This is the "G" (generation) in RAG, and the source labeling is what makes
@@ -134,9 +168,9 @@ abstract theory. Reading these in order roughly follows the pipeline:
 
 6. **Structured output** (`llm/client.py` `complete_json`) — several steps
    (relevance scores, the concept list, quiz questions) need machine-parseable
-   output, not prose. These calls constrain Claude's response to a JSON
-   schema (`output_config.format`) instead of asking nicely and hoping the
-   text parses.
+   output, not prose. These calls constrain Gemini's response to a JSON
+   schema (`response_format`) instead of asking nicely and hoping the text
+   parses.
 
 7. **Grounded conversation** (`routers/tutor.py`, `llm/prompts.py`
    `tutor_system_prompt`) — when a student answers wrong, the tutor chat isn't
@@ -152,7 +186,7 @@ This is a single vertical slice, not a production app. Explicit corners cut:
 - **No auth/accounts** — one shared coach view; students just type a name per attempt.
 - **No live web search** for outside resources — a coach pastes text/links manually.
 - **Local-only** — SQLite + local Chroma directory, run with `uvicorn`/`vite dev`; no deployment config.
-- **Single LLM provider for generation** — Gemini isn't wired in, though the `llm/client.py` abstraction makes that a small, contained change.
+- **Single LLM provider** — everything runs through Gemini; the `llm/client.py` / `rag/embeddings.py` / `rag/transcription.py` abstractions make splitting providers (e.g. a dedicated embeddings model) a contained, one-file change if needed later.
 - **Approximate concept-to-resource attribution** — a concept's "video coverage" tag reflects whether *any* relevant retrieved chunk for the topic was a video, not a chunk-level citation per concept.
 
 ## Verification

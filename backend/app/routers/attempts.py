@@ -52,13 +52,13 @@ def request_hint(attempt_id: int, payload: schemas.HintRequest, db: Session = De
 
     existing = next((a for a in attempt.answers if a.question_id == question.id), None)
     if existing is None:
-        existing = models.AttemptAnswer(attempt_id=attempt_id, question_id=question.id)
+        existing = models.AttemptAnswer(attempt_id=attempt_id, question_id=question.id, hints_used=0)
         db.add(existing)
-    existing.hints_used += 1
+    existing.hints_used = (existing.hints_used or 0) + 1
 
     context = _topic_concept_context(db, topic_id)
     system, user = hint_prompt(question.assessment.topic.name, context, question.prompt)
-    hint = complete_text(system, user, max_tokens=300, effort="low")
+    hint = complete_text(system, user, max_tokens=500, effort="low")
 
     db.commit()
     return {"hint": hint}
@@ -86,7 +86,7 @@ def submit_attempt(attempt_id: int, payload: schemas.SubmitPayload, db: Session 
                 f"Question: {question.prompt}\nCorrect answer: {question.correct_answer}\n"
                 f"Student answer: {answer.student_answer}",
                 SHORT_ANSWER_GRADE_SCHEMA,
-                max_tokens=300,
+                max_tokens=500,
                 effort="low",
             )
             is_correct = grading.get("is_correct", False)
