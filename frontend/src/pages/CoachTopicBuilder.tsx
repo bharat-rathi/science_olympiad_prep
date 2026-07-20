@@ -16,6 +16,10 @@ export default function CoachTopicBuilder() {
   const [resText, setResText] = useState("");
   const [resUrl, setResUrl] = useState("");
 
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkError, setLinkError] = useState("");
+
   function refresh() {
     api.getTopic(id).then(setTopic);
     api.listResources(id).then(setResources);
@@ -31,6 +35,21 @@ export default function CoachTopicBuilder() {
     setResText("");
     setResUrl("");
     refresh();
+  }
+
+  async function addLink() {
+    if (!linkUrl.trim()) return;
+    setLinkBusy(true);
+    setLinkError("");
+    try {
+      await api.addLinkResource(id, linkUrl.trim());
+      setLinkUrl("");
+      refresh();
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLinkBusy(false);
+    }
   }
 
   async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -99,6 +118,22 @@ export default function CoachTopicBuilder() {
             <input type="file" accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.zip" onChange={uploadFile} disabled={busy} />
           </label>
         </div>
+      </div>
+
+      <div className="card stack">
+        <label className="muted">Or paste a link -- the system fetches and reads it directly</label>
+        <div className="row">
+          <input
+            placeholder="https://..."
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button className="primary" onClick={addLink} disabled={linkBusy}>
+            {linkBusy ? "Fetching..." : "Fetch & add"}
+          </button>
+        </div>
+        {linkError && <p style={{ color: "var(--danger)" }}>{linkError}</p>}
       </div>
 
       {resources.length > 0 && (

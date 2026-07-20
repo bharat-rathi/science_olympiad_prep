@@ -35,6 +35,10 @@ class ResourceCreateText(BaseModel):
     source_url: str = ""
 
 
+class ResourceCreateLink(BaseModel):
+    url: str
+
+
 class ConceptTermOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

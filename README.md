@@ -7,10 +7,10 @@ LLM-driven tutoring — every piece is plain, readable code rather than hidden
 behind a framework, so it doubles as a walkthrough of how these techniques fit
 together.
 
-**Coach flow:** add a topic's resources (pasted text/links, or an uploaded
-video/audio clip) → generate a concept glossary grounded in whatever's
-actually useful in those resources → approve/edit it → generate a practice
-assessment → publish it.
+**Coach flow:** add a topic's resources (pasted text, a real URL the system
+fetches and reads directly, or an uploaded video/audio clip) → generate a
+concept glossary grounded in whatever's actually useful in those resources →
+approve/edit it → generate a practice assessment → publish it.
 
 **Student flow:** browse the concept glossary → take the assessment → ask for
 hints → get a conversational, Socratic re-explanation on anything answered
@@ -36,13 +36,14 @@ sciolympiad-coach/
 │   │   ├── config.py        Settings (.env)
 │   │   ├── db.py, models.py, schemas.py   SQLite via SQLAlchemy
 │   │   ├── routers/         topics, ingestion, explain, assessment, attempts, tutor
-│   │   ├── rag/              chunking, embeddings, vectorstore (Chroma), transcription, retrieval
+│   │   ├── rag/              chunking, embeddings, vectorstore (Chroma), transcription, link_fetch, retrieval
 │   │   └── llm/               Gemini client wrapper + prompt templates
 │   └── data/                 sqlite db + Chroma persistence (gitignored)
 ├── frontend/                 React + TypeScript (Vite)
 │   └── src/
 │       ├── api/client.ts     typed fetch wrapper for the backend
 │       └── pages/             CoachTopicBuilder, CoachAssessment, StudentPractice, StudentTest
+├── render.yaml                Render deploy blueprint (see "Deploying" below)
 └── README.md (this file)
 ```
 
@@ -131,9 +132,10 @@ A few applied-AI ideas show up as small, concrete pieces of code rather than
 abstract theory. Reading these in order roughly follows the pipeline:
 
 1. **Chunking** ([`rag/chunking.py`](backend/app/rag/chunking.py)) — long text
-   (a transcript, a pasted article) is split into overlapping ~500-token
-   windows. Overlap exists so a concept that straddles a chunk boundary isn't
-   lost in either half.
+   (a transcript, a pasted article, or a URL's extracted content — see
+   [`rag/link_fetch.py`](backend/app/rag/link_fetch.py)) is split into
+   overlapping ~500-token windows. Overlap exists so a concept that straddles
+   a chunk boundary isn't lost in either half.
 
 2. **Embeddings** ([`rag/embeddings.py`](backend/app/rag/embeddings.py)) —
    each chunk is turned into a vector such that semantically similar text ends
@@ -181,20 +183,66 @@ abstract theory. Reading these in order roughly follows the pipeline:
 
 ## Simplifications (future work)
 
-This is a single vertical slice, not a production app. Explicit corners cut:
+This is a small vertical slice, not a production app. Explicit corners cut:
 
-- **No auth/accounts** — one shared coach view; students just type a name per attempt.
-- **No live web search** for outside resources — a coach pastes text/links manually.
-- **Local-only** — SQLite + local Chroma directory, run with `uvicorn`/`vite dev`; no deployment config.
-- **Single LLM provider** — everything runs through Gemini; the `llm/client.py` / `rag/embeddings.py` / `rag/transcription.py` abstractions make splitting providers (e.g. a dedicated embeddings model) a contained, one-file change if needed later.
-- **Approximate concept-to-resource attribution** — a concept's "video coverage" tag reflects whether *any* relevant retrieved chunk for the topic was a video, not a chunk-level citation per concept.
+- **One shared password, not per-coach accounts** — good enough to keep the app
+  private to your ~13 coaches, but there's no notion of *who* curated or
+  approved what. Students just type a name per attempt, no login at all.
+- **No general web search** — a coach still has to know and paste the specific
+  URL they want ingested; the system doesn't go find sources on its own.
+- **Single LLM provider** — everything runs through Gemini; the `llm/client.py`
+  / `rag/embeddings.py` / `rag/transcription.py` abstractions make splitting
+  providers (e.g. a dedicated embeddings model) a contained, one-file change
+  if needed later.
+- **Approximate concept-to-resource attribution** — a concept's "video
+  coverage" tag reflects whether *any* relevant retrieved chunk for the topic
+  was a video, not a chunk-level citation per concept.
+- **SQLite + local-disk Chroma**, not a managed database — fine at this scale
+  (one small Render instance, ~13 users), but it means the app can only ever
+  run as a single instance/replica; it wouldn't survive being scaled
+  horizontally without moving to Postgres/pgvector or similar.
 
 ## Verification
 
 Backend: `uvicorn app.main:app --reload` then `curl http://localhost:8000/api/health`.
 
 Frontend: `npm run dev`, open `http://localhost:5173`, pick the seeded "Roller
-Coaster" topic → Coach view → add a resource → generate explanations → approve
-a couple → generate + publish an assessment → open Student view → take the
-test → request a hint → answer one wrong on purpose → confirm the tutor chat
-opens and responds.
+Coaster" topic → Coach view → add a resource (paste text, paste a real link,
+or upload a clip) → generate explanations → approve a couple → generate +
+publish an assessment → open Student view → take the test → request a hint →
+answer one wrong on purpose → confirm the tutor chat opens and responds.
+
+## Deploying (so other coaches can use it)
+
+This app is meant to be shared across the whole coaching team, not run only on
+one laptop. It deploys as a **single service** — the FastAPI backend serves
+both the API and the built frontend, so there's one URL to share and no CORS
+to configure.
+
+**One-time setup on [Render](https://render.com):**
+
+1. Push this repo to GitHub (already done if you're reading this from the repo).
+2. In Render: **New → Blueprint**, point it at this repo. It reads
+   [`render.yaml`](render.yaml) and creates the web service automatically.
+3. **Set the two secrets** Render will prompt for (or add them under the
+   service's **Environment** tab):
+   - `GEMINI_API_KEY` — your Gemini key.
+   - `COACH_PASSWORD` — one password you'll share with the other coaches.
+     Leaving this unset (as in local dev) disables the login gate entirely —
+     don't leave it unset on a public deployment.
+4. Deploy. Render builds the frontend (`npm run build`) and installs the
+   backend, then starts `uvicorn` behind Render's own HTTPS.
+5. Share the resulting `https://sciolympiad-coach.onrender.com`-style URL and
+   the `COACH_PASSWORD` with your other coaches — that's the whole onboarding
+   step, since it's one shared login rather than individual accounts.
+
+**Persistent data.** `render.yaml` provisions a small disk mounted at
+`backend/data`, where the SQLite database and the Chroma vector store live —
+without it, all topics/resources/concepts would reset on every redeploy.
+That requires Render's `starter` plan (a few dollars/month), which is what
+`render.yaml` specifies; the free tier has no persistent disk. If you just
+want a quick smoke-test deploy first, you can temporarily drop the `disks:`
+block and use the free plan — just know a redeploy will wipe the data.
+
+**Updating the deployment:** push to `main` — Render auto-deploys on every
+push to the branch the Blueprint was created from.

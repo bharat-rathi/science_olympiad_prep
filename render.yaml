@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sciolympiad-coach
+    runtime: python
+    plan: starter # free tier has no persistent disk -- data would reset on every deploy
+    buildCommand: >
+      pip install -r backend/requirements.txt &&
+      cd frontend && npm install && npm run build
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # set in the Render dashboard -- never commit real keys
+      - key: COACH_PASSWORD
+        sync: false # set in the Render dashboard -- shared password for all coaches
+    disks:
+      - name: sciolympiad-data
+        mountPath: /opt/render/project/src/backend/data
+        sizeGB: 1

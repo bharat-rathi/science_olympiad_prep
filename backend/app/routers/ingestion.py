@@ -8,6 +8,7 @@ from app import models, schemas
 from app.db import get_db
 from app.rag.chunking import chunk_text
 from app.rag.embeddings import embed_texts
+from app.rag.link_fetch import fetch_url_text
 from app.rag.transcription import save_upload_to_temp, transcribe_audio, transcribe_video
 from app.rag.vectorstore import add_chunks
 
@@ -50,6 +51,34 @@ def add_text_resource(topic_id: int, payload: schemas.ResourceCreateText, db: Se
     db.refresh(resource)
 
     _index_resource(db, resource, payload.text)
+    return resource
+
+
+@router.post("/{topic_id}/resources/link", response_model=schemas.ResourceOut)
+def add_link_resource(topic_id: int, payload: schemas.ResourceCreateLink, db: Session = Depends(get_db)):
+    """Fetch a real URL and ingest its main readable content -- no copy/paste required."""
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+
+    try:
+        title, text = fetch_url_text(payload.url)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+    resource = models.Resource(
+        topic_id=topic_id,
+        type="link",
+        title=title,
+        source_url=payload.url,
+        raw_text=text,
+        status="ready",
+    )
+    db.add(resource)
+    db.commit()
+    db.refresh(resource)
+
+    _index_resource(db, resource, text)
     return resource
 
 

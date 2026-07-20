@@ -1,4 +1,7 @@
-const BASE = "http://localhost:8000";
+// Relative -- in dev, Vite's proxy (see vite.config.ts) forwards /api to the
+// local backend; in production the backend serves this built frontend itself,
+// so API calls are same-origin. Either way, no hardcoded host/CORS to manage.
+const BASE = "";
 
 export interface Topic {
   id: number;
@@ -82,7 +85,17 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`${res.status} ${res.statusText}: ${body}`);
+    // FastAPI error responses are {"detail": "..."} -- surface that message
+    // directly when present, since it's already written to be shown to the
+    // coach (e.g. link_fetch.py's ValueError messages).
+    let detail: string | undefined;
+    try {
+      const parsed = JSON.parse(body);
+      if (typeof parsed.detail === "string") detail = parsed.detail;
+    } catch {
+      // not JSON -- fall through to the raw form below
+    }
+    throw new Error(detail ?? `${res.status} ${res.statusText}: ${body}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -97,6 +110,8 @@ export const api = {
   listResources: (topicId: number) => req<Resource[]>(`/api/topics/${topicId}/resources`),
   addTextResource: (topicId: number, payload: { title: string; text: string; source_url?: string }) =>
     req<Resource>(`/api/topics/${topicId}/resources/text`, { method: "POST", body: JSON.stringify(payload) }),
+  addLinkResource: (topicId: number, url: string) =>
+    req<Resource>(`/api/topics/${topicId}/resources/link`, { method: "POST", body: JSON.stringify({ url }) }),
   uploadMediaResource: async (topicId: number, file: File): Promise<Resource[]> => {
     const form = new FormData();
     form.append("file", file);
