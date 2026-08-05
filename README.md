@@ -7,14 +7,16 @@ LLM-driven tutoring — every piece is plain, readable code rather than hidden
 behind a framework, so it doubles as a walkthrough of how these techniques fit
 together.
 
-**Coach flow:** add a topic's resources (pasted text, a real URL the system
-fetches and reads directly, or an uploaded video/audio clip) → generate a
-concept glossary grounded in whatever's actually useful in those resources →
-approve/edit it → generate a practice assessment → publish it.
+**Coach flow:** log in → add a topic's resources (pasted text, a PDF, a
+YouTube link, or any other URL — the system fetches/reads each one directly —
+or an uploaded video/audio clip) → generate a concept glossary grounded in
+whatever's actually useful in those resources → approve/edit it → let the
+system suggest a mix of questions (you choose how many MCQ vs. short-answer)
+and/or author your own questions by hand → publish.
 
 **Student flow:** browse the concept glossary → take the assessment → ask for
 hints → get a conversational, Socratic re-explanation on anything answered
-wrong.
+wrong. No login required — students just enter a name per attempt.
 
 ## Why this exists
 
@@ -32,18 +34,21 @@ knowledge when it isn't.
 sciolympiad-coach/
 ├── backend/                 FastAPI (Python)
 │   ├── app/
-│   │   ├── main.py          App wiring, CORS, seeds a demo topic
+│   │   ├── main.py          App wiring, session middleware, seeds a demo topic
 │   │   ├── config.py        Settings (.env)
+│   │   ├── auth.py           Coach password hashing + session cookies + require_coach dependency
 │   │   ├── db.py, models.py, schemas.py   SQLite via SQLAlchemy
-│   │   ├── routers/         topics, ingestion, explain, assessment, attempts, tutor
-│   │   ├── rag/              chunking, embeddings, vectorstore (Chroma), transcription, link_fetch, retrieval
-│   │   └── llm/               Gemini client wrapper + prompt templates
-│   └── data/                 sqlite db + Chroma persistence (gitignored)
-├── frontend/                 React + TypeScript (Vite)
+│   │   ├── routers/         auth, topics, ingestion, explain, assessment, attempts, tutor
+│   │   ├── rag/               chunking, embeddings, vectorstore (Chroma), transcription,
+│   │   │                      link_fetch, pdf_extract, youtube_fetch, retrieval
+│   │   └── llm/                Gemini client wrapper (with per-call logging) + prompt templates
+│   └── data/                  sqlite db + Chroma persistence (gitignored)
+├── frontend/                  React + TypeScript (Vite)
 │   └── src/
-│       ├── api/client.ts     typed fetch wrapper for the backend
-│       └── pages/             CoachTopicBuilder, CoachAssessment, StudentPractice, StudentTest
-├── render.yaml                Render deploy blueprint (see "Deploying" below)
+│       ├── api/client.ts      typed fetch wrapper for the backend
+│       └── pages/              Login, Home, CoachTopicBuilder, CoachAssessment,
+│                                StudentPractice, StudentTest
+├── render.yaml                 Render deploy blueprint (see "Deploying" below)
 └── README.md (this file)
 ```
 
@@ -101,6 +106,14 @@ uvicorn app.main:app --reload
 Backend runs at `http://localhost:8000`. A demo topic ("Roller Coaster") is
 seeded automatically on first run.
 
+**First-time setup (coach accounts).** There's no shared password to set —
+coaches log in with individual accounts. The very first run shows a
+"create the first coach account" screen right in the app; once you're logged
+in, a small "Add a coach" card on the home page lets you create accounts for
+teammates (you set their name + password and share it with them directly —
+there's no self-serve signup or password reset, deliberately, for a ~13-person
+known group). Students never log in at all.
+
 **Frontend**
 
 ```sh
@@ -152,13 +165,14 @@ abstract theory. Reading these in order roughly follows the pipeline:
 4. **Relevance judging** — *the "don't over-index on video" step*
    ([`rag/retrieval.py`](backend/app/rag/retrieval.py)). Similarity search
    alone will always return *something*, even if it's not actually useful.
-   Before a retrieved chunk is allowed to influence an explanation, a
-   separate Gemini call scores it: "does this substantively explain a
-   concept a student needs, or is it logistics/rules/off-topic?" This applies
-   equally to video and text — it's the mechanism that keeps a video from
-   dominating an explanation just because it exists, and it's what lets the
-   coach UI show, per concept, whether video actually helped
-   (`video coverage` tag) or the system fell back to general knowledge.
+   Before a retrieved chunk is allowed to influence an explanation, a single
+   Gemini call scores every candidate chunk at once: "does this
+   substantively explain a concept a student needs, or is it
+   logistics/rules/off-topic?" This applies equally to video and text — it's
+   the mechanism that keeps a video from dominating an explanation just
+   because it exists, and it's what lets the coach UI show, per concept,
+   whether video actually helped (`video coverage` tag) or the system fell
+   back to general knowledge.
 
 5. **Grounded generation**
    ([`llm/prompts.py`](backend/app/llm/prompts.py) `explanation_prompt`) —
@@ -181,13 +195,45 @@ abstract theory. Reading these in order roughly follows the pipeline:
    student's wrong answer, so the conversation stays grounded and Socratic
    rather than just restating the answer.
 
+## Reducing AI/token usage
+
+Not every step in this pipeline needs an LLM, and several that do were
+originally calling it more than necessary. Four concrete things this codebase
+does to keep AI use to what's actually needed:
+
+1. **PDF, YouTube, and generic-link ingestion use zero LLM calls.** PDF text
+   comes from [`pypdf`](backend/app/rag/pdf_extract.py) directly. YouTube
+   transcripts come from the video's official caption track via
+   [`youtube-transcript-api`](backend/app/rag/youtube_fetch.py) — no
+   download, no transcription cost. Generic web pages go through
+   [`trafilatura`](backend/app/rag/link_fetch.py)'s readable-content
+   extractor. Only uploaded video/audio files (which have no existing
+   transcript) actually need Gemini to transcribe them.
+2. **Relevance judging is one call, not one per chunk.** Scoring up to
+   `retrieval_top_k` candidate chunks used to be a separate LLM call each;
+   [`rag/retrieval.py`](backend/app/rag/retrieval.py) now batches them into a
+   single call that scores the whole set at once.
+3. **Short-answer grading has a cheap pre-check.** Before spending an LLM
+   call, [`routers/attempts.py`](backend/app/routers/attempts.py) normalizes
+   and compares the student's answer to the correct answer; exact or
+   near-exact matches are graded instantly with no LLM call. Only genuinely
+   ambiguous phrasing falls through to the LLM grader.
+4. **Regenerating concepts replaces, not duplicates.** Clicking "Generate
+   concept explanations" again used to *add* another full set on top of the
+   old one (wasting both the call and the resulting mess); it now clears the
+   previous *unapproved* concepts first, so a coach can freely regenerate
+   without piling up redundant LLM output (or duplicate rows).
+
+**Visibility:** every LLM call goes through
+[`llm/client.py`](backend/app/llm/client.py), which logs a labeled line
+(`llm_call label=... effort=... input_chars=... output_chars=...`) for each
+one. Watch the backend logs (locally, or Render's log tab once deployed) to
+see exactly how many calls a given action costs.
+
 ## Simplifications (future work)
 
 This is a small vertical slice, not a production app. Explicit corners cut:
 
-- **One shared password, not per-coach accounts** — good enough to keep the app
-  private to your ~13 coaches, but there's no notion of *who* curated or
-  approved what. Students just type a name per attempt, no login at all.
 - **No general web search** — a coach still has to know and paste the specific
   URL they want ingested; the system doesn't go find sources on its own.
 - **Single LLM provider** — everything runs through Gemini; the `llm/client.py`
@@ -201,16 +247,44 @@ This is a small vertical slice, not a production app. Explicit corners cut:
   (one small Render instance, ~13 users), but it means the app can only ever
   run as a single instance/replica; it wouldn't survive being scaled
   horizontally without moving to Postgres/pgvector or similar.
+- **One shared topic library** — every coach sees and can edit every topic;
+  there's no per-team data isolation. That's a deliberate fit for one
+  coaching staff, not a multi-tenant product.
+- **Coach accounts have no password reset or self-service signup** — an
+  existing coach creates every new account by hand and shares the password
+  directly. Fine for a small known group; wouldn't scale past that.
+
+## Further production hardening (not built, but worth knowing about)
+
+Things a genuinely production-grade version of this would add, deliberately
+left out here to keep this iteration's scope bounded:
+
+- **Rate limiting / a per-coach cost budget** — nothing currently stops a
+  coach from clicking "Generate" a hundred times in a row. The LLM-call
+  logging (above) gives visibility, not a cap.
+- **Automated database backups** — the SQLite file lives on Render's
+  persistent disk, which survives redeploys but isn't backed up on a
+  schedule. Worth a periodic manual export until this exists.
+- **Structured monitoring/alerting** — logs exist (see "Reducing AI/token
+  usage"), but nothing aggregates them or pages anyone if something breaks.
+- **Password reset flow** — see above.
+- **Postgres migration path** — `DATABASE_URL` already isolates the DB choice
+  (see `app/config.py` / `app/db.py`), so moving off SQLite later is a
+  connection-string change plus a data migration, not a rewrite — just not
+  needed at ~13 users.
 
 ## Verification
 
 Backend: `uvicorn app.main:app --reload` then `curl http://localhost:8000/api/health`.
 
-Frontend: `npm run dev`, open `http://localhost:5173`, pick the seeded "Roller
-Coaster" topic → Coach view → add a resource (paste text, paste a real link,
-or upload a clip) → generate explanations → approve a couple → generate +
-publish an assessment → open Student view → take the test → request a hint →
-answer one wrong on purpose → confirm the tutor chat opens and responds.
+Frontend: `npm run dev`, open `http://localhost:5173` → create the first coach
+account (or log in) → pick the seeded "Roller Coaster" topic → Coach view →
+add a resource (paste text, upload a PDF, paste a YouTube link, paste a plain
+article link, or upload a video/audio clip) → generate explanations → approve
+a couple → in the assessment editor, pick a mix of MCQ/short-answer and
+generate, and/or add a question by hand → publish → open Student view (no
+login needed) → take the test → request a hint → answer one wrong on purpose
+→ confirm the tutor chat opens and responds.
 
 ## Deploying (so other coaches can use it)
 
@@ -224,24 +298,21 @@ to configure.
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. In Render: **New → Blueprint**, point it at this repo. It reads
    [`render.yaml`](render.yaml) and creates the web service automatically.
-3. **Set the two secrets** Render will prompt for (or add them under the
-   service's **Environment** tab):
-   - `GEMINI_API_KEY` — your Gemini key.
-   - `COACH_PASSWORD` — one password you'll share with the other coaches.
-     Leaving this unset (as in local dev) disables the login gate entirely —
-     don't leave it unset on a public deployment.
+3. **Set the one secret** Render will prompt for (or add it under the
+   service's **Environment** tab): `GEMINI_API_KEY` — your Gemini key.
 4. Deploy. Render builds the frontend (`npm run build`) and installs the
    backend, then starts `uvicorn` behind Render's own HTTPS.
-5. Share the resulting `https://sciolympiad-coach.onrender.com`-style URL and
-   the `COACH_PASSWORD` with your other coaches — that's the whole onboarding
-   step, since it's one shared login rather than individual accounts.
+5. Open the deployed URL — it'll show "create the first coach account" since
+   the database starts empty. Create your own account, then use the "Add a
+   coach" card on the home page to create one for each other coach and share
+   their password with them directly.
 
 **Persistent data.** `render.yaml` provisions a small disk mounted at
 `backend/data`, where the SQLite database and the Chroma vector store live —
 without it, all topics/resources/concepts would reset on every redeploy.
 That requires Render's `starter` plan (a few dollars/month), which is what
 `render.yaml` specifies; the free tier has no persistent disk. If you just
-want a quick smoke-test deploy first, you can temporarily drop the `disks:`
+want a quick smoke-test deploy first, you can temporarily drop the `disk:`
 block and use the free plan — just know a redeploy will wipe the data.
 
 **Updating the deployment:** push to `main` — Render auto-deploys on every

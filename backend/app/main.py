@@ -1,18 +1,37 @@
-import base64
-import binascii
-import secrets
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
-from app import models
-from app.config import settings
+from app import auth, models
 from app.db import SessionLocal, engine
-from app.routers import assessment, attempts, explain, ingestion, topics, tutor
+from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, topics, tutor
+
+# INFO so llm/client.py's per-call logging (label, effort, char counts) shows
+# up in Render's logs -- the app's cheapest way to see LLM call volume.
+logging.basicConfig(level=logging.INFO)
 
 models.Base.metadata.create_all(bind=engine)
+
+
+def _ensure_column(table: str, column: str, ddl_type: str) -> None:
+    """Add a column create_all won't add to an already-existing table.
+
+    SQLite-specific (PRAGMA table_info) -- fine since we're deliberately on
+    SQLite at this scale (see README); revisit if that ever changes.
+    """
+    with engine.connect() as conn:
+        existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+        if column not in existing:
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
+            conn.commit()
+
+
+_ensure_column("topics", "created_by_coach_id", "INTEGER")
+_ensure_column("assessments", "created_by_coach_id", "INTEGER")
 
 app = FastAPI(title="Science Olympiad Coach")
 
@@ -22,38 +41,30 @@ app = FastAPI(title="Science Olympiad Coach")
 
 
 @app.middleware("http")
-async def require_coach_auth(request: Request, call_next):
-    """Gate the whole app behind one shared password once it's deployed.
+async def attach_coach_session(request: Request, call_next):
+    """Resolve the session cookie to a Coach (if any) for every request.
 
-    Deliberately a single shared secret, not per-coach accounts -- cheapest
-    to build for a ~13-person known group, at the cost of a plain browser
-    Basic Auth prompt instead of a styled login page. Disabled entirely when
-    COACH_PASSWORD is unset (local dev's default).
+    Only attaches request.state.coach -- it does NOT block unauthenticated
+    requests. Coaches and students share this API: coaches log in to author
+    content, students never log in at all (they just enter a name per
+    attempt). Individual coach-only endpoints enforce login themselves via
+    the auth.require_coach dependency; see routers/topics.py, ingestion.py,
+    explain.py, and assessment.py for where that's applied.
     """
-    if not settings.coach_password or request.url.path == "/api/health":
-        return await call_next(request)
-
-    unauthorized = Response(
-        status_code=401,
-        headers={"WWW-Authenticate": 'Basic realm="Science Olympiad Coach"'},
-    )
-
-    auth_header = request.headers.get("authorization", "")
-    if not auth_header.startswith("Basic "):
-        return unauthorized
-
-    try:
-        decoded = base64.b64decode(auth_header.removeprefix("Basic ")).decode("utf-8")
-        _, _, supplied_password = decoded.partition(":")
-    except (binascii.Error, UnicodeDecodeError):
-        return unauthorized
-
-    if not secrets.compare_digest(supplied_password, settings.coach_password):
-        return unauthorized
+    token = request.cookies.get(auth.SESSION_COOKIE_NAME)
+    coach = None
+    if token:
+        db = SessionLocal()
+        try:
+            coach = auth.get_coach_from_token(db, token)
+        finally:
+            db.close()
+    request.state.coach = coach
 
     return await call_next(request)
 
 
+app.include_router(auth_router.router)
 app.include_router(topics.router)
 app.include_router(ingestion.router)
 app.include_router(explain.router)

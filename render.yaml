@@ -10,8 +10,6 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false # set in the Render dashboard -- never commit real keys
-      - key: COACH_PASSWORD
-        sync: false # set in the Render dashboard -- shared password for all coaches
     disk:
       name: sciolympiad-data
       mountPath: /opt/render/project/src/backend/data

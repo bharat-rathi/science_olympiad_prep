@@ -115,13 +115,21 @@ export default function CoachTopicBuilder() {
             Add text resource
           </button>
           <label>
-            <input type="file" accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.zip" onChange={uploadFile} disabled={busy} />
+            <input
+              type="file"
+              accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.pdf,.zip"
+              onChange={uploadFile}
+              disabled={busy}
+            />
           </label>
         </div>
       </div>
 
       <div className="card stack">
-        <label className="muted">Or paste a link -- the system fetches and reads it directly</label>
+        <label className="muted">
+          Or paste a link -- YouTube links pull the official captions, anything else gets its
+          readable text fetched directly
+        </label>
         <div className="row">
           <input
             placeholder="https://..."

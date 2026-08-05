@@ -25,11 +25,6 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
 
-    # Shared password gating the whole app now that ~13 coaches access one
-    # deployed instance. Empty string (the local-dev default) disables the
-    # gate entirely -- only set this in the hosted deployment's env vars.
-    coach_password: str = ""
-
     database_url: str = f"sqlite:///{DATA_DIR / 'sciolympiad.db'}"
     chroma_dir: str = str(DATA_DIR / "chroma")
 

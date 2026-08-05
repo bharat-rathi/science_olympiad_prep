@@ -1,6 +1,6 @@
 from app.config import settings
 from app.llm.client import complete_json
-from app.llm.prompts import RELEVANCE_SCHEMA, relevance_judge_prompt
+from app.llm.prompts import BATCH_RELEVANCE_SCHEMA, batch_relevance_judge_prompt
 from app.rag.embeddings import embed_text
 from app.rag.vectorstore import query_topic
 
@@ -11,9 +11,12 @@ def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: 
     Two stages, deliberately kept separate:
       1. Embedding similarity retrieval (recall-oriented, cheap) pulls a
          candidate set from Chroma.
-      2. An LLM relevance-judge pass (precision-oriented) scores each
-         candidate against "does this substantively explain a concept a
-         student needs," dropping anything below threshold.
+      2. A single batched LLM relevance-judge call (precision-oriented)
+         scores every candidate at once against "does this substantively
+         explain a concept a student needs," dropping anything below
+         threshold -- one call for up to retrieval_top_k candidates, not one
+         call per candidate, since this step runs on every "Generate concept
+         explanations" click.
 
     Stage 2 is what keeps a merely-present video from dominating an
     explanation just because it exists -- it's scored by the same rubric as
@@ -22,13 +25,22 @@ def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: 
     """
     query_embedding = embed_text(f"{topic_name}. {topic_description}")
     candidates = query_topic(topic_id, query_embedding, top_k=settings.retrieval_top_k)
+    if not candidates:
+        return []
+
+    indexed = [{"index": i, "source_type": c["metadata"]["source_type"], "text": c["text"]} for i, c in enumerate(candidates)]
+    system, user = batch_relevance_judge_prompt(topic_name, topic_description, indexed)
+    result = complete_json(
+        system, user, BATCH_RELEVANCE_SCHEMA, max_tokens=1500, effort="low", label="relevance_judge_batch"
+    )
+
+    judgments_by_index = {j["index"]: j for j in result.get("judgments", []) if "index" in j}
 
     relevant = []
-    for candidate in candidates:
-        system, user = relevance_judge_prompt(
-            topic_name, topic_description, candidate["metadata"]["source_type"], candidate["text"]
-        )
-        judged = complete_json(system, user, RELEVANCE_SCHEMA, max_tokens=400, effort="low")
+    for i, candidate in enumerate(candidates):
+        judged = judgments_by_index.get(i)
+        if not judged:
+            continue
         score = judged.get("score", 0)
         if score >= settings.relevance_threshold:
             relevant.append({**candidate, "relevance_score": score, "relevance_reason": judged.get("reason", "")})

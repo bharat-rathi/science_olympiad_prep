@@ -3,6 +3,28 @@ import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class CoachOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+
+
+class RegisterRequest(BaseModel):
+    name: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    name: str
+    password: str
+
+
+class MeResponse(BaseModel):
+    authenticated: bool
+    coach: CoachOut | None = None
+    needs_bootstrap: bool = False
+
+
 class TopicOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -10,6 +32,13 @@ class TopicOut(BaseModel):
     name: str
     description: str
     created_at: datetime.datetime
+    created_by: str | None = None
+
+    @staticmethod
+    def from_model(topic) -> "TopicOut":
+        out = TopicOut.model_validate(topic)
+        out.created_by = topic.created_by_coach.name if topic.created_by_coach else None
+        return out
 
 
 class TopicCreate(BaseModel):
@@ -76,12 +105,32 @@ class QuestionUpdate(BaseModel):
     order: int | None = None
 
 
+class QuestionCreate(BaseModel):
+    prompt: str
+    type: str  # mcq | short
+    choices: list[str] = []
+    correct_answer: str
+    explanation: str = ""
+
+
+class GenerateQuestionsRequest(BaseModel):
+    num_mcq: int = 4
+    num_short: int = 2
+
+
 class AssessmentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     topic_id: int
     status: str
     questions: list[QuestionOut]
+    created_by: str | None = None
+
+    @staticmethod
+    def from_model(assessment) -> "AssessmentOut":
+        out = AssessmentOut.model_validate(assessment)
+        out.created_by = assessment.created_by_coach.name if assessment.created_by_coach else None
+        return out
 
 
 class AttemptStart(BaseModel):

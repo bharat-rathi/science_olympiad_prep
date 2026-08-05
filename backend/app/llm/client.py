@@ -1,8 +1,11 @@
 import json
+import logging
 
 from google import genai
 
 from app.config import settings
+
+logger = logging.getLogger("llm_calls")
 
 _client: genai.Client | None = None
 
@@ -27,7 +30,13 @@ def _generation_config(max_tokens: int, effort: str) -> dict:
     return {"max_output_tokens": max_tokens, "thinking_level": _THINKING_LEVEL.get(effort, "low")}
 
 
-def complete_text(system: str, user: str, max_tokens: int = 2000, effort: str = "medium") -> str:
+def _log_call(label: str, effort: str, input_chars: int, output_chars: int) -> None:
+    # Visibility into LLM call volume/cost without a full usage-metrics
+    # pipeline -- watch Render's logs for how often each label fires.
+    logger.info("llm_call label=%s effort=%s input_chars=%d output_chars=%d", label, effort, input_chars, output_chars)
+
+
+def complete_text(system: str, user: str, max_tokens: int = 2000, effort: str = "medium", label: str = "") -> str:
     """Single place all generation calls go through -- swap providers here."""
     interaction = _get_client().interactions.create(
         model=settings.gemini_model,
@@ -35,10 +44,14 @@ def complete_text(system: str, user: str, max_tokens: int = 2000, effort: str = 
         input=user,
         generation_config=_generation_config(max_tokens, effort),
     )
-    return interaction.output_text or ""
+    text = interaction.output_text or ""
+    _log_call(label or "complete_text", effort, len(system) + len(user), len(text))
+    return text
 
 
-def complete_json(system: str, user: str, schema: dict, max_tokens: int = 2000, effort: str = "medium") -> dict:
+def complete_json(
+    system: str, user: str, schema: dict, max_tokens: int = 2000, effort: str = "medium", label: str = ""
+) -> dict:
     """Same as complete_text, but constrains the response to the given JSON schema."""
     interaction = _get_client().interactions.create(
         model=settings.gemini_model,
@@ -47,10 +60,12 @@ def complete_json(system: str, user: str, schema: dict, max_tokens: int = 2000, 
         generation_config=_generation_config(max_tokens, effort),
         response_format={"type": "text", "mime_type": "application/json", "schema": schema},
     )
-    return json.loads(interaction.output_text) if interaction.output_text else {}
+    text = interaction.output_text or ""
+    _log_call(label or "complete_json", effort, len(system) + len(user), len(text))
+    return json.loads(text) if text else {}
 
 
-def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium") -> str:
+def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium", label: str = "") -> str:
     """Multi-turn conversational call, used by the tutor chat.
 
     Conversation history lives in our own TutorMessage table (see
@@ -65,4 +80,6 @@ def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort:
         input=transcript,
         generation_config=_generation_config(max_tokens, effort),
     )
-    return interaction.output_text or ""
+    text = interaction.output_text or ""
+    _log_call(label or "chat_turn", effort, len(system) + len(transcript), len(text))
+    return text

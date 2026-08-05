@@ -50,6 +50,7 @@ def start_tutor_thread(attempt_id: int, question_id: int, db: Session = Depends(
         [{"role": "user", "content": "The student just got this wrong. Start the conversation."}],
         max_tokens=600,
         effort="low",
+        label="tutor_start",
     )
     msg = models.TutorMessage(attempt_answer_id=row.id, role="assistant", content=opening)
     db.add(msg)
@@ -69,7 +70,7 @@ def tutor_turn(payload: schemas.TutorTurnRequest, db: Session = Depends(get_db))
     system = _system_prompt(db, row)
     history = [{"role": m.role, "content": m.content} for m in row.tutor_messages]
 
-    reply = chat_turn(system, history, max_tokens=600, effort="low")
+    reply = chat_turn(system, history, max_tokens=600, effort="low", label="tutor_turn")
     assistant_msg = models.TutorMessage(attempt_answer_id=row.id, role="assistant", content=reply)
     db.add(assistant_msg)
     db.commit()

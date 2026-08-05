@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -19,6 +20,26 @@ SHORT_ANSWER_GRADE_SCHEMA = {
     "required": ["is_correct", "feedback"],
     "additionalProperties": False,
 }
+
+
+def _normalize(s: str) -> str:
+    return re.sub(r"[^\w\s]", "", s.strip().lower())
+
+
+def _cheap_match(student_answer: str, correct_answer: str) -> bool:
+    """Catch the easy exact/near-exact cases without spending an LLM call.
+
+    Only meant to short-circuit obvious matches -- anything that doesn't
+    clear this bar still goes to the LLM grader below, so grading stays
+    lenient about phrasing for genuinely ambiguous answers.
+    """
+    a, b = _normalize(student_answer), _normalize(correct_answer)
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    shorter, longer = sorted([a, b], key=len)
+    return len(shorter) >= 4 and shorter in longer and len(shorter) / len(longer) >= 0.6
 
 
 def _topic_concept_context(db: Session, topic_id: int) -> str:
@@ -58,7 +79,7 @@ def request_hint(attempt_id: int, payload: schemas.HintRequest, db: Session = De
 
     context = _topic_concept_context(db, topic_id)
     system, user = hint_prompt(question.assessment.topic.name, context, question.prompt)
-    hint = complete_text(system, user, max_tokens=500, effort="low")
+    hint = complete_text(system, user, max_tokens=500, effort="low", label="hint")
 
     db.commit()
     return {"hint": hint}
@@ -79,6 +100,8 @@ def submit_attempt(attempt_id: int, payload: schemas.SubmitPayload, db: Session 
 
         if question.type == "mcq":
             is_correct = answer.student_answer.strip().lower() == question.correct_answer.strip().lower()
+        elif _cheap_match(answer.student_answer, question.correct_answer):
+            is_correct = True
         else:
             grading = complete_json(
                 "You grade a student's short-answer response against the correct answer for a "
@@ -88,6 +111,7 @@ def submit_attempt(attempt_id: int, payload: schemas.SubmitPayload, db: Session 
                 SHORT_ANSWER_GRADE_SCHEMA,
                 max_tokens=500,
                 effort="low",
+                label="grade_short_answer",
             )
             is_correct = grading.get("is_correct", False)
 

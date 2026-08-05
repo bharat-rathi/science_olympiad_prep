@@ -3,18 +3,30 @@
 // so API calls are same-origin. Either way, no hardcoded host/CORS to manage.
 const BASE = "";
 
+export interface Coach {
+  id: number;
+  name: string;
+}
+
+export interface MeResponse {
+  authenticated: boolean;
+  coach: Coach | null;
+  needs_bootstrap: boolean;
+}
+
 export interface Topic {
   id: number;
   event_name: string;
   name: string;
   description: string;
   created_at: string;
+  created_by: string | null;
 }
 
 export interface Resource {
   id: number;
   topic_id: number;
-  type: "video" | "text" | "link";
+  type: "video" | "text" | "link" | "pdf";
   title: string;
   source_url: string;
   status: string;
@@ -47,6 +59,7 @@ export interface Assessment {
   topic_id: number;
   status: "draft" | "published";
   questions: Question[];
+  created_by: string | null;
 }
 
 export interface Attempt {
@@ -102,6 +115,13 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  me: () => req<MeResponse>("/api/auth/me"),
+  register: (name: string, password: string) =>
+    req<Coach>("/api/auth/register", { method: "POST", body: JSON.stringify({ name, password }) }),
+  login: (name: string, password: string) =>
+    req<Coach>("/api/auth/login", { method: "POST", body: JSON.stringify({ name, password }) }),
+  logout: () => req<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
+
   listTopics: () => req<Topic[]>("/api/topics"),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),
   createTopic: (payload: { event_name: string; name: string; description?: string }) =>
@@ -126,10 +146,19 @@ export const api = {
   updateConcept: (topicId: number, conceptId: number, payload: Partial<Pick<ConceptTerm, "term" | "explanation_md" | "approved">>) =>
     req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}`, { method: "PATCH", body: JSON.stringify(payload) }),
 
-  generateAssessment: (topicId: number) =>
-    req<Assessment>(`/api/topics/${topicId}/assessment/generate`, { method: "POST" }),
+  getOrCreateAssessment: (topicId: number) =>
+    req<Assessment>(`/api/topics/${topicId}/assessment`, { method: "POST" }),
   getLatestAssessment: (topicId: number) => req<Assessment | null>(`/api/topics/${topicId}/assessment`),
   getAssessment: (id: number) => req<Assessment>(`/api/assessments/${id}`),
+  generateQuestions: (assessmentId: number, numMcq: number, numShort: number) =>
+    req<Assessment>(`/api/assessments/${assessmentId}/generate-questions`, {
+      method: "POST",
+      body: JSON.stringify({ num_mcq: numMcq, num_short: numShort }),
+    }),
+  addQuestion: (
+    assessmentId: number,
+    payload: { prompt: string; type: "mcq" | "short"; choices: string[]; correct_answer: string; explanation?: string },
+  ) => req<Question>(`/api/assessments/${assessmentId}/questions`, { method: "POST", body: JSON.stringify(payload) }),
   publishAssessment: (id: number) => req<Assessment>(`/api/assessments/${id}/publish`, { method: "POST" }),
   updateQuestion: (assessmentId: number, questionId: number, payload: Partial<Question>) =>
     req<Question>(`/api/assessments/${assessmentId}/questions/${questionId}`, {

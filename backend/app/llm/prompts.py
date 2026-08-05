@@ -35,6 +35,56 @@ def relevance_judge_prompt(topic_name: str, topic_description: str, source_type:
     return system, user
 
 
+BATCH_RELEVANCE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "judgments": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "index": {"type": "integer"},
+                    "score": {"type": "number", "description": "0.0 (irrelevant) to 1.0 (highly relevant)"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["index", "score", "reason"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["judgments"],
+    "additionalProperties": False,
+}
+
+
+def batch_relevance_judge_prompt(
+    topic_name: str, topic_description: str, candidates: list[dict]
+) -> tuple[str, str]:
+    """Same rubric as relevance_judge_prompt, but scores every candidate in one call.
+
+    `candidates` items are {"index": int, "source_type": str, "text": str}.
+    """
+    system = (
+        "You judge whether each snippet of source material substantively explains a "
+        "Science Olympiad competition concept a student needs to understand, as "
+        "opposed to being competition logistics, rules, schedules, small talk, or "
+        "otherwise off-topic. Video transcripts get no special treatment over text "
+        "resources -- judge purely on content. Score every snippet independently and "
+        "return one judgment per snippet, in the same order, each carrying its index."
+    )
+    snippet_block = "\n\n".join(
+        f"[index={c['index']}, source={c['source_type']}]\n{c['text']}" for c in candidates
+    )
+    user = (
+        f"Topic: {topic_name}\n"
+        f"Topic description: {topic_description}\n\n"
+        f"Snippets:\n{snippet_block}\n\n"
+        "For each snippet, score how substantively it explains a concept the student "
+        "needs for this topic (0.0-1.0), and give a one-sentence reason."
+    )
+    return system, user
+
+
 CONCEPT_LIST_SCHEMA = {
     "type": "object",
     "properties": {
@@ -110,19 +160,20 @@ QUIZ_SCHEMA = {
 }
 
 
-def quiz_prompt(topic_name: str, concepts: list[dict], num_questions: int = 6) -> tuple[str, str]:
+def quiz_prompt(topic_name: str, concepts: list[dict], num_mcq: int, num_short: int) -> tuple[str, str]:
     system = (
         "You write competition-practice assessment questions for a Science "
         "Olympiad team, grounded strictly in the approved concept explanations "
-        "given to you. Mix multiple-choice and short-answer questions. For mcq "
-        "questions, 'choices' has 4 options and 'correct_answer' is one of them "
-        "verbatim. For short questions, 'choices' is an empty array."
+        "given to you. For mcq questions, 'choices' has 4 options and "
+        "'correct_answer' is one of them verbatim. For short questions, "
+        "'choices' is an empty array."
     )
     concept_block = "\n\n".join(f"### {c['term']}\n{c['explanation_md']}" for c in concepts)
     user = (
         f"Topic: {topic_name}\n\n"
         f"Approved concept explanations:\n{concept_block}\n\n"
-        f"Write {num_questions} questions testing these concepts."
+        f"Write exactly {num_mcq} multiple-choice questions and {num_short} short-answer "
+        "questions testing these concepts."
     )
     return system, user
 
