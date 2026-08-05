@@ -133,6 +133,22 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/api/debug/settings")
+def debug_settings():
+    """Temporary -- no shell access on Render's free plan, so this is how we
+    check what env vars actually reached the running process. No secrets
+    returned, only booleans/non-secret values. Remove once the Google OAuth
+    env var issue is resolved.
+    """
+    return {
+        "google_client_id_set": bool(settings.google_client_id),
+        "google_client_secret_set": bool(settings.google_client_secret),
+        "session_secret_is_default": settings.session_secret == "dev-insecure-secret-change-me",
+        "public_base_url": settings.public_base_url,
+        "gemini_api_key_set": bool(settings.gemini_api_key),
+    }
+
+
 # Serve the built frontend, if present (production deploy / `npm run build`
 # locally). In local dev without a build, this directory won't exist and the
 # app just serves the API -- run the frontend separately with `npm run dev`.
