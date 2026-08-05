@@ -20,8 +20,10 @@ export default function StudentPractice() {
 
   return (
     <div>
-      <h1>{topic.name}</h1>
-      <p className="muted">{topic.description}</p>
+      <div className="page-header">
+        <h1>{topic.name}</h1>
+        <p className="muted">{topic.description}</p>
+      </div>
 
       {assessment && (
         <div className="card row" style={{ justifyContent: "space-between" }}>

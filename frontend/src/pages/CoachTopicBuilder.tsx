@@ -97,10 +97,14 @@ export default function CoachTopicBuilder() {
 
   return (
     <div>
-      <h1>{topic.name}</h1>
-      <p className="muted">{topic.description}</p>
+      <div className="page-header">
+        <h1>{topic.name}</h1>
+        <p className="muted">{topic.description}</p>
+      </div>
 
-      <h2>1. Resources</h2>
+      <h2>
+        <span className="step-badge">1</span> Resources
+      </h2>
       <p className="muted">
         Paste text/link content, or upload a short video/audio clip (or a zip of several). Video is
         one possible source among several -- it's only used where the relevance check below finds
@@ -155,7 +159,9 @@ export default function CoachTopicBuilder() {
         </div>
       )}
 
-      <h2>2. Concept explanations</h2>
+      <h2>
+        <span className="step-badge">2</span> Concept explanations
+      </h2>
       <div className="row">
         <button className="primary" onClick={generate} disabled={busy}>
           {busy ? "Working..." : "Generate concept explanations"}
@@ -187,7 +193,9 @@ export default function CoachTopicBuilder() {
         ))}
       </div>
 
-      <h2>3. Assessment</h2>
+      <h2>
+        <span className="step-badge">3</span> Assessment
+      </h2>
       <Link to={`/coach/${id}/assessment`}>
         <button disabled={approvedCount === 0}>Go to assessment editor</button>
       </Link>

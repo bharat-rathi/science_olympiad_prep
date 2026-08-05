@@ -64,10 +64,11 @@ function AuthedApp({
         <NavLink to="/" end>
           Home
         </NavLink>
-        <span style={{ marginLeft: "auto" }} className="row">
+        <span style={{ marginLeft: "auto" }} className="nav-user">
           {coach ? (
             <>
-              <span className="muted">Logged in as {coach.name}</span>
+              <span className="avatar">{(coach.name || "?").slice(0, 1).toUpperCase()}</span>
+              <span className="muted">{coach.name || "Pending sign-in"}</span>
               <button onClick={logout}>Logout</button>
             </>
           ) : (

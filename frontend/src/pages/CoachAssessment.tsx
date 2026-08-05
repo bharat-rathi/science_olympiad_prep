@@ -85,7 +85,9 @@ export default function CoachAssessment() {
 
   return (
     <div>
-      <h1>Assessment editor</h1>
+      <div className="page-header">
+        <h1>Assessment editor</h1>
+      </div>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div className="row" style={{ justifyContent: "space-between" }}>

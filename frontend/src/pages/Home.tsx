@@ -43,34 +43,35 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
 
   return (
     <div>
-      <h1>Topics</h1>
-      <p className="muted">
-        Pick a topic to coach or practice. A topic's video coverage is used only where it's
-        actually useful -- see each concept's source tag once you're inside a topic.
-      </p>
+      <div className="page-header">
+        <h1>Topics</h1>
+        <p className="muted">
+          Pick a topic to coach or practice. A topic's video coverage is used only where it's
+          actually useful -- see each concept's source tag once you're inside a topic.
+        </p>
+      </div>
 
-      <div className="stack">
+      <div className="grid-2">
         {topics.map((t) => (
-          <div className="card" key={t.id}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <div>
-                <strong>{t.name}</strong>
-                <div className="muted">
-                  {t.event_name}
-                  {t.created_by ? ` · added by ${t.created_by}` : ""}
-                </div>
+          <div className="card hoverable stack" key={t.id}>
+            <div>
+              <strong>{t.name}</strong>
+              <div className="muted">
+                {t.event_name}
+                {t.created_by ? ` · added by ${t.created_by}` : ""}
               </div>
-              <div className="row">
-                <Link to={`/coach/${t.id}`}>
-                  <button>Coach view</button>
-                </Link>
-                <Link to={`/student/${t.id}`}>
-                  <button className="primary">Student view</button>
-                </Link>
-              </div>
+            </div>
+            <div className="row">
+              <Link to={`/coach/${t.id}`}>
+                <button>Coach view</button>
+              </Link>
+              <Link to={`/student/${t.id}`}>
+                <button className="primary">Student view</button>
+              </Link>
             </div>
           </div>
         ))}
+        {topics.length === 0 && <p className="muted">No topics yet.</p>}
       </div>
 
       {coach ? (

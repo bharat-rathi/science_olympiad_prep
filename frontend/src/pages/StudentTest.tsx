@@ -72,19 +72,24 @@ export default function StudentTest() {
 
   if (!attempt) {
     return (
-      <div className="card stack">
+      <div className="auth-shell">
+        <div className="auth-logo">📝</div>
         <h1>{assessment.status === "published" ? "Ready to start" : "This test is not published yet"}</h1>
-        <input placeholder="Your name" value={studentName} onChange={(e) => setStudentName(e.target.value)} />
-        <button className="primary" onClick={start} disabled={assessment.status !== "published"}>
-          Start test
-        </button>
+        <div className="card stack" style={{ marginTop: 20, textAlign: "left" }}>
+          <input placeholder="Your name" value={studentName} onChange={(e) => setStudentName(e.target.value)} />
+          <button className="primary" onClick={start} disabled={assessment.status !== "published"}>
+            Start test
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1>Test in progress</h1>
+      <div className="page-header">
+        <h1>Test in progress</h1>
+      </div>
       <div className="stack">
         {assessment.questions.map((q) => {
           const result = results?.find((r) => r.question_id === q.id);
