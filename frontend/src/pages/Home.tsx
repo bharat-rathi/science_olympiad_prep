@@ -9,11 +9,10 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  const [showAddCoach, setShowAddCoach] = useState(false);
-  const [coachName, setCoachName] = useState("");
-  const [coachPassword, setCoachPassword] = useState("");
-  const [coachError, setCoachError] = useState("");
-  const [coachMessage, setCoachMessage] = useState("");
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
 
   useEffect(() => {
     api.listTopics().then(setTopics);
@@ -29,17 +28,16 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
     setDescription("");
   }
 
-  async function addCoach() {
-    setCoachError("");
-    setCoachMessage("");
+  async function invite() {
+    setInviteError("");
+    setInviteMessage("");
     try {
-      const created = await api.register(coachName.trim(), coachPassword);
-      setCoachMessage(`Added ${created.name} -- share their password with them directly.`);
-      setCoachName("");
-      setCoachPassword("");
+      await api.inviteCoach(inviteEmail.trim().toLowerCase());
+      setInviteMessage(`Invited ${inviteEmail.trim()} -- they can now sign in with that Google account.`);
+      setInviteEmail("");
       onCoachAdded();
     } catch (err) {
-      setCoachError(err instanceof Error ? err.message : String(err));
+      setInviteError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -98,26 +96,25 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
       {coach && (
         <>
           <h2>Coaches</h2>
-          {showAddCoach ? (
+          {showInvite ? (
             <div className="card stack">
-              <input placeholder="Teammate's name" value={coachName} onChange={(e) => setCoachName(e.target.value)} />
               <input
-                type="password"
-                placeholder="Set a password for them (8+ characters)"
-                value={coachPassword}
-                onChange={(e) => setCoachPassword(e.target.value)}
+                type="email"
+                placeholder="Teammate's Google account email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
               />
-              {coachError && <p style={{ color: "var(--danger)" }}>{coachError}</p>}
-              {coachMessage && <p className="muted">{coachMessage}</p>}
+              {inviteError && <p style={{ color: "var(--danger)" }}>{inviteError}</p>}
+              {inviteMessage && <p className="muted">{inviteMessage}</p>}
               <div className="row">
-                <button className="primary" onClick={addCoach}>
-                  Add coach
+                <button className="primary" onClick={invite}>
+                  Send invite
                 </button>
-                <button onClick={() => setShowAddCoach(false)}>Done</button>
+                <button onClick={() => setShowInvite(false)}>Done</button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setShowAddCoach(true)}>+ Add a coach</button>
+            <button onClick={() => setShowInvite(true)}>+ Invite a coach</button>
           )}
         </>
       )}

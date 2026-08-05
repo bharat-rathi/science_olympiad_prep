@@ -25,6 +25,21 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
 
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    # The origin the browser actually addresses: the Vite dev server in local
+    # dev (so the post-login redirect and Google's callback both land
+    # somewhere that's actually serving the React app -- Vite's own proxy
+    # forwards /api/* through to this backend either way), the Render URL in
+    # production. Must exactly match a redirect URI registered in Google
+    # Cloud Console.
+    public_base_url: str = "http://localhost:5173"
+    # Signs Starlette's SessionMiddleware cookie, which Authlib uses to stash
+    # the OAuth state/nonce between the login and callback legs -- unrelated
+    # to our own CoachSession cookie (app/auth.py), which is what actually
+    # tracks "who's logged in" afterward.
+    session_secret: str = "dev-insecure-secret-change-me"
+
     database_url: str = f"sqlite:///{DATA_DIR / 'sciolympiad.db'}"
     chroma_dir: str = str(DATA_DIR / "chroma")
 

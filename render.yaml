@@ -10,6 +10,14 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false # set in the Render dashboard -- never commit real keys
+      - key: GOOGLE_CLIENT_ID
+        sync: false # from Google Cloud Console -- see README "Google Cloud Console setup"
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false # random string, e.g. `python -c "import secrets; print(secrets.token_hex(32))"`
+      - key: PUBLIC_BASE_URL
+        value: https://science-olympiad-prep.onrender.com # update if your service URL differs
     disk:
       name: sciolympiad-data
       mountPath: /opt/render/project/src/backend/data

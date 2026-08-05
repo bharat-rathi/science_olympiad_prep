@@ -16,8 +16,12 @@ class Coach(Base):
     __tablename__ = "coaches"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(200), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    # Filled in from the Google profile on first sign-in. NULL until then --
+    # a row with google_sub IS NULL means "invited, hasn't signed in yet".
+    name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    google_sub: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    invited_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
 

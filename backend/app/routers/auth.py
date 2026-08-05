@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
+from app.config import settings
 from app.db import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -18,38 +20,57 @@ def _set_session_cookie(response: Response, request: Request, token: str) -> Non
     )
 
 
-@router.post("/register", response_model=schemas.CoachOut)
-def register(payload: schemas.RegisterRequest, request: Request, response: Response, db: Session = Depends(get_db)):
-    is_bootstrap = db.query(models.Coach).count() == 0
-    if not is_bootstrap and request.state.coach is None:
-        raise HTTPException(403, "Log in first to add a teammate's account")
+@router.get("/google/login")
+async def google_login(request: Request):
+    redirect_uri = f"{settings.public_base_url}/api/auth/google/callback"
+    return await auth.oauth.google.authorize_redirect(request, redirect_uri)
 
-    if db.query(models.Coach).filter(models.Coach.name == payload.name).first():
-        raise HTTPException(409, "That name is already taken")
-    if len(payload.password) < 8:
-        raise HTTPException(400, "Password must be at least 8 characters")
 
-    coach = models.Coach(name=payload.name, password_hash=auth.hash_password(payload.password))
-    db.add(coach)
+@router.get("/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    """Finish the OAuth round-trip and turn a Google identity into a Coach.
+
+    A Coach row with email set but google_sub still NULL means "invited but
+    hasn't signed in yet" (see /invite below) -- this is where that row gets
+    claimed. The very first account ever (nobody invited, nobody exists) is
+    allowed to self-create, same bootstrap rule the old password flow had.
+    """
+    oauth_token = await auth.oauth.google.authorize_access_token(request)
+    userinfo = oauth_token["userinfo"]
+    email = userinfo["email"]
+    name = userinfo.get("name") or email
+    google_sub = userinfo["sub"]
+
+    coach = db.query(models.Coach).filter(models.Coach.email == email).first()
+    if coach is None:
+        is_bootstrap = db.query(models.Coach).count() == 0
+        if not is_bootstrap:
+            return RedirectResponse(f"{settings.public_base_url}/login?error=not_invited")
+        coach = models.Coach(email=email, name=name, google_sub=google_sub)
+        db.add(coach)
+    else:
+        coach.google_sub = google_sub
+        coach.name = name
     db.commit()
     db.refresh(coach)
 
-    if is_bootstrap:
-        token = auth.create_session(db, coach)
-        _set_session_cookie(response, request, token)
+    session_token = auth.create_session(db, coach)
+    response = RedirectResponse(f"{settings.public_base_url}/")
+    _set_session_cookie(response, request, session_token)
+    return response
 
-    return coach
 
+@router.post("/invite", response_model=schemas.CoachOut)
+def invite(payload: schemas.InviteRequest, coach: models.Coach = Depends(auth.require_coach), db: Session = Depends(get_db)):
+    email = payload.email.strip().lower()
+    if db.query(models.Coach).filter(models.Coach.email == email).first():
+        raise HTTPException(409, "That email has already been invited or has an account")
 
-@router.post("/login", response_model=schemas.CoachOut)
-def login(payload: schemas.LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
-    coach = db.query(models.Coach).filter(models.Coach.name == payload.name).first()
-    if not coach or not auth.verify_password(payload.password, coach.password_hash):
-        raise HTTPException(401, "Incorrect name or password")
-
-    token = auth.create_session(db, coach)
-    _set_session_cookie(response, request, token)
-    return coach
+    invited = models.Coach(email=email, invited_by_coach_id=coach.id)
+    db.add(invited)
+    db.commit()
+    db.refresh(invited)
+    return invited
 
 
 @router.post("/logout")

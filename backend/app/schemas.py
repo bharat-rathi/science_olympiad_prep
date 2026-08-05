@@ -6,17 +6,13 @@ from pydantic import BaseModel, ConfigDict
 class CoachOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    name: str
+    # NULL for a coach who's been invited (by email) but hasn't signed in
+    # with Google yet -- their profile name isn't known until they do.
+    name: str | None
 
 
-class RegisterRequest(BaseModel):
-    name: str
-    password: str
-
-
-class LoginRequest(BaseModel):
-    name: str
-    password: str
+class InviteRequest(BaseModel):
+    email: str
 
 
 class MeResponse(BaseModel):

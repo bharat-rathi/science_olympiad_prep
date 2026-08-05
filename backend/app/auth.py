@@ -1,26 +1,27 @@
 import datetime
 import secrets
 
-import bcrypt
+from authlib.integrations.starlette_client import OAuth
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app import models
+from app.config import settings
 
 SESSION_COOKIE_NAME = "sciolympiad_session"
 SESSION_TTL_DAYS = 30
 
-
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    try:
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
-    except ValueError:
-        # Malformed stored hash -- treat as a failed login rather than a 500.
-        return False
+# Coach identity is Google-only (see routers/auth.py for the login/callback
+# routes). Registered here, alongside the session helpers below, since both
+# are "how a request gets a coach attached to it".
+oauth = OAuth()
+oauth.register(
+    name="google",
+    client_id=settings.google_client_id,
+    client_secret=settings.google_client_secret,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
 
 def create_session(db: Session, coach: models.Coach) -> str:

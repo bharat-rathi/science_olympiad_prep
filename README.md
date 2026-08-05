@@ -36,7 +36,7 @@ sciolympiad-coach/
 │   ├── app/
 │   │   ├── main.py          App wiring, session middleware, seeds a demo topic
 │   │   ├── config.py        Settings (.env)
-│   │   ├── auth.py           Coach password hashing + session cookies + require_coach dependency
+│   │   ├── auth.py           Google OAuth registry + session cookies + require_coach dependency
 │   │   ├── db.py, models.py, schemas.py   SQLite via SQLAlchemy
 │   │   ├── routers/         auth, topics, ingestion, explain, assessment, attempts, tutor
 │   │   ├── rag/               chunking, embeddings, vectorstore (Chroma), transcription,
@@ -58,6 +58,39 @@ sciolympiad-coach/
 - Python 3.11+
 - Node.js 18+
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+- A Google OAuth client (for coach sign-in) — see the next section
+
+**Google Cloud Console setup (one-time, for coach sign-in)**
+
+Coaches authenticate with "Sign in with Google," which needs an OAuth client
+you create yourself (this app never sees your Google account credentials —
+it only receives an email/name/id token back from Google after you approve
+the sign-in):
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com/) →
+   create a project (or reuse one) — e.g. "Science Olympiad Coach".
+2. **APIs & Services → OAuth consent screen**:
+   - User type: **External**.
+   - App name, support email — anything reasonable.
+   - Scopes: leave the defaults (`openid`, `email`, `profile` — no sensitive
+     scopes needed).
+   - Publishing status: leave it as **Testing** rather than publishing —
+     avoids Google's app-verification review, which isn't worth it for a
+     ~13-person tool. The tradeoff: while in Testing, Google *itself* only
+     allows sign-in for emails you've added under **Test users** on this
+     same screen — so every coach's email needs to be added **here**, in
+     addition to being invited from inside the app (the "Invite a coach"
+     card on the home page). Two lists, same people.
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**:
+   - Application type: **Web application**.
+   - **Authorized redirect URIs** — add both:
+     - `http://localhost:5173/api/auth/google/callback` (local dev)
+     - `https://<your-render-url>/api/auth/google/callback` (production —
+       use the actual `.onrender.com` URL from your Render dashboard)
+   - Create, then copy the **Client ID** and **Client secret**.
+4. Put those in `backend/.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+   for local dev, and in the Render service's **Environment** tab for
+   production (see "Deploying" below).
 
 **Backend**
 
@@ -66,7 +99,7 @@ cd backend
 python -m venv venv
 venv\Scripts\activate        # Windows; use `source venv/bin/activate` on macOS/Linux
 pip install -r requirements.txt
-copy .env.example .env       # then fill in GEMINI_API_KEY
+copy .env.example .env       # then fill in GEMINI_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET
 uvicorn app.main:app --reload
 ```
 
@@ -106,13 +139,15 @@ uvicorn app.main:app --reload
 Backend runs at `http://localhost:8000`. A demo topic ("Roller Coaster") is
 seeded automatically on first run.
 
-**First-time setup (coach accounts).** There's no shared password to set —
-coaches log in with individual accounts. The very first run shows a
-"create the first coach account" screen right in the app; once you're logged
-in, a small "Add a coach" card on the home page lets you create accounts for
-teammates (you set their name + password and share it with them directly —
-there's no self-serve signup or password reset, deliberately, for a ~13-person
-known group). Students never log in at all.
+**First-time setup (coach accounts).** Coaches sign in with Google — no
+passwords to set or share. You'll need Google OAuth credentials first (see
+"Google Cloud Console setup" below); once `GOOGLE_CLIENT_ID`/
+`GOOGLE_CLIENT_SECRET` are in `backend/.env`, the very first sign-in creates
+the first coach account automatically. After that, a small "Invite a coach"
+card on the home page lets you add teammates by email — only invited emails
+can complete Google sign-in and get an account (there's no open self-serve
+signup, deliberately, for a ~13-person known group). Students never log in
+at all.
 
 **Frontend**
 
@@ -250,9 +285,15 @@ This is a small vertical slice, not a production app. Explicit corners cut:
 - **One shared topic library** — every coach sees and can edit every topic;
   there's no per-team data isolation. That's a deliberate fit for one
   coaching staff, not a multi-tenant product.
-- **Coach accounts have no password reset or self-service signup** — an
-  existing coach creates every new account by hand and shares the password
-  directly. Fine for a small known group; wouldn't scale past that.
+- **No self-service signup** — an existing coach invites every new account by
+  email; only that email can complete Google sign-in. There's no password to
+  reset (Google handles the actual authentication), but the invite step is
+  manual by design. Fine for a small known group; wouldn't scale past that.
+- **Google OAuth consent screen stays in "Testing" mode** — avoids Google's
+  app-verification review, but means every coach's email has to be added
+  twice: once as an invite in this app, once as a Google "Test user" in
+  Cloud Console. Publishing the OAuth app removes that duplication but adds
+  Google's review process — not worth it at this scale.
 
 ## Further production hardening (not built, but worth knowing about)
 
@@ -267,7 +308,6 @@ left out here to keep this iteration's scope bounded:
   schedule. Worth a periodic manual export until this exists.
 - **Structured monitoring/alerting** — logs exist (see "Reducing AI/token
   usage"), but nothing aggregates them or pages anyone if something breaks.
-- **Password reset flow** — see above.
 - **Postgres migration path** — `DATABASE_URL` already isolates the DB choice
   (see `app/config.py` / `app/db.py`), so moving off SQLite later is a
   connection-string change plus a data migration, not a rewrite — just not
@@ -277,8 +317,9 @@ left out here to keep this iteration's scope bounded:
 
 Backend: `uvicorn app.main:app --reload` then `curl http://localhost:8000/api/health`.
 
-Frontend: `npm run dev`, open `http://localhost:5173` → create the first coach
-account (or log in) → pick the seeded "Roller Coaster" topic → Coach view →
+Frontend: `npm run dev`, open `http://localhost:5173` → sign in with Google
+(creates the first coach account automatically if none exist yet) → pick the
+seeded "Roller Coaster" topic → Coach view →
 add a resource (paste text, upload a PDF, paste a YouTube link, paste a plain
 article link, or upload a video/audio clip) → generate explanations → approve
 a couple → in the assessment editor, pick a mix of MCQ/short-answer and
@@ -298,8 +339,14 @@ to configure.
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. In Render: **New → Blueprint**, point it at this repo. It reads
    [`render.yaml`](render.yaml) and creates the web service automatically.
-3. **Set the one secret** Render will prompt for (or add it under the
-   service's **Environment** tab): `GEMINI_API_KEY` — your Gemini key.
+3. **Set the secrets** Render will prompt for (or add them under the
+   service's **Environment** tab): `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` (see "Google Cloud Console
+   setup" above for the Google values — make sure the OAuth client's
+   authorized redirect URIs include this service's actual `.onrender.com`
+   URL). `PUBLIC_BASE_URL` is already set in `render.yaml` to this repo's
+   known Render URL; update it there (or override in the dashboard) if
+   yours differs.
 4. Deploy. Render builds the frontend (`npm run build`) and installs the
    backend, then starts `uvicorn` behind Render's own HTTPS. Python version is
    pinned via [`.python-version`](.python-version) at the repo root — Render
@@ -307,10 +354,11 @@ to configure.
    to have prebuilt wheels for some of our dependencies (`pydantic-core`
    failed to build on Python 3.14 this way) and fails the build trying to
    compile them from source.
-5. Open the deployed URL — it'll show "create the first coach account" since
-   the database starts empty. Create your own account, then use the "Add a
-   coach" card on the home page to create one for each other coach and share
-   their password with them directly.
+5. Open the deployed URL and sign in with Google — the first sign-in creates
+   the first coach account automatically since the database starts empty.
+   From there, use the "Invite a coach" card on the home page to invite each
+   teammate by email (and remember to also add them as a Google Test user —
+   see "Google Cloud Console setup" above).
 
 **Persistent data.** `render.yaml` provisions a small disk mounted at
 `backend/data`, where the SQLite database and the Chroma vector store live —

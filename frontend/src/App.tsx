@@ -54,7 +54,7 @@ function AuthedApp({
   const location = useLocation();
   const isCoachRoute = location.pathname.startsWith("/coach");
   if (!coach && (isCoachRoute || needsBootstrap)) {
-    return <Login needsBootstrap={needsBootstrap} onAuthed={refreshAuth} />;
+    return <Login needsBootstrap={needsBootstrap} />;
   }
 
   return (

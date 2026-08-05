@@ -5,7 +5,9 @@ const BASE = "";
 
 export interface Coach {
   id: number;
-  name: string;
+  // null for a coach who's been invited by email but hasn't signed in with
+  // Google yet -- their profile name isn't known until they do.
+  name: string | null;
 }
 
 export interface MeResponse {
@@ -116,10 +118,7 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   me: () => req<MeResponse>("/api/auth/me"),
-  register: (name: string, password: string) =>
-    req<Coach>("/api/auth/register", { method: "POST", body: JSON.stringify({ name, password }) }),
-  login: (name: string, password: string) =>
-    req<Coach>("/api/auth/login", { method: "POST", body: JSON.stringify({ name, password }) }),
+  inviteCoach: (email: string) => req<Coach>("/api/auth/invite", { method: "POST", body: JSON.stringify({ email }) }),
   logout: () => req<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
 
   listTopics: () => req<Topic[]>("/api/topics"),
