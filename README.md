@@ -301,7 +301,12 @@ to configure.
 3. **Set the one secret** Render will prompt for (or add it under the
    service's **Environment** tab): `GEMINI_API_KEY` — your Gemini key.
 4. Deploy. Render builds the frontend (`npm run build`) and installs the
-   backend, then starts `uvicorn` behind Render's own HTTPS.
+   backend, then starts `uvicorn` behind Render's own HTTPS. Python version is
+   pinned via [`.python-version`](.python-version) at the repo root — Render
+   otherwise defaults to whatever its latest Python is, which can be too new
+   to have prebuilt wheels for some of our dependencies (`pydantic-core`
+   failed to build on Python 3.14 this way) and fails the build trying to
+   compile them from source.
 5. Open the deployed URL — it'll show "create the first coach account" since
    the database starts empty. Create your own account, then use the "Add a
    coach" card on the home page to create one for each other coach and share
