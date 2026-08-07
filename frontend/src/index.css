@@ -301,7 +301,7 @@ label {
 
 .flashcard {
   perspective: 1200px;
-  height: 200px;
+  height: 240px;
   cursor: pointer;
 }
 
@@ -334,15 +334,70 @@ label {
   overflow-y: auto;
 }
 
+.flashcard-count {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.flashcard-monogram {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
 .flashcard-front strong {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .flashcard-back {
   transform: rotateY(180deg);
   background: var(--accent-soft);
   align-items: flex-start;
+  justify-content: flex-start;
   text-align: left;
+  gap: 8px;
+}
+
+.flashcard-analogy {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.flashcard-expand-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.flashcard-expand-toggle:hover {
+  text-decoration: underline;
+  background: none;
+}
+
+.flashcard-explanation {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 /* ---------- Chat ---------- */

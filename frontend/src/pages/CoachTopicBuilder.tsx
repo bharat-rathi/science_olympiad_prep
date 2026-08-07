@@ -261,7 +261,7 @@ export default function CoachTopicBuilder() {
             <div className="row">
               <label className="row">
                 <input type="checkbox" checked={c.approved} onChange={() => toggleApprove(c)} />
-                Approved for assessment
+                Approved (used for both flashcards and assessment questions)
               </label>
             </div>
           </div>
@@ -290,18 +290,22 @@ export default function CoachTopicBuilder() {
       </div>
 
       <h2>
-        <span className="step-badge">4</span> Publish to students
+        <span className="step-badge">4</span> Publish learning content
       </h2>
+      <p className="muted">
+        Controls only the flashcards and story from step 3 above -- separate from publishing the
+        assessment, which has its own publish button on the assessment editor page.
+      </p>
       <div className="card row" style={{ justifyContent: "space-between" }}>
         <span>
           {topic.content_published ? (
-            <span className="tag video">Live for students</span>
+            <span className="tag video">Flashcards + story live for students</span>
           ) : (
-            <span className="tag general">Draft -- not visible to students yet</span>
+            <span className="tag general">Draft -- flashcards/story not visible to students yet</span>
           )}
         </span>
         <button className={topic.content_published ? "" : "primary"} onClick={togglePublish} disabled={publishBusy || approvedCount === 0}>
-          {publishBusy ? "Working..." : topic.content_published ? "Unpublish" : "Publish content"}
+          {publishBusy ? "Working..." : topic.content_published ? "Unpublish" : "Publish learning content"}
         </button>
       </div>
       {approvedCount === 0 && <p className="muted">Approve at least one concept before publishing.</p>}
@@ -309,6 +313,10 @@ export default function CoachTopicBuilder() {
       <h2>
         <span className="step-badge">5</span> Assessment
       </h2>
+      <p className="muted">
+        Has its own publish step, independent of step 4 -- you can publish a test before or after
+        publishing the flashcards/story, or without ever publishing them at all.
+      </p>
       <Link to={`/coach/${id}/assessment`}>
         <button disabled={approvedCount === 0}>Go to assessment editor</button>
       </Link>
