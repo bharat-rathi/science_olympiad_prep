@@ -29,6 +29,8 @@ class TopicOut(BaseModel):
     description: str
     created_at: datetime.datetime
     created_by: str | None = None
+    content_published: bool = False
+    story_md: str = ""
 
     @staticmethod
     def from_model(topic) -> "TopicOut":
@@ -41,6 +43,10 @@ class TopicCreate(BaseModel):
     event_name: str
     name: str
     description: str = ""
+
+
+class TopicStoryUpdate(BaseModel):
+    story_md: str
 
 
 class ResourceOut(BaseModel):
@@ -70,6 +76,7 @@ class ConceptTermOut(BaseModel):
     topic_id: int
     term: str
     explanation_md: str
+    analogy: str = ""
     source_resource_ids: list[int]
     video_relevant: bool
     approved: bool
@@ -78,7 +85,12 @@ class ConceptTermOut(BaseModel):
 class ConceptTermUpdate(BaseModel):
     term: str | None = None
     explanation_md: str | None = None
+    analogy: str | None = None
     approved: bool | None = None
+
+
+class ConceptFeedbackRequest(BaseModel):
+    feedback: str
 
 
 class QuestionOut(BaseModel):

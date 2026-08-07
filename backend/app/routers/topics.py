@@ -32,6 +32,45 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
     return schemas.TopicOut.from_model(topic)
 
 
+@router.patch("/{topic_id}/story", response_model=schemas.TopicOut)
+def update_story(
+    topic_id: int,
+    payload: schemas.TopicStoryUpdate,
+    db: Session = Depends(get_db),
+    coach: models.Coach = Depends(auth.require_coach),
+):
+    """Manual edit of an already-generated story -- no LLM call."""
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    topic.story_md = payload.story_md
+    db.commit()
+    db.refresh(topic)
+    return schemas.TopicOut.from_model(topic)
+
+
+@router.post("/{topic_id}/publish-content", response_model=schemas.TopicOut)
+def publish_content(topic_id: int, db: Session = Depends(get_db), coach: models.Coach = Depends(auth.require_coach)):
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    topic.content_published = True
+    db.commit()
+    db.refresh(topic)
+    return schemas.TopicOut.from_model(topic)
+
+
+@router.post("/{topic_id}/unpublish-content", response_model=schemas.TopicOut)
+def unpublish_content(topic_id: int, db: Session = Depends(get_db), coach: models.Coach = Depends(auth.require_coach)):
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    topic.content_published = False
+    db.commit()
+    db.refresh(topic)
+    return schemas.TopicOut.from_model(topic)
+
+
 @router.get("/{topic_id}/resources", response_model=list[schemas.ResourceOut])
 def list_resources(topic_id: int, db: Session = Depends(get_db)):
     return db.query(models.Resource).filter(models.Resource.topic_id == topic_id).order_by(models.Resource.id).all()

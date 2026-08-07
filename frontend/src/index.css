@@ -297,6 +297,54 @@ label {
   gap: 14px;
 }
 
+/* ---------- Flashcards ---------- */
+
+.flashcard {
+  perspective: 1200px;
+  height: 200px;
+  cursor: pointer;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0.15, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.flashcard-front strong {
+  font-size: 1.05rem;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  background: var(--accent-soft);
+  align-items: flex-start;
+  text-align: left;
+}
+
 /* ---------- Chat ---------- */
 
 .chat-bubble {

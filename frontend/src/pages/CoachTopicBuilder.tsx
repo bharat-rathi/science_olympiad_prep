@@ -20,6 +20,11 @@ export default function CoachTopicBuilder() {
   const [linkBusy, setLinkBusy] = useState(false);
   const [linkError, setLinkError] = useState("");
 
+  const [feedbackDrafts, setFeedbackDrafts] = useState<Record<number, string>>({});
+  const [refiningId, setRefiningId] = useState<number | null>(null);
+  const [storyBusy, setStoryBusy] = useState(false);
+  const [publishBusy, setPublishBusy] = useState(false);
+
   function refresh() {
     api.getTopic(id).then(setTopic);
     api.listResources(id).then(setResources);
@@ -89,6 +94,55 @@ export default function CoachTopicBuilder() {
   async function editExplanation(c: ConceptTerm, explanation_md: string) {
     const updated = await api.updateConcept(id, c.id, { explanation_md });
     setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+  }
+
+  async function editAnalogy(c: ConceptTerm, analogy: string) {
+    const updated = await api.updateConcept(id, c.id, { analogy });
+    setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+  }
+
+  async function refineConcept(c: ConceptTerm) {
+    const feedback = (feedbackDrafts[c.id] || "").trim();
+    if (!feedback) return;
+    setRefiningId(c.id);
+    try {
+      const updated = await api.refineConcept(id, c.id, feedback);
+      setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+      setFeedbackDrafts((prev) => ({ ...prev, [c.id]: "" }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRefiningId(null);
+    }
+  }
+
+  async function generateStory() {
+    setStoryBusy(true);
+    setError("");
+    try {
+      const updated = await api.generateStory(id);
+      setTopic(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setStoryBusy(false);
+    }
+  }
+
+  async function editStory(story_md: string) {
+    const updated = await api.updateStory(id, story_md);
+    setTopic(updated);
+  }
+
+  async function togglePublish() {
+    if (!topic) return;
+    setPublishBusy(true);
+    try {
+      const updated = topic.content_published ? await api.unpublishContent(id) : await api.publishContent(id);
+      setTopic(updated);
+    } finally {
+      setPublishBusy(false);
+    }
   }
 
   if (!topic) return <p>Loading...</p>;
@@ -179,10 +233,31 @@ export default function CoachTopicBuilder() {
                 {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
               </span>
             </div>
+            <label className="muted" style={{ marginTop: 4 }}>
+              Explanation
+            </label>
             <textarea
               defaultValue={c.explanation_md}
               onBlur={(e) => e.target.value !== c.explanation_md && editExplanation(c, e.target.value)}
             />
+            <label className="muted">Analogy</label>
+            <textarea
+              defaultValue={c.analogy}
+              placeholder="A short real-world comparison for the flashcard back"
+              style={{ minHeight: 50 }}
+              onBlur={(e) => e.target.value !== c.analogy && editAnalogy(c, e.target.value)}
+            />
+            <div className="row">
+              <input
+                placeholder="Feedback to refine this concept (e.g. 'too technical', 'add an example')"
+                style={{ flex: 1 }}
+                value={feedbackDrafts[c.id] || ""}
+                onChange={(e) => setFeedbackDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
+              />
+              <button onClick={() => refineConcept(c)} disabled={refiningId === c.id || !(feedbackDrafts[c.id] || "").trim()}>
+                {refiningId === c.id ? "Refining..." : "Refine"}
+              </button>
+            </div>
             <div className="row">
               <label className="row">
                 <input type="checkbox" checked={c.approved} onChange={() => toggleApprove(c)} />
@@ -194,7 +269,45 @@ export default function CoachTopicBuilder() {
       </div>
 
       <h2>
-        <span className="step-badge">3</span> Assessment
+        <span className="step-badge">3</span> Story (optional)
+      </h2>
+      <p className="muted">
+        Weaves the approved concepts into one short narrative students can read as a story instead
+        of a list of definitions. Only generated when you ask for it.
+      </p>
+      <div className="card stack">
+        <button onClick={generateStory} disabled={storyBusy || approvedCount === 0}>
+          {storyBusy ? "Writing..." : topic.story_md ? "Regenerate story" : "Generate story"}
+        </button>
+        {approvedCount === 0 && <p className="muted">Approve at least one concept first.</p>}
+        {topic.story_md && (
+          <textarea
+            defaultValue={topic.story_md}
+            style={{ minHeight: 160 }}
+            onBlur={(e) => e.target.value !== topic.story_md && editStory(e.target.value)}
+          />
+        )}
+      </div>
+
+      <h2>
+        <span className="step-badge">4</span> Publish to students
+      </h2>
+      <div className="card row" style={{ justifyContent: "space-between" }}>
+        <span>
+          {topic.content_published ? (
+            <span className="tag video">Live for students</span>
+          ) : (
+            <span className="tag general">Draft -- not visible to students yet</span>
+          )}
+        </span>
+        <button className={topic.content_published ? "" : "primary"} onClick={togglePublish} disabled={publishBusy || approvedCount === 0}>
+          {publishBusy ? "Working..." : topic.content_published ? "Unpublish" : "Publish content"}
+        </button>
+      </div>
+      {approvedCount === 0 && <p className="muted">Approve at least one concept before publishing.</p>}
+
+      <h2>
+        <span className="step-badge">5</span> Assessment
       </h2>
       <Link to={`/coach/${id}/assessment`}>
         <button disabled={approvedCount === 0}>Go to assessment editor</button>

@@ -94,14 +94,23 @@ CONCEPT_LIST_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "term": {"type": "string"},
-                    "explanation_md": {"type": "string", "description": "2-5 sentences, markdown allowed"},
+                    "explanation_md": {
+                        "type": "string",
+                        "description": "First-principles explanation for a student meeting this concept for the "
+                        "first time, 3-6 sentences, markdown allowed",
+                    },
+                    "analogy": {
+                        "type": "string",
+                        "description": "One short, concrete real-world comparison that makes the concept click "
+                        "-- not a restatement of the explanation, an actual analogy",
+                    },
                     "source": {
                         "type": "string",
                         "enum": ["team_resource", "general_knowledge"],
                         "description": "team_resource if grounded in provided snippets, general_knowledge otherwise",
                     },
                 },
-                "required": ["term", "explanation_md", "source"],
+                "required": ["term", "explanation_md", "analogy", "source"],
                 "additionalProperties": False,
             },
         }
@@ -113,16 +122,22 @@ CONCEPT_LIST_SCHEMA = {
 
 def explanation_prompt(topic_name: str, topic_description: str, labeled_snippets: list[dict]) -> tuple[str, str]:
     system = (
-        "You help a Science Olympiad coach prepare students for competition. Given "
-        "relevant snippets from the team's own resources (which may be sparse or "
-        "absent), produce a glossary of the key concepts and jargon a student must "
-        "know for this topic. For each concept: if the provided snippets actually "
-        "cover it, ground the explanation in them and mark source as "
-        "'team_resource'. If the snippets don't cover it well, still explain it "
-        "using your general knowledge of the event, and mark source as "
-        "'general_knowledge' -- don't skip important concepts just because the "
-        "team's materials didn't happen to cover them, and don't stretch thin "
-        "snippets to cover concepts they don't really address."
+        "You explain Science Olympiad concepts to a student meeting them for the very "
+        "first time -- not to a coach, not to someone with prior background. Write from "
+        "first principles: build the idea up from what the student already knows about "
+        "the everyday world, define every piece of jargon inline the moment you use it "
+        "(never assume a term is already understood), and avoid unexplained notation, "
+        "formulas, or domain shorthand. Prefer plain, concrete language over technical "
+        "precision -- it's fine to simplify as long as it's not wrong. Given relevant "
+        "snippets from the team's own resources (which may be sparse or absent), produce "
+        "a glossary of the key concepts and jargon a student must know for this topic. "
+        "For each concept: if the provided snippets actually cover it, ground the "
+        "explanation in them and mark source as 'team_resource'. If the snippets don't "
+        "cover it well, still explain it using your general knowledge of the event, and "
+        "mark source as 'general_knowledge' -- don't skip important concepts just "
+        "because the team's materials didn't happen to cover them, and don't stretch "
+        "thin snippets to cover concepts they don't really address. Also give each "
+        "concept a short, concrete analogy to something from ordinary life."
     )
     snippet_block = "\n\n".join(
         f"[{s['source_type']}] {s['text']}" for s in labeled_snippets
@@ -131,7 +146,71 @@ def explanation_prompt(topic_name: str, topic_description: str, labeled_snippets
         f"Topic: {topic_name}\n"
         f"Description: {topic_description}\n\n"
         f"Relevant snippets from team resources:\n{snippet_block}\n\n"
-        "Produce 5-10 concept/jargon terms a student competing in this event should know."
+        "Produce 5-10 concept/jargon terms a student new to this event should know, "
+        "explained from first principles."
+    )
+    return system, user
+
+
+REFINE_CONCEPT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "explanation_md": {"type": "string"},
+        "analogy": {"type": "string"},
+    },
+    "required": ["explanation_md", "analogy"],
+    "additionalProperties": False,
+}
+
+
+def refine_concept_prompt(
+    topic_name: str, term: str, explanation_md: str, analogy: str, feedback: str
+) -> tuple[str, str]:
+    """Revise one concept's explanation/analogy per a coach's freeform feedback.
+
+    Deliberately does not re-run retrieval -- the concept is already grounded;
+    revising wording per feedback doesn't need new source material, so this
+    stays a single cheap call instead of a full re-generation.
+    """
+    system = (
+        "You revise a single Science Olympiad concept explanation for a student "
+        "audience, based on a coach's feedback. Keep it first-principles and "
+        "jargon-free unless the feedback says otherwise. Produce a complete revised "
+        "explanation and analogy, not just the delta."
+    )
+    user = (
+        f"Topic: {topic_name}\n"
+        f"Concept: {term}\n\n"
+        f"Current explanation:\n{explanation_md}\n\n"
+        f"Current analogy:\n{analogy or '(none yet)'}\n\n"
+        f"Coach feedback:\n{feedback}\n\n"
+        "Revise the explanation and analogy to address this feedback."
+    )
+    return system, user
+
+
+STORY_SCHEMA = {
+    "type": "object",
+    "properties": {"story_md": {"type": "string"}},
+    "required": ["story_md"],
+    "additionalProperties": False,
+}
+
+
+def story_prompt(topic_name: str, concepts: list[dict]) -> tuple[str, str]:
+    system = (
+        "You write a short narrative story for Science Olympiad students that weaves "
+        "together a set of approved concepts for one topic, in the order given, so a "
+        "student can follow the ideas as a story rather than a list of definitions. "
+        "Keep it first-principles and concrete -- a student meeting these ideas for "
+        "the first time should come away understanding them, not just entertained. "
+        "300-600 words, markdown allowed, no section headers -- just flowing narrative."
+    )
+    concept_block = "\n\n".join(f"### {c['term']}\n{c['explanation_md']}" for c in concepts)
+    user = (
+        f"Topic: {topic_name}\n\n"
+        f"Approved concepts to weave into the story, in this order:\n{concept_block}\n\n"
+        "Write the story."
     )
     return system, user
 

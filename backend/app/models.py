@@ -43,6 +43,13 @@ class Topic(Base):
     description: Mapped[str] = mapped_column(Text, default="")
     created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+    # Gates student visibility of concepts/story, independent of each
+    # concept's own `approved` flag -- lets a coach approve concepts
+    # incrementally while iterating, then flip this once ready.
+    content_published: Mapped[bool] = mapped_column(Boolean, default=False)
+    # One narrative per topic (not per concept) weaving approved concepts
+    # together -- generated only when a coach explicitly asks for it.
+    story_md: Mapped[str] = mapped_column(Text, default="")
 
     resources: Mapped[list["Resource"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
     concepts: Mapped[list["ConceptTerm"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
@@ -76,6 +83,9 @@ class ConceptTerm(Base):
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
     term: Mapped[str] = mapped_column(String(300))
     explanation_md: Mapped[str] = mapped_column(Text, default="")
+    # Short relatable comparison generated alongside explanation_md -- the
+    # "back of the flashcard" content beyond the plain explanation.
+    analogy: Mapped[str] = mapped_column(Text, default="")
     source_resource_ids: Mapped[list] = mapped_column(JSON, default=list)
     video_relevant: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)

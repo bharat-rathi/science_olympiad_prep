@@ -23,6 +23,8 @@ export interface Topic {
   description: string;
   created_at: string;
   created_by: string | null;
+  content_published: boolean;
+  story_md: string;
 }
 
 export interface Resource {
@@ -40,6 +42,7 @@ export interface ConceptTerm {
   topic_id: number;
   term: string;
   explanation_md: string;
+  analogy: string;
   source_resource_ids: number[];
   video_relevant: boolean;
   approved: boolean;
@@ -142,8 +145,21 @@ export const api = {
   listConcepts: (topicId: number) => req<ConceptTerm[]>(`/api/topics/${topicId}/concepts`),
   generateExplanations: (topicId: number) =>
     req<ConceptTerm[]>(`/api/topics/${topicId}/generate-explanations`, { method: "POST" }),
-  updateConcept: (topicId: number, conceptId: number, payload: Partial<Pick<ConceptTerm, "term" | "explanation_md" | "approved">>) =>
-    req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  updateConcept: (
+    topicId: number,
+    conceptId: number,
+    payload: Partial<Pick<ConceptTerm, "term" | "explanation_md" | "analogy" | "approved">>,
+  ) => req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  refineConcept: (topicId: number, conceptId: number, feedback: string) =>
+    req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}/refine`, {
+      method: "POST",
+      body: JSON.stringify({ feedback }),
+    }),
+  generateStory: (topicId: number) => req<Topic>(`/api/topics/${topicId}/generate-story`, { method: "POST" }),
+  updateStory: (topicId: number, story_md: string) =>
+    req<Topic>(`/api/topics/${topicId}/story`, { method: "PATCH", body: JSON.stringify({ story_md }) }),
+  publishContent: (topicId: number) => req<Topic>(`/api/topics/${topicId}/publish-content`, { method: "POST" }),
+  unpublishContent: (topicId: number) => req<Topic>(`/api/topics/${topicId}/unpublish-content`, { method: "POST" }),
 
   getOrCreateAssessment: (topicId: number) =>
     req<Assessment>(`/api/topics/${topicId}/assessment`, { method: "POST" }),
