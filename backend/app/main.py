@@ -56,6 +56,7 @@ _ensure_column("assessments", "created_by_coach_id", "INTEGER")
 _ensure_column("topics", "content_published", "BOOLEAN DEFAULT 0")
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "analogy", "TEXT DEFAULT ''")
+_ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
 
 app = FastAPI(title="Science Olympiad Coach")
 
