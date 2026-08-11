@@ -362,6 +362,24 @@ label {
   font-size: 1.1rem;
 }
 
+.flashcard-image {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.concept-image-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
 .flashcard-back {
   transform: rotateY(180deg);
   background: var(--accent-soft);
