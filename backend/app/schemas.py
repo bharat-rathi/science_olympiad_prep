@@ -67,6 +67,9 @@ class ResourceCreateText(BaseModel):
 
 
 class ResourceCreateLink(BaseModel):
+    # Despite the name, this doubles as a research-agent trigger: ingestion.py
+    # only treats it as a URL to fetch if it parses as one, otherwise it's
+    # handed to the research agent as a search keyword/topic.
     url: str
 
 
@@ -80,6 +83,7 @@ class ConceptTermOut(BaseModel):
     source_resource_ids: list[int]
     video_relevant: bool
     approved: bool
+    image_data_url: str = ""
 
 
 class ConceptTermUpdate(BaseModel):
