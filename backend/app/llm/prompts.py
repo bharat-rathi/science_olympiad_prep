@@ -152,6 +152,49 @@ def explanation_prompt(topic_name: str, topic_description: str, labeled_snippets
     return system, user
 
 
+def research_prompt(query: str, topic_name: str, topic_description: str) -> tuple[str, str]:
+    """Research agent: search the web for a coach-typed keyword/topic and
+    synthesize findings, with a machine-parseable source list at the end.
+
+    Freeform text output (not a JSON schema) -- Google Search grounding and
+    schema-constrained JSON output aren't combinable in one call, and the
+    trailing "Sources:" section is simple enough for rag/web_research.py to
+    parse with a regex.
+    """
+    system = (
+        "You research a topic for a Science Olympiad team using web search, then "
+        "write up what you found in your own words -- organized, factual notes a "
+        "coach can turn into student-facing material, not a copy-paste of any one "
+        "page. Search as many times as needed to cover the topic properly. Stick to "
+        "material genuinely relevant to the given event/topic; skip tangents. "
+        "End your response with a line reading exactly 'Sources:' followed by one "
+        "bullet per source actually used, each formatted exactly as "
+        "'- <title> -- <url>'."
+    )
+    user = (
+        f"Event/topic: {topic_name}\n"
+        f"Topic description: {topic_description}\n\n"
+        f"Research this: {query}\n\n"
+        "Write organized notes covering the key facts and concepts a student would "
+        "need to know, then the Sources section."
+    )
+    return system, user
+
+
+def image_prompt(topic_name: str, term: str, analogy: str) -> str:
+    """Review agent's visual step: one illustration prompt for a flashcard concept.
+
+    Plain string, not JSON -- generate_image() takes a text prompt directly.
+    """
+    analogy_hint = f" Lean on this analogy if it suggests a clear scene: {analogy}." if analogy else ""
+    return (
+        f"A simple, friendly, colorful educational illustration for a Science Olympiad "
+        f"flashcard explaining '{term}' (from the topic '{topic_name}') to a middle/high "
+        f"school student.{analogy_hint} Flat vector style, clear and uncluttered, no text "
+        "or labels or letters anywhere in the image, safe and appropriate for kids."
+    )
+
+
 REFINE_CONCEPT_SCHEMA = {
     "type": "object",
     "properties": {

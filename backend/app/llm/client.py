@@ -51,19 +51,23 @@ def _log_call(label: str, effort: str, input_chars: int, output_chars: int, atte
     )
 
 
-def _create_with_retry(**kwargs):
-    """Call Gemini's interactions.create with backoff on rate-limit/server errors.
+def _create_with_retry(fn=None, **kwargs):
+    """Call a Gemini SDK method with backoff on rate-limit/server errors.
 
-    A single retry layer shared by complete_text/complete_json/chat_turn --
-    all of them bottleneck through this function, so this is the one place
-    that needs to change if we ever add a second provider to fail over to.
+    Defaults to interactions.create (used by complete_text/complete_json/
+    chat_turn/complete_text_grounded); generate_image passes
+    models.generate_content instead, since image output isn't supported on
+    the interactions.create path yet. Either way, this is the one retry
+    layer everything bottlenecks through -- the one place that needs to
+    change if we ever add a second provider to fail over to.
     """
+    call = fn or _get_client().interactions.create
     last_error: errors.APIError | None = None
     for attempt in range(_MAX_RETRIES + 1):
         try:
             if attempt:
                 logger.info("llm_call retrying after rate-limit/server error, attempt=%d", attempt)
-            return _get_client().interactions.create(**kwargs)
+            return call(**kwargs)
         except errors.APIError as e:
             if e.code not in _RETRYABLE_CODES or attempt == _MAX_RETRIES:
                 raise
@@ -100,6 +104,50 @@ def complete_json(
     text = interaction.output_text or ""
     _log_call(label or "complete_json", effort, len(system) + len(user), len(text))
     return json.loads(text) if text else {}
+
+
+def complete_text_grounded(
+    system: str, user: str, max_tokens: int = 3000, effort: str = "high", label: str = ""
+) -> str:
+    """Same as complete_text, but lets the model search Google before answering.
+
+    Used by rag/web_research.py (the research agent) when a coach types a
+    bare keyword instead of pasting a link -- the model looks the topic up
+    rather than answering purely from training data.
+    """
+    interaction = _create_with_retry(
+        model=settings.gemini_model,
+        system_instruction=system,
+        input=user,
+        generation_config=_generation_config(max_tokens, effort),
+        tools=[{"type": "google_search"}],
+    )
+    text = interaction.output_text or ""
+    _log_call(label or "complete_text_grounded", effort, len(system) + len(user), len(text))
+    return text
+
+
+def generate_image(prompt: str, label: str = "") -> bytes:
+    """Generate one image from a text prompt via Gemini's native image model
+    (settings.gemini_image_model, aka "nano banana").
+
+    Returns raw image bytes (PNG). Raises ValueError -- safe to show a coach
+    directly -- if the model responded without producing an image (e.g. it
+    refused the prompt).
+    """
+    response = _create_with_retry(
+        fn=_get_client().models.generate_content,
+        model=settings.gemini_image_model,
+        contents=prompt,
+        config={"response_modalities": ["TEXT", "IMAGE"]},
+    )
+    _log_call(label or "generate_image", "n/a", len(prompt), 0)
+    candidates = response.candidates or []
+    parts = candidates[0].content.parts if candidates and candidates[0].content else []
+    for part in parts:
+        if getattr(part, "inline_data", None) and part.inline_data.data:
+            return part.inline_data.data
+    raise ValueError("Image generation didn't return an image -- try again or reword the concept.")
 
 
 def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium", label: str = "") -> str:

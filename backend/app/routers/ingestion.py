@@ -1,5 +1,6 @@
 import zipfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
 from app.rag.transcription import save_upload_to_temp, transcribe_audio, transcribe_video
 from app.rag.vectorstore import add_chunks
+from app.rag.web_research import research_topic
 from app.rag.youtube_fetch import fetch_youtube_transcript, is_youtube_url
 
 router = APIRouter(prefix="/api/topics", tags=["ingestion"])
@@ -62,6 +64,11 @@ def add_text_resource(
     return resource
 
 
+def _looks_like_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in ("http", "https") and bool(parsed.hostname)
+
+
 @router.post("/{topic_id}/resources/link", response_model=schemas.ResourceOut)
 def add_link_resource(
     topic_id: int,
@@ -72,20 +79,32 @@ def add_link_resource(
     """Fetch a real URL and ingest its content -- no copy/paste required.
 
     YouTube links are detected and routed to the official captions track
-    (no LLM, no video download); everything else goes through the generic
-    readable-content extractor.
+    (no LLM, no video download); other http(s) URLs go through the generic
+    readable-content extractor. If the coach didn't paste a URL at all --
+    just typed a keyword or topic name -- this falls back to the research
+    agent (rag/web_research.py), which searches the web and synthesizes
+    findings instead. Either way the result lands in the same resource pool
+    for concept generation to draw from.
     """
     topic = db.get(models.Topic, topic_id)
     if not topic:
         raise HTTPException(404, "Topic not found")
 
+    value = payload.url.strip()
     try:
-        if is_youtube_url(payload.url):
+        if is_youtube_url(value):
             resource_type = "video"
-            title, text = fetch_youtube_transcript(payload.url)
-        else:
+            title, text = fetch_youtube_transcript(value)
+        elif _looks_like_url(value):
             resource_type = "link"
-            title, text = fetch_url_text(payload.url)
+            title, text = fetch_url_text(value)
+        else:
+            resource_type = "research"
+            found = research_topic(value, topic.name, topic.description)
+            title = found["title"]
+            text = found["text"]
+            if found["sources"]:
+                text += "\n\nSources:\n" + "\n".join(f"- {s['title']} -- {s['url']}" for s in found["sources"])
     except ValueError as e:
         raise HTTPException(422, str(e))
 
@@ -93,8 +112,8 @@ def add_link_resource(
         topic_id=topic_id,
         type=resource_type,
         title=title,
-        source_url=payload.url,
-        raw_text=text if resource_type == "link" else "",
+        source_url=value if resource_type != "research" else "",
+        raw_text=text if resource_type in ("link", "research") else "",
         transcript=text if resource_type == "video" else "",
         status="ready",
     )

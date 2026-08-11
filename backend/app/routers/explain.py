@@ -1,14 +1,17 @@
+import base64
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
 from app.db import get_db
-from app.llm.client import complete_json
+from app.llm.client import complete_json, generate_image
 from app.llm.prompts import (
     CONCEPT_LIST_SCHEMA,
     REFINE_CONCEPT_SCHEMA,
     STORY_SCHEMA,
     explanation_prompt,
+    image_prompt,
     refine_concept_prompt,
     story_prompt,
 )
@@ -94,6 +97,35 @@ def refine_concept(
 
     concept.explanation_md = result["explanation_md"]
     concept.analogy = result["analogy"]
+    db.commit()
+    db.refresh(concept)
+    return concept
+
+
+@router.post("/{topic_id}/concepts/{concept_id}/generate-image", response_model=schemas.ConceptTermOut)
+def generate_concept_image(
+    topic_id: int,
+    concept_id: int,
+    db: Session = Depends(get_db),
+    coach: models.Coach = Depends(auth.require_coach),
+):
+    """Review agent's visual step: a kid-friendly illustration for one flashcard.
+
+    Single image-gen call, no retrieval -- the concept is already reviewed
+    and approved-or-not; this just adds a picture to it.
+    """
+    concept = db.get(models.ConceptTerm, concept_id)
+    if not concept or concept.topic_id != topic_id:
+        raise HTTPException(404, "Concept not found")
+
+    topic = db.get(models.Topic, topic_id)
+    prompt = image_prompt(topic.name, concept.term, concept.analogy)
+    try:
+        image_bytes = generate_image(prompt, label="generate_concept_image")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+    concept.image_data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode("ascii")
     db.commit()
     db.refresh(concept)
     return concept

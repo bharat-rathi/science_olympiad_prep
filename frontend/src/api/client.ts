@@ -30,7 +30,7 @@ export interface Topic {
 export interface Resource {
   id: number;
   topic_id: number;
-  type: "video" | "text" | "link" | "pdf";
+  type: "video" | "text" | "link" | "pdf" | "research";
   title: string;
   source_url: string;
   status: string;
@@ -46,6 +46,7 @@ export interface ConceptTerm {
   source_resource_ids: number[];
   video_relevant: boolean;
   approved: boolean;
+  image_data_url: string;
 }
 
 export interface Question {
@@ -155,6 +156,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ feedback }),
     }),
+  generateConceptImage: (topicId: number, conceptId: number) =>
+    req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}/generate-image`, { method: "POST" }),
   generateStory: (topicId: number) => req<Topic>(`/api/topics/${topicId}/generate-story`, { method: "POST" }),
   updateStory: (topicId: number, story_md: string) =>
     req<Topic>(`/api/topics/${topicId}/story`, { method: "PATCH", body: JSON.stringify({ story_md }) }),

@@ -24,6 +24,10 @@ class Settings(BaseSettings):
 
     gemini_model: str = "gemini-3.5-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
+    # Gemini's native image model ("nano banana") -- used for the
+    # kid-friendly concept illustrations, via generate_content with
+    # response_modalities=["TEXT", "IMAGE"] rather than a separate Imagen call.
+    gemini_image_model: str = "gemini-2.5-flash-image"
 
     google_client_id: str = ""
     google_client_secret: str = ""

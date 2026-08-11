@@ -65,7 +65,7 @@ class Resource(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
-    type: Mapped[str] = mapped_column(String(20))  # video | text | link | pdf
+    type: Mapped[str] = mapped_column(String(20))  # video | text | link | pdf | research
     title: Mapped[str] = mapped_column(String(300), default="")
     source_url: Mapped[str] = mapped_column(String(1000), default="")
     raw_text: Mapped[str] = mapped_column(Text, default="")
@@ -89,6 +89,10 @@ class ConceptTerm(Base):
     source_resource_ids: Mapped[list] = mapped_column(JSON, default=list)
     video_relevant: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Data URL (data:image/png;base64,...) for the review agent's generated
+    # flashcard illustration -- stored inline rather than in blob storage,
+    # fine at this app's scale (see README).
+    image_data_url: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
     topic: Mapped["Topic"] = relationship(back_populates="concepts")
