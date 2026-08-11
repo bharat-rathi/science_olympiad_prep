@@ -98,7 +98,11 @@ export default function StudentPractice() {
                           <span className="flashcard-count">
                             {i + 1} / {concepts.length}
                           </span>
-                          <span className="flashcard-monogram">{c.term.slice(0, 1).toUpperCase()}</span>
+                          {c.image_data_url ? (
+                            <img src={c.image_data_url} alt={c.term} className="flashcard-image" />
+                          ) : (
+                            <span className="flashcard-monogram">{c.term.slice(0, 1).toUpperCase()}</span>
+                          )}
                           <strong>{c.term}</strong>
                           <span className="muted" style={{ marginTop: 8 }}>
                             Tap to reveal

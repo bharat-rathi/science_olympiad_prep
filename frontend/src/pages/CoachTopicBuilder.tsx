@@ -22,6 +22,7 @@ export default function CoachTopicBuilder() {
 
   const [feedbackDrafts, setFeedbackDrafts] = useState<Record<number, string>>({});
   const [refiningId, setRefiningId] = useState<number | null>(null);
+  const [imagingId, setImagingId] = useState<number | null>(null);
   const [storyBusy, setStoryBusy] = useState(false);
   const [publishBusy, setPublishBusy] = useState(false);
 
@@ -116,6 +117,18 @@ export default function CoachTopicBuilder() {
     }
   }
 
+  async function generateImage(c: ConceptTerm) {
+    setImagingId(c.id);
+    try {
+      const updated = await api.generateConceptImage(id, c.id);
+      setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImagingId(null);
+    }
+  }
+
   async function generateStory() {
     setStoryBusy(true);
     setError("");
@@ -186,17 +199,18 @@ export default function CoachTopicBuilder() {
       <div className="card stack">
         <label className="muted">
           Or paste a link -- YouTube links pull the official captions, anything else gets its
-          readable text fetched directly
+          readable text fetched directly. No link handy? Type a topic or keyword instead and the
+          research agent will search the web and summarize what it finds.
         </label>
         <div className="row">
           <input
-            placeholder="https://..."
+            placeholder="https://... or a topic keyword"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             style={{ flex: 1 }}
           />
           <button className="primary" onClick={addLink} disabled={linkBusy}>
-            {linkBusy ? "Fetching..." : "Fetch & add"}
+            {linkBusy ? "Working..." : "Fetch / research & add"}
           </button>
         </div>
         {linkError && <p style={{ color: "var(--danger)" }}>{linkError}</p>}
@@ -206,7 +220,9 @@ export default function CoachTopicBuilder() {
         <div className="stack">
           {resources.map((r) => (
             <div className="card" key={r.id}>
-              <span className={`tag ${r.type === "video" ? "video" : ""}`}>{r.type}</span>
+              <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
+                {r.type}
+              </span>
               {r.title}
             </div>
           ))}
@@ -256,6 +272,14 @@ export default function CoachTopicBuilder() {
               />
               <button onClick={() => refineConcept(c)} disabled={refiningId === c.id || !(feedbackDrafts[c.id] || "").trim()}>
                 {refiningId === c.id ? "Refining..." : "Refine"}
+              </button>
+            </div>
+            <div className="row" style={{ alignItems: "flex-start" }}>
+              {c.image_data_url && (
+                <img src={c.image_data_url} alt={c.term} className="concept-image-preview" />
+              )}
+              <button onClick={() => generateImage(c)} disabled={imagingId === c.id}>
+                {imagingId === c.id ? "Drawing..." : c.image_data_url ? "Regenerate image" : "Generate image"}
               </button>
             </div>
             <div className="row">
