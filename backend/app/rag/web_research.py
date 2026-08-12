@@ -1,5 +1,7 @@
 import re
 
+from google.genai import errors as genai_errors
+
 from app.llm.client import complete_text_grounded
 from app.llm.prompts import research_prompt
 
