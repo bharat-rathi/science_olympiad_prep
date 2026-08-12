@@ -1,5 +1,7 @@
 import re
 
+from google.genai import errors as genai_errors
+
 from app.llm.client import complete_text_grounded
 from app.llm.prompts import research_prompt
 
@@ -20,7 +22,14 @@ def research_topic(query: str, topic_name: str, topic_description: str) -> dict:
         raise ValueError("Nothing to research -- type a topic or keyword.")
 
     system, user = research_prompt(query, topic_name, topic_description)
-    raw = complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
+    try:
+        raw = complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
+    except genai_errors.APIError as e:
+        # Surfaced to the coach instead of a raw 500 -- most likely cause is
+        # Google Search grounding not being available on the API key's
+        # current tier/quota (see llm/client.py's generate_image docstring
+        # for the same caveat on image generation).
+        raise ValueError(f"Research failed ({e.code}: {e.message}) -- try again, or paste a link instead.") from e
 
     parts = _SOURCES_HEADER_RE.split(raw, maxsplit=1)
     body = parts[0].strip()
