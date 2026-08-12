@@ -4,7 +4,6 @@ import random
 import time
 
 from google import genai
-from google.genai import errors
 
 from app.config import settings
 
@@ -51,6 +50,21 @@ def _log_call(label: str, effort: str, input_chars: int, output_chars: int, atte
     )
 
 
+def _status_code(exc: Exception) -> int | None:
+    # google-genai's exception hierarchy isn't stable across versions --
+    # client.models.* raises errors.APIError (.code), while client.interactions.*
+    # has been observed raising a private, differently-shaped error (e.g.
+    # google.genai._interactions.RateLimitError, .status_code) after a minor
+    # version bump. Duck-type instead of pinning to one class so retry
+    # detection survives that drift; requirements.txt doesn't pin an exact
+    # google-genai version, so this WILL happen again.
+    for attr in ("code", "status_code"):
+        value = getattr(exc, attr, None)
+        if isinstance(value, int):
+            return value
+    return None
+
+
 def _create_with_retry(fn=None, **kwargs):
     """Call a Gemini SDK method with backoff on rate-limit/server errors.
 
@@ -62,14 +76,15 @@ def _create_with_retry(fn=None, **kwargs):
     change if we ever add a second provider to fail over to.
     """
     call = fn or _get_client().interactions.create
-    last_error: errors.APIError | None = None
+    last_error: Exception | None = None
     for attempt in range(_MAX_RETRIES + 1):
         try:
             if attempt:
                 logger.info("llm_call retrying after rate-limit/server error, attempt=%d", attempt)
             return call(**kwargs)
-        except errors.APIError as e:
-            if e.code not in _RETRYABLE_CODES or attempt == _MAX_RETRIES:
+        except Exception as e:
+            code = _status_code(e)
+            if code not in _RETRYABLE_CODES or attempt == _MAX_RETRIES:
                 raise
             last_error = e
             delay = _BASE_DELAY_SECONDS * (2**attempt) + random.uniform(0, 1)
@@ -133,14 +148,18 @@ def generate_image(prompt: str, label: str = "") -> bytes:
 
     Returns raw image bytes (PNG). Raises ValueError -- safe to show a coach
     directly -- if the model responded without producing an image (e.g. it
-    refused the prompt).
+    refused the prompt) or the API call itself failed (e.g. rate-limited
+    past the retry budget).
     """
-    response = _create_with_retry(
-        fn=_get_client().models.generate_content,
-        model=settings.gemini_image_model,
-        contents=prompt,
-        config={"response_modalities": ["TEXT", "IMAGE"]},
-    )
+    try:
+        response = _create_with_retry(
+            fn=_get_client().models.generate_content,
+            model=settings.gemini_image_model,
+            contents=prompt,
+            config={"response_modalities": ["TEXT", "IMAGE"]},
+        )
+    except Exception as e:
+        raise ValueError(f"Image generation failed -- {e}") from e
     _log_call(label or "generate_image", "n/a", len(prompt), 0)
     candidates = response.candidates or []
     parts = candidates[0].content.parts if candidates and candidates[0].content else []
