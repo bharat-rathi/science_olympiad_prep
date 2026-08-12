@@ -20,7 +20,16 @@ def research_topic(query: str, topic_name: str, topic_description: str) -> dict:
         raise ValueError("Nothing to research -- type a topic or keyword.")
 
     system, user = research_prompt(query, topic_name, topic_description)
-    raw = complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
+    try:
+        raw = complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
+    except Exception as e:
+        # Broad on purpose: google-genai's exception hierarchy for this call
+        # path isn't stable across versions (see llm/client.py's
+        # _status_code comment) and complete_text_grounded has already
+        # exhausted its own retries by the time anything reaches here, so
+        # whatever comes out is a real external failure -- surfaced to the
+        # coach instead of a raw 500.
+        raise ValueError(f"Research failed -- {e} -- try again, or paste a link instead.") from e
 
     parts = _SOURCES_HEADER_RE.split(raw, maxsplit=1)
     body = parts[0].strip()
