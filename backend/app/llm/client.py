@@ -129,15 +129,24 @@ def complete_text_grounded(
     Used by rag/web_research.py (the research agent) when a coach types a
     bare keyword instead of pasting a link -- the model looks the topic up
     rather than answering purely from training data.
+
+    Goes through models.generate_content (like generate_image) rather than
+    interactions.create -- the latter's tools=[{"type": "google_search"}]
+    wasn't reliably triggering real grounded search in production (results
+    came back as bare restatements of the query), unlike the classic
+    google_search Tool declaration used here.
     """
-    interaction = _create_with_retry(
+    response = _create_with_retry(
+        fn=_get_client().models.generate_content,
         model=settings.gemini_model,
-        system_instruction=system,
-        input=user,
-        generation_config=_generation_config(max_tokens, effort),
-        tools=[{"type": "google_search"}],
+        contents=user,
+        config={
+            "system_instruction": system,
+            "tools": [{"google_search": {}}],
+            "max_output_tokens": max_tokens,
+        },
     )
-    text = interaction.output_text or ""
+    text = response.text or ""
     _log_call(label or "complete_text_grounded", effort, len(system) + len(user), len(text))
     return text
 

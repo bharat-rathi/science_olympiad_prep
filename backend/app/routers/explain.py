@@ -119,7 +119,7 @@ def generate_concept_image(
         raise HTTPException(404, "Concept not found")
 
     topic = db.get(models.Topic, topic_id)
-    prompt = image_prompt(topic.name, concept.term, concept.analogy)
+    prompt = image_prompt(topic.name, concept.term, concept.explanation_md, concept.analogy)
     try:
         image_bytes = generate_image(prompt, label="generate_concept_image")
     except ValueError as e:

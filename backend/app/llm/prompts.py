@@ -162,11 +162,15 @@ def research_prompt(query: str, topic_name: str, topic_description: str) -> tupl
     parse with a regex.
     """
     system = (
-        "You research a topic for a Science Olympiad team using web search, then "
-        "write up what you found in your own words -- organized, factual notes a "
-        "coach can turn into student-facing material, not a copy-paste of any one "
-        "page. Search as many times as needed to cover the topic properly. Stick to "
-        "material genuinely relevant to the given event/topic; skip tangents. "
+        "You are a research assistant for a Science Olympiad coach, with a Google Search "
+        "tool available. Use it -- issue one or more real searches for this topic before "
+        "writing anything; do not answer from memory alone and do not just restate or "
+        "lightly rephrase the query. Read what the searches actually return, then write a "
+        "substantive briefing in your own words: concrete facts, mechanisms, definitions, "
+        "and examples a coach could turn into flashcards for a student meeting this topic "
+        "for the first time. Aim for several solid paragraphs when the topic has anything "
+        "findable. If your searches genuinely turn up nothing useful, say so explicitly in "
+        "one sentence rather than padding with generic filler. "
         "End your response with a line reading exactly 'Sources:' followed by one "
         "bullet per source actually used, each formatted exactly as "
         "'- <title> -- <url>'."
@@ -174,24 +178,32 @@ def research_prompt(query: str, topic_name: str, topic_description: str) -> tupl
     user = (
         f"Event/topic: {topic_name}\n"
         f"Topic description: {topic_description}\n\n"
-        f"Research this: {query}\n\n"
-        "Write organized notes covering the key facts and concepts a student would "
-        "need to know, then the Sources section."
+        f"Search the web and research this: {query}\n\n"
+        "Write the briefing covering the key facts and concepts a student would need to "
+        "know, then the Sources section."
     )
     return system, user
 
 
-def image_prompt(topic_name: str, term: str, analogy: str) -> str:
+def image_prompt(topic_name: str, term: str, explanation_md: str, analogy: str) -> str:
     """Review agent's visual step: one illustration prompt for a flashcard concept.
 
+    Grounded in the actual explanation, not just the term -- otherwise the
+    image model has almost nothing to depict and falls back to generic
+    decoration instead of something that actually explains the concept.
     Plain string, not JSON -- generate_image() takes a text prompt directly.
     """
-    analogy_hint = f" Lean on this analogy if it suggests a clear scene: {analogy}." if analogy else ""
+    analogy_hint = f" It may help to lean on this analogy: {analogy}." if analogy else ""
     return (
-        f"A simple, friendly, colorful educational illustration for a Science Olympiad "
-        f"flashcard explaining '{term}' (from the topic '{topic_name}') to a middle/high "
-        f"school student.{analogy_hint} Flat vector style, clear and uncluttered, no text "
-        "or labels or letters anywhere in the image, safe and appropriate for kids."
+        f"Create an educational illustration for a Science Olympiad student meeting "
+        f"'{term}' for the first time, as part of the topic '{topic_name}'. It should "
+        "visually explain the actual idea below the way a well-illustrated kids' science "
+        "book would -- show the real objects, steps, or mechanism involved, not an "
+        f"abstract or purely decorative scene.{analogy_hint}\n\n"
+        f"What it needs to explain:\n{explanation_md}\n\n"
+        "Style: simple, colorful, flat vector illustration, clear and uncluttered, "
+        "friendly and appropriate for kids. Absolutely no text, letters, numbers, or "
+        "labels anywhere in the image -- convey everything visually."
     )
 
 

@@ -1,7 +1,5 @@
 import re
 
-from google.genai import errors as genai_errors
-
 from app.llm.client import complete_text_grounded
 from app.llm.prompts import research_prompt
 
@@ -35,8 +33,12 @@ def research_topic(query: str, topic_name: str, topic_description: str) -> dict:
 
     parts = _SOURCES_HEADER_RE.split(raw, maxsplit=1)
     body = parts[0].strip()
-    if not body:
-        raise ValueError(f"Couldn't find anything useful on '{query}' -- try a more specific topic or paste a link instead.")
+    # A genuinely substantive briefing runs at least a few sentences; anything
+    # shorter is almost always the model echoing/lightly rephrasing the query
+    # rather than reporting real search results -- treat that as a failure
+    # too, not just a fully empty response.
+    if len(body) < 100:
+        raise ValueError(f"Couldn't find substantive information on '{query}' -- try rephrasing, being more specific, or paste a link instead.")
 
     sources = []
     if len(parts) > 1:
