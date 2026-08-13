@@ -20,6 +20,8 @@ export default function CoachTopicBuilder() {
   const [linkBusy, setLinkBusy] = useState(false);
   const [linkError, setLinkError] = useState("");
 
+  const [expandedResourceIds, setExpandedResourceIds] = useState<Set<number>>(new Set());
+
   const [feedbackDrafts, setFeedbackDrafts] = useState<Record<number, string>>({});
   const [refiningId, setRefiningId] = useState<number | null>(null);
   const [imagingId, setImagingId] = useState<number | null>(null);
@@ -41,6 +43,15 @@ export default function CoachTopicBuilder() {
     setResText("");
     setResUrl("");
     refresh();
+  }
+
+  function toggleResourceExpand(resourceId: number) {
+    setExpandedResourceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(resourceId)) next.delete(resourceId);
+      else next.add(resourceId);
+      return next;
+    });
   }
 
   async function addLink() {
@@ -218,14 +229,32 @@ export default function CoachTopicBuilder() {
 
       {resources.length > 0 && (
         <div className="stack">
-          {resources.map((r) => (
-            <div className="card" key={r.id}>
-              <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
-                {r.type}
-              </span>
-              {r.title}
-            </div>
-          ))}
+          {resources.map((r) => {
+            const content = r.type === "video" ? r.transcript : r.raw_text;
+            const isExpanded = expandedResourceIds.has(r.id);
+            return (
+              <div className="card" key={r.id}>
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <span>
+                    <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
+                      {r.type}
+                    </span>
+                    {r.title}
+                  </span>
+                  {content && (
+                    <button onClick={() => toggleResourceExpand(r.id)}>
+                      {isExpanded ? "Hide content" : "View content"}
+                    </button>
+                  )}
+                </div>
+                {isExpanded && content && (
+                  <p className="muted" style={{ whiteSpace: "pre-wrap", marginTop: 10, marginBottom: 0 }}>
+                    {content}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

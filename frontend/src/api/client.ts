@@ -35,6 +35,8 @@ export interface Resource {
   source_url: string;
   status: string;
   created_at: string;
+  raw_text: string;
+  transcript: string;
 }
 
 export interface ConceptTerm {

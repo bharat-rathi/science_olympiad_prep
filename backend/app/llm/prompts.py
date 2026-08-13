@@ -195,15 +195,18 @@ def image_prompt(topic_name: str, term: str, explanation_md: str, analogy: str) 
     """
     analogy_hint = f" It may help to lean on this analogy: {analogy}." if analogy else ""
     return (
-        f"Create an educational illustration for a Science Olympiad student meeting "
-        f"'{term}' for the first time, as part of the topic '{topic_name}'. It should "
-        "visually explain the actual idea below the way a well-illustrated kids' science "
-        "book would -- show the real objects, steps, or mechanism involved, not an "
-        f"abstract or purely decorative scene.{analogy_hint}\n\n"
+        f"Create a simple explainer diagram for a Science Olympiad student meeting "
+        f"'{term}' for the first time, as part of the topic '{topic_name}'. Depict only "
+        "what's necessary to make the concept below click at a glance -- the real objects, "
+        "motion, or forces involved, shown clearly (e.g. with motion lines, arrows, or "
+        "before/after positioning to show cause and effect). This is a focused diagram, "
+        f"not a busy scene with unrelated decorative elements.{analogy_hint}\n\n"
         f"What it needs to explain:\n{explanation_md}\n\n"
-        "Style: simple, colorful, flat vector illustration, clear and uncluttered, "
-        "friendly and appropriate for kids. Absolutely no text, letters, numbers, or "
-        "labels anywhere in the image -- convey everything visually."
+        "Style: simple, colorful, flat vector illustration on a plain or minimal "
+        "background, few elements, clear and uncluttered, friendly and appropriate for "
+        "kids. Do not include ANY text, letters, numbers, words, or labels anywhere in "
+        "the image, even small or stylized ones -- express the idea purely through the "
+        "imagery itself."
     )
 
 

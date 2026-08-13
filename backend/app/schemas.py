@@ -58,6 +58,8 @@ class ResourceOut(BaseModel):
     source_url: str
     status: str
     created_at: datetime.datetime
+    raw_text: str = ""
+    transcript: str = ""
 
 
 class ResourceCreateText(BaseModel):
