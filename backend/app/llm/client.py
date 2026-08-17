@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import random
@@ -176,6 +177,25 @@ def generate_image(prompt: str, label: str = "") -> bytes:
         if getattr(part, "inline_data", None) and part.inline_data.data:
             return part.inline_data.data
     raise ValueError("Image generation didn't return an image -- try again or reword the concept.")
+
+
+def describe_image(prompt: str, image_bytes: bytes, mime_type: str = "image/png", max_tokens: int = 800, label: str = "") -> str:
+    """Vision call -- used for PDF pages where plain text extraction comes
+    back thin (scans, diagrams, charts). Goes through interactions.create
+    (the default _create_with_retry path), same as complete_text/
+    complete_json/chat_turn.
+    """
+    interaction = _create_with_retry(
+        model=settings.gemini_model,
+        input=[
+            {"type": "text", "text": prompt},
+            {"type": "image", "data": base64.b64encode(image_bytes).decode("ascii"), "mime_type": mime_type},
+        ],
+        generation_config=_generation_config(max_tokens, "low"),
+    )
+    text = interaction.output_text or ""
+    _log_call(label or "describe_image", "low", len(prompt), len(text))
+    return text
 
 
 def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium", label: str = "") -> str:

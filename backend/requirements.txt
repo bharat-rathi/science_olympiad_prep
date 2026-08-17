@@ -10,7 +10,7 @@ chromadb==0.5.23
 tiktoken==0.8.0
 trafilatura==1.12.2
 requests==2.32.3
-pypdf==5.1.0
+pymupdf==1.28.2
 youtube-transcript-api==1.2.4
 Authlib==1.7.2
 itsdangerous==2.2.0

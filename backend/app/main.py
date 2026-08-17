@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
@@ -75,6 +75,26 @@ app.add_middleware(
 # No CORS middleware needed: in dev, Vite's proxy (frontend/vite.config.ts)
 # forwards /api to this server; in production this server serves the built
 # frontend itself (below). Both cases are same-origin.
+
+
+# On Render's Free instance type (512 MB RAM), reading a huge upload fully
+# into memory before we get a chance to reject it can OOM-kill the process --
+# the browser then sees the connection just die mid-request ("Failed to
+# fetch"), not a clean error. Checking Content-Length here rejects oversized
+# requests before Starlette ever reads the body, for every endpoint, not
+# just the upload one.
+MAX_REQUEST_BYTES = 25 * 1024 * 1024
+
+
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_REQUEST_BYTES:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": f"That file is too large (max {MAX_REQUEST_BYTES // (1024 * 1024)}MB)."},
+        )
+    return await call_next(request)
 
 
 @app.middleware("http")
