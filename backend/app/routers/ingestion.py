@@ -1,3 +1,4 @@
+import tempfile
 import zipfile
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,7 +12,7 @@ from app.rag.chunking import chunk_text
 from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
-from app.rag.transcription import save_upload_to_temp, transcribe_audio, transcribe_video
+from app.rag.transcription import stream_upload_to_temp, transcribe_audio, transcribe_video
 from app.rag.vectorstore import add_chunks
 from app.rag.web_research import research_topic
 from app.rag.youtube_fetch import fetch_youtube_transcript, is_youtube_url
@@ -140,29 +141,39 @@ async def upload_media_resource(
     Video/audio go through Gemini transcription; PDFs go through plain text
     extraction (no LLM). A zip is unpacked and each supported file inside it
     is processed the same way.
+
+    Streams straight to disk (stream_upload_to_temp / zf.extract) rather than
+    ever holding the whole upload in memory as one bytes object -- a
+    resource PDF full of high-res diagrams/photos can easily be 50-100MB,
+    and this app runs on a memory-constrained host.
     """
     topic = db.get(models.Topic, topic_id)
     if not topic:
         raise HTTPException(404, "Topic not found")
 
-    data = await file.read()
     filename = file.filename or "upload"
     suffix = Path(filename).suffix.lower()
 
     created: list[models.Resource] = []
     try:
         if suffix == ".zip":
-            tmp_zip = save_upload_to_temp(filename, data)
-            with zipfile.ZipFile(tmp_zip) as zf:
-                for name in zf.namelist():
-                    ext = Path(name).suffix.lower()
-                    if ext not in SUPPORTED_UPLOAD_EXTENSIONS:
-                        continue
-                    with zf.open(name) as member:
-                        member_bytes = member.read()
-                    created.append(_ingest_upload_and_create(db, topic_id, name, member_bytes, ext))
+            tmp_zip = stream_upload_to_temp(file.file, filename)
+            try:
+                with zipfile.ZipFile(tmp_zip) as zf, tempfile.TemporaryDirectory() as extract_dir:
+                    for name in zf.namelist():
+                        ext = Path(name).suffix.lower()
+                        if ext not in SUPPORTED_UPLOAD_EXTENSIONS:
+                            continue
+                        extracted_path = Path(zf.extract(name, path=extract_dir))
+                        created.append(_ingest_from_path(db, topic_id, Path(name).name, extracted_path, ext))
+            finally:
+                tmp_zip.unlink(missing_ok=True)
         elif suffix in SUPPORTED_UPLOAD_EXTENSIONS:
-            created.append(_ingest_upload_and_create(db, topic_id, filename, data, suffix))
+            tmp_path = stream_upload_to_temp(file.file, filename)
+            try:
+                created.append(_ingest_from_path(db, topic_id, filename, tmp_path, suffix))
+            finally:
+                tmp_path.unlink(missing_ok=True)
         else:
             raise HTTPException(400, f"Unsupported file type: {suffix}")
     except ValueError as e:
@@ -171,9 +182,7 @@ async def upload_media_resource(
     return created
 
 
-def _ingest_upload_and_create(db: Session, topic_id: int, filename: str, data: bytes, ext: str) -> models.Resource:
-    tmp_path = save_upload_to_temp(filename, data)
-
+def _ingest_from_path(db: Session, topic_id: int, filename: str, tmp_path: Path, ext: str) -> models.Resource:
     if ext in PDF_EXTENSIONS:
         text = extract_pdf_text(tmp_path)
         resource = models.Resource(topic_id=topic_id, type="pdf", title=filename, raw_text=text, status="ready")

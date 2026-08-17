@@ -83,7 +83,12 @@ app.add_middleware(
 # fetch"), not a clean error. Checking Content-Length here rejects oversized
 # requests before Starlette ever reads the body, for every endpoint, not
 # just the upload one.
-MAX_REQUEST_BYTES = 25 * 1024 * 1024
+#
+# Uploads now stream straight to disk (see routers/ingestion.py,
+# stream_upload_to_temp) instead of being buffered in memory as one bytes
+# object, so this ceiling is about a sane per-file limit, not memory safety --
+# 120MB comfortably covers real image-heavy resource PDFs (~80-90MB seen so far).
+MAX_REQUEST_BYTES = 120 * 1024 * 1024
 
 
 @app.middleware("http")

@@ -1,5 +1,7 @@
+import shutil
 import tempfile
 from pathlib import Path
+from typing import IO
 
 from google import genai
 
@@ -47,4 +49,22 @@ def save_upload_to_temp(filename: str, data: bytes) -> Path:
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
     tmp.write(data)
     tmp.close()
+    return Path(tmp.name)
+
+
+def stream_upload_to_temp(file_obj: IO[bytes], filename: str) -> Path:
+    """Copy an uploaded file to disk in chunks, without ever holding the
+    whole thing in memory as one bytes object.
+
+    On a 512MB-RAM host, `data = await file.read()` for a large upload (a
+    resource PDF full of high-res images can easily be 50-100MB) plus
+    Starlette's own request buffering can add up fast. Streaming keeps
+    memory use roughly constant regardless of file size.
+    """
+    suffix = Path(filename).suffix or ".bin"
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    try:
+        shutil.copyfileobj(file_obj, tmp, length=1024 * 1024)
+    finally:
+        tmp.close()
     return Path(tmp.name)
