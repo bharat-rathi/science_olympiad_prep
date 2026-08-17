@@ -135,7 +135,7 @@ export default function StudentPractice() {
             </>
           ) : (
             <div className="card">
-              <p style={{ whiteSpace: "pre-wrap", margin: 0, lineHeight: 1.7 }}>{topic.story_md}</p>
+              <p className="story-content" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{topic.story_md}</p>
             </div>
           )}
         </>

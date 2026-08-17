@@ -192,11 +192,12 @@ export default function CoachTopicBuilder() {
         <input placeholder="Resource title" value={resTitle} onChange={(e) => setResTitle(e.target.value)} />
         <input placeholder="Source URL (optional)" value={resUrl} onChange={(e) => setResUrl(e.target.value)} />
         <textarea placeholder="Paste text content" value={resText} onChange={(e) => setResText(e.target.value)} />
-        <div className="row">
+        <div className="row" style={{ justifyContent: "space-between" }}>
           <button className="primary" onClick={addTextResource}>
             Add text resource
           </button>
-          <label>
+          <label className="row" style={{ gap: 8 }}>
+            <span className="tag">upload video / audio / PDF / zip</span>
             <input
               type="file"
               accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.pdf,.zip"
@@ -239,7 +240,7 @@ export default function CoachTopicBuilder() {
                     <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
                       {r.type}
                     </span>
-                    {r.title}
+                    <span className="card-title" style={{ fontSize: "1rem" }}>{r.title}</span>
                   </span>
                   {content && (
                     <button onClick={() => toggleResourceExpand(r.id)}>
@@ -262,8 +263,8 @@ export default function CoachTopicBuilder() {
         <span className="step-badge">2</span> Concept explanations
       </h2>
       <div className="row">
-        <button className="primary" onClick={generate} disabled={busy}>
-          {busy ? "Working..." : "Generate concept explanations"}
+        <button className="accent" onClick={generate} disabled={busy}>
+          {busy ? "Working..." : "✨ Generate concept explanations"}
         </button>
         <span className="muted">{approvedCount} approved</span>
       </div>
@@ -271,9 +272,9 @@ export default function CoachTopicBuilder() {
 
       <div className="stack" style={{ marginTop: 12 }}>
         {concepts.map((c) => (
-          <div className="card" key={c.id}>
+          <div className="card accent-top" key={c.id}>
             <div className="row" style={{ justifyContent: "space-between" }}>
-              <strong>{c.term}</strong>
+              <span className="card-title">{c.term}</span>
               <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
                 {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
               </span>
@@ -329,13 +330,14 @@ export default function CoachTopicBuilder() {
         of a list of definitions. Only generated when you ask for it.
       </p>
       <div className="card stack">
-        <button onClick={generateStory} disabled={storyBusy || approvedCount === 0}>
-          {storyBusy ? "Writing..." : topic.story_md ? "Regenerate story" : "Generate story"}
+        <button className="accent" onClick={generateStory} disabled={storyBusy || approvedCount === 0}>
+          {storyBusy ? "Writing..." : topic.story_md ? "✨ Regenerate story" : "✨ Generate story"}
         </button>
         {approvedCount === 0 && <p className="muted">Approve at least one concept first.</p>}
         {topic.story_md && (
           <textarea
             defaultValue={topic.story_md}
+            className="story-content"
             style={{ minHeight: 160 }}
             onBlur={(e) => e.target.value !== topic.story_md && editStory(e.target.value)}
           />
@@ -352,7 +354,7 @@ export default function CoachTopicBuilder() {
       <div className="card row" style={{ justifyContent: "space-between" }}>
         <span>
           {topic.content_published ? (
-            <span className="tag video">Flashcards + story live for students</span>
+            <span className="tag success">Flashcards + story live for students</span>
           ) : (
             <span className="tag general">Draft -- flashcards/story not visible to students yet</span>
           )}

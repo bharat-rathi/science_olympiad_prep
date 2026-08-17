@@ -91,7 +91,7 @@ export default function CoachAssessment() {
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <span className="tag">{assessment.status}</span>
+        <span className={`tag ${assessment.status === "published" ? "success" : "general"}`}>{assessment.status}</span>
         <div className="row">
           {assessment.status === "draft" && (
             <button className="primary" onClick={publish} disabled={assessment.questions.length === 0}>
@@ -117,8 +117,8 @@ export default function CoachAssessment() {
           Short answer
           <input type="number" min={0} max={20} value={numShort} onChange={(e) => setNumShort(Number(e.target.value))} style={{ width: 60, marginLeft: 6 }} />
         </label>
-        <button className="primary" onClick={generateMore} disabled={busy}>
-          {busy ? "Generating..." : "Generate"}
+        <button className="accent" onClick={generateMore} disabled={busy}>
+          {busy ? "Generating..." : "✨ Generate"}
         </button>
       </div>
 
@@ -170,7 +170,7 @@ export default function CoachAssessment() {
       <h2>Questions ({assessment.questions.length})</h2>
       <div className="stack" style={{ marginTop: 12 }}>
         {assessment.questions.map((q) => (
-          <div className="card" key={q.id}>
+          <div className="card accent-top" key={q.id}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <span className="tag">{q.type}</span>
               <button onClick={() => deleteQuestion(q)}>Remove</button>

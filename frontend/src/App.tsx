@@ -60,7 +60,9 @@ function AuthedApp({
   return (
     <>
       <nav className="top-nav">
-        <span className="brand">🧪 Science Olympiad Coach</span>
+        <span className="brand">
+          <span className="brand-mark">🧪</span> OlympiadPrep
+        </span>
         <NavLink to="/" end>
           Home
         </NavLink>

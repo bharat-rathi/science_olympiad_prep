@@ -94,9 +94,9 @@ export default function StudentTest() {
         {assessment.questions.map((q) => {
           const result = results?.find((r) => r.question_id === q.id);
           return (
-            <div className="card" key={q.id}>
-              <p>
-                <strong>{q.prompt}</strong>
+            <div className="card accent-top" key={q.id}>
+              <p className="card-title" style={{ margin: "0 0 12px" }}>
+                {q.prompt}
               </p>
 
               {q.type === "mcq" ? (

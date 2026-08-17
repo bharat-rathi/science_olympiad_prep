@@ -1,28 +1,50 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap");
 
 :root {
-  --bg: #f4f5f3;
-  --bg-alt: #ececea;
+  --bg: #f8fafc;
+  --bg-alt: #eef2f8;
   --surface: #ffffff;
-  --border: #e4e3de;
-  --border-strong: #d4d2ca;
-  --text: #1c1b17;
-  --muted: #6f6d64;
-  --accent: #1f6f5c;
-  --accent-dark: #16564647;
-  --accent-soft: #e7f2ee;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --muted: #64748b;
+
+  /* Deep Navy -- authority, primary actions */
+  --navy: #0f172a;
+  --navy-soft: #1e293b;
+  --navy-tint: #e9edf5;
+
+  /* Olympiad Gold -- used sparingly, for "generate"/celebratory actions */
+  --gold: #c9971f;
+  --gold-bright: #d4af37;
+  --gold-soft: #fdf3d9;
+  --gold-contrast: #1c1305;
+
+  /* Accent == primary interactive color throughout the app (navy) */
+  --accent: var(--navy);
+  --accent-dark: var(--navy-soft);
+  --accent-soft: var(--navy-tint);
   --accent-contrast: #ffffff;
-  --danger: #b3452c;
-  --danger-soft: #fbeae5;
+
+  --success: #0f8a7c;
+  --success-soft: #e3f7f3;
+  --danger: #c0362c;
+  --danger-soft: #fbeae8;
   --warn: #b3801e;
   --warn-soft: #faf1de;
-  --shadow-sm: 0 1px 2px rgba(20, 20, 15, 0.05), 0 1px 1px rgba(20, 20, 15, 0.03);
-  --shadow-md: 0 4px 14px rgba(20, 20, 15, 0.07), 0 1px 3px rgba(20, 20, 15, 0.05);
-  --shadow-lg: 0 12px 32px rgba(20, 20, 15, 0.1), 0 2px 6px rgba(20, 20, 15, 0.05);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-head: "Montserrat", var(--font-ui);
+  --font-story: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+  font-family: var(--font-ui);
 }
 
 * {
@@ -37,7 +59,7 @@ body {
 }
 
 .app-shell {
-  max-width: 920px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 36px 24px 80px;
 }
@@ -48,9 +70,9 @@ nav.top-nav {
   display: flex;
   gap: 6px;
   align-items: center;
-  padding: 14px 28px;
+  padding: 12px 28px;
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(248, 250, 252, 0.85);
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
@@ -58,32 +80,49 @@ nav.top-nav {
 }
 
 nav.top-nav a {
-  color: var(--text);
+  color: var(--muted);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 0.92rem;
-  padding: 7px 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 7px 14px;
   border-radius: 999px;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 nav.top-nav a.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--navy-tint);
+  color: var(--navy);
 }
 
 nav.top-nav a:hover:not(.active) {
   background: var(--bg-alt);
+  color: var(--text);
 }
 
 nav.top-nav .brand {
-  font-weight: 800;
-  font-size: 1.05rem;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.1rem;
   letter-spacing: -0.01em;
   margin-right: 18px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  color: var(--navy);
+}
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--navy);
+  color: var(--gold-bright);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-user {
@@ -93,37 +132,42 @@ nav.top-nav .brand {
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--navy);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--gold-soft), 0 0 0 3px var(--gold-bright);
 }
 
 /* ---------- Typography ---------- */
 
 h1 {
-  font-size: 1.7rem;
-  font-weight: 800;
+  font-family: var(--font-head);
+  font-size: 1.9rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 6px;
+  color: var(--navy);
 }
 
 h2 {
-  font-size: 1.05rem;
+  font-family: var(--font-head);
+  font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  margin-top: 36px;
+  margin-top: 40px;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 10px;
+  color: var(--navy);
 }
 
 p {
@@ -138,14 +182,81 @@ p {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-size: 0.75rem;
+  background: var(--navy);
+  color: var(--gold-bright);
+  font-family: var(--font-head);
+  font-size: 0.78rem;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: linear-gradient(135deg, var(--navy-tint) 0%, #f8fafc 70%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero h1 {
+  font-size: 2.3rem;
+  max-width: 560px;
+}
+
+.hero p {
+  max-width: 480px;
+  color: var(--muted);
+}
+
+/* ---------- Stat tiles ---------- */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-tile {
+  background: var(--navy);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-tile.alt {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-tile .stat-label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.stat-tile .stat-value {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* ---------- Cards ---------- */
@@ -153,17 +264,29 @@ p {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
   margin-bottom: 14px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  position: relative;
 }
 
 .card.hoverable:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--border-strong);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.card.accent-top {
+  border-top: 3px solid var(--gold-bright);
+}
+
+.card-title {
+  font-family: var(--font-story);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
 }
 
 .muted {
@@ -177,28 +300,31 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   background: var(--bg-alt);
   color: var(--muted);
   margin-right: 6px;
 }
 
 .tag.video {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: transparent;
+  background: var(--navy-tint);
+  color: var(--navy);
 }
 
 .tag.general {
-  background: var(--warn-soft);
-  color: var(--warn);
-  border-color: transparent;
+  background: var(--gold-soft);
+  color: var(--gold-contrast);
+}
+
+.tag.success {
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 /* ---------- Buttons ---------- */
@@ -222,16 +348,36 @@ button:hover:not(:disabled) {
 }
 
 button.primary {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: var(--accent);
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
   box-shadow: var(--shadow-sm);
 }
 
 button.primary:hover:not(:disabled) {
-  background: #195a49;
-  border-color: #195a49;
+  background: var(--navy-soft);
+  border-color: var(--navy-soft);
   box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+button.accent {
+  background: var(--gold-bright);
+  color: var(--gold-contrast);
+  border-color: var(--gold-bright);
+  box-shadow: var(--shadow-sm);
+}
+
+button.accent:hover:not(:disabled) {
+  background: #e0bd4f;
+  border-color: #e0bd4f;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+button.pill {
+  border-radius: 999px;
+  padding: 11px 22px;
 }
 
 button:active:not(:disabled) {
@@ -263,8 +409,8 @@ input[type="number"] {
 textarea:focus,
 input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 3px var(--gold-soft);
 }
 
 textarea {
@@ -321,7 +467,7 @@ label {
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -332,6 +478,10 @@ label {
   justify-content: center;
   text-align: center;
   overflow-y: auto;
+}
+
+.flashcard-front {
+  border-top: 3px solid var(--gold-bright);
 }
 
 .flashcard-count {
@@ -347,11 +497,12 @@ label {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--navy);
+  color: var(--gold-bright);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-head);
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 12px;
@@ -359,7 +510,9 @@ label {
 }
 
 .flashcard-front strong {
-  font-size: 1.1rem;
+  font-family: var(--font-head);
+  font-size: 1.15rem;
+  color: var(--navy);
 }
 
 .flashcard-image {
@@ -382,7 +535,7 @@ label {
 
 .flashcard-back {
   transform: rotateY(180deg);
-  background: var(--accent-soft);
+  background: var(--navy-tint);
   align-items: flex-start;
   justify-content: flex-start;
   text-align: left;
@@ -391,31 +544,43 @@ label {
 
 .flashcard-analogy {
   margin: 0;
-  font-size: 1.05rem;
+  font-family: var(--font-story);
+  font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--text);
+  color: var(--navy);
 }
 
 .flashcard-expand-toggle {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--navy);
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .flashcard-expand-toggle:hover {
-  text-decoration: underline;
   background: none;
+  opacity: 0.75;
 }
 
 .flashcard-explanation {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+/* ---------- Story ---------- */
+
+.story-content {
+  font-family: var(--font-story);
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--text);
 }
 
 /* ---------- Chat ---------- */
@@ -436,8 +601,8 @@ label {
 }
 
 .chat-bubble.user {
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--navy);
+  color: #fff;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
@@ -448,7 +613,7 @@ label {
 }
 
 .correct {
-  color: var(--accent);
+  color: var(--success);
   font-weight: 700;
 }
 
@@ -460,26 +625,49 @@ label {
 /* ---------- Auth pages ---------- */
 
 .auth-shell {
-  max-width: 400px;
-  margin: 100px auto 0;
+  max-width: 420px;
+  margin: 80px auto 0;
   padding: 0 24px;
   text-align: center;
 }
 
 .auth-logo {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-lg);
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--navy);
+  color: var(--gold-bright);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   margin: 0 auto 18px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-shell h1 {
+  font-size: 1.7rem;
 }
 
 .auth-shell .card {
   text-align: left;
+}
+
+button.google {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+}
+
+button.google:hover {
+  background: var(--navy-soft);
+  border-color: var(--navy-soft);
 }
