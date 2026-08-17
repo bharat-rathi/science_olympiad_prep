@@ -574,6 +574,78 @@ label {
   line-height: 1.5;
 }
 
+/* ---------- Dropzone ---------- */
+
+.dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--navy-tint);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone.active {
+  border-color: var(--gold-bright);
+  background: var(--gold-soft);
+}
+
+.dropzone-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.dropzone strong {
+  font-family: var(--font-head);
+  color: var(--navy);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.dropzone-divider {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 16px 0;
+}
+
+.dropzone-text-toggle {
+  background: none;
+  border: none;
+  padding: 4px 0 0;
+  color: var(--navy);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dropzone-text-toggle:hover {
+  background: none;
+  opacity: 0.75;
+}
+
+/* ---------- Concept cards ---------- */
+
+.concept-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.concept-analogy {
+  margin: 10px 0 6px;
+}
+
 /* ---------- Story ---------- */
 
 .story-content {

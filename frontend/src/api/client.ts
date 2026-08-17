@@ -144,6 +144,8 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+  deleteResource: (topicId: number, resourceId: number) =>
+    req<void>(`/api/topics/${topicId}/resources/${resourceId}`, { method: "DELETE" }),
 
   listConcepts: (topicId: number) => req<ConceptTerm[]>(`/api/topics/${topicId}/concepts`),
   generateExplanations: (topicId: number) =>

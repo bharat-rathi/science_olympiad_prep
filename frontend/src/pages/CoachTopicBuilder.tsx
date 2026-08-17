@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ConceptTerm, Resource, Topic } from "../api/client";
+
+const RESOURCE_ICON: Record<string, string> = {
+  pdf: "📄",
+  video: "🎬",
+  text: "📝",
+  link: "🔗",
+  research: "🔍",
+};
 
 export default function CoachTopicBuilder() {
   const { topicId } = useParams();
@@ -12,6 +20,10 @@ export default function CoachTopicBuilder() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const [showPasteText, setShowPasteText] = useState(false);
   const [resTitle, setResTitle] = useState("");
   const [resText, setResText] = useState("");
   const [resUrl, setResUrl] = useState("");
@@ -21,12 +33,15 @@ export default function CoachTopicBuilder() {
   const [linkError, setLinkError] = useState("");
 
   const [expandedResourceIds, setExpandedResourceIds] = useState<Set<number>>(new Set());
+  const [deletingResourceId, setDeletingResourceId] = useState<number | null>(null);
+  const [expandedConceptIds, setExpandedConceptIds] = useState<Set<number>>(new Set());
 
   const [feedbackDrafts, setFeedbackDrafts] = useState<Record<number, string>>({});
   const [refiningId, setRefiningId] = useState<number | null>(null);
   const [imagingId, setImagingId] = useState<number | null>(null);
   const [storyBusy, setStoryBusy] = useState(false);
   const [publishBusy, setPublishBusy] = useState(false);
+  const [approveAllBusy, setApproveAllBusy] = useState(false);
 
   function refresh() {
     api.getTopic(id).then(setTopic);
@@ -42,6 +57,7 @@ export default function CoachTopicBuilder() {
     setResTitle("");
     setResText("");
     setResUrl("");
+    setShowPasteText(false);
     refresh();
   }
 
@@ -50,6 +66,28 @@ export default function CoachTopicBuilder() {
       const next = new Set(prev);
       if (next.has(resourceId)) next.delete(resourceId);
       else next.add(resourceId);
+      return next;
+    });
+  }
+
+  async function removeResource(r: Resource) {
+    if (!window.confirm(`Remove "${r.title}"? Its source content will no longer count toward concept generation.`)) return;
+    setDeletingResourceId(r.id);
+    try {
+      await api.deleteResource(id, r.id);
+      setResources((prev) => prev.filter((x) => x.id !== r.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDeletingResourceId(null);
+    }
+  }
+
+  function toggleConceptExpand(conceptId: number) {
+    setExpandedConceptIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(conceptId)) next.delete(conceptId);
+      else next.add(conceptId);
       return next;
     });
   }
@@ -69,9 +107,7 @@ export default function CoachTopicBuilder() {
     }
   }
 
-  async function uploadFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function doUpload(file: File) {
     setBusy(true);
     setError("");
     try {
@@ -81,8 +117,20 @@ export default function CoachTopicBuilder() {
       setError(String(err));
     } finally {
       setBusy(false);
-      e.target.value = "";
     }
+  }
+
+  function onFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) doUpload(file);
+  }
+
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) doUpload(file);
   }
 
   async function generate() {
@@ -101,6 +149,19 @@ export default function CoachTopicBuilder() {
   async function toggleApprove(c: ConceptTerm) {
     const updated = await api.updateConcept(id, c.id, { approved: !c.approved });
     setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+  }
+
+  async function approveAll() {
+    const toApprove = concepts.filter((c) => !c.approved);
+    if (toApprove.length === 0) return;
+    setApproveAllBusy(true);
+    try {
+      const updates = await Promise.all(toApprove.map((c) => api.updateConcept(id, c.id, { approved: true })));
+      const byId = new Map(updates.map((u) => [u.id, u]));
+      setConcepts((prev) => prev.map((x) => byId.get(x.id) || x));
+    } finally {
+      setApproveAllBusy(false);
+    }
   }
 
   async function editExplanation(c: ConceptTerm, explanation_md: string) {
@@ -184,68 +245,114 @@ export default function CoachTopicBuilder() {
         <span className="step-badge">1</span> Resources
       </h2>
       <p className="muted">
-        Paste text/link content, or upload a short video/audio clip (or a zip of several). Video is
-        one possible source among several -- it's only used where the relevance check below finds
-        it actually explains a concept.
+        Upload a document, PDF, video/audio clip (or a zip of several), paste a link, or type a
+        topic to research. Video is one possible source among several -- it's only used where the
+        relevance check below finds it actually explains a concept.
       </p>
-      <div className="card stack">
-        <input placeholder="Resource title" value={resTitle} onChange={(e) => setResTitle(e.target.value)} />
-        <input placeholder="Source URL (optional)" value={resUrl} onChange={(e) => setResUrl(e.target.value)} />
-        <textarea placeholder="Paste text content" value={resText} onChange={(e) => setResText(e.target.value)} />
-        <div className="row" style={{ justifyContent: "space-between" }}>
-          <button className="primary" onClick={addTextResource}>
-            Add text resource
-          </button>
-          <label className="row" style={{ gap: 8 }}>
-            <span className="tag">upload video / audio / PDF / zip</span>
-            <input
-              type="file"
-              accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.pdf,.zip"
-              onChange={uploadFile}
-              disabled={busy}
-            />
-          </label>
-        </div>
-      </div>
 
-      <div className="card stack">
-        <label className="muted">
-          Or paste a link -- YouTube links pull the official captions, anything else gets its
-          readable text fetched directly. No link handy? Type a topic or keyword instead and the
-          research agent will search the web and summarize what it finds.
-        </label>
+      <div className="card">
+        <div
+          className={`dropzone ${dragActive ? "active" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={onDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".mp4,.mov,.mkv,.avi,.webm,.mp3,.wav,.m4a,.flac,.pdf,.zip"
+            onChange={onFileInputChange}
+            disabled={busy}
+            style={{ display: "none" }}
+          />
+          <div className="dropzone-icon">📤</div>
+          <strong>{busy ? "Uploading..." : "Drag and drop a file here, or click to browse"}</strong>
+          <div className="row" style={{ justifyContent: "center", marginTop: 10 }}>
+            <span className="tag">PDF</span>
+            <span className="tag">Video / Audio</span>
+            <span className="tag">Zip of several</span>
+          </div>
+        </div>
+
+        <div className="dropzone-divider">or</div>
+
         <div className="row">
           <input
-            placeholder="https://... or a topic keyword"
+            placeholder="Paste a link (YouTube or any web page), or type a topic to research"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             style={{ flex: 1 }}
           />
           <button className="primary" onClick={addLink} disabled={linkBusy}>
-            {linkBusy ? "Working..." : "Fetch / research & add"}
+            {linkBusy ? "Working..." : "Add"}
           </button>
         </div>
         {linkError && <p style={{ color: "var(--danger)" }}>{linkError}</p>}
+
+        {showPasteText ? (
+          <div className="stack" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+            <input placeholder="Resource title" value={resTitle} onChange={(e) => setResTitle(e.target.value)} />
+            <input placeholder="Source URL (optional)" value={resUrl} onChange={(e) => setResUrl(e.target.value)} />
+            <textarea placeholder="Paste text content" value={resText} onChange={(e) => setResText(e.target.value)} />
+            <div className="row">
+              <button className="primary" onClick={addTextResource}>
+                Add text resource
+              </button>
+              <button onClick={() => setShowPasteText(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button className="dropzone-text-toggle" onClick={() => setShowPasteText(true)}>
+            + Paste text directly instead
+          </button>
+        )}
       </div>
+
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {resources.length > 0 && (
         <div className="stack">
+          <div className="muted" style={{ fontWeight: 600, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Uploaded resources ({resources.length}) -- always here to review or clean up
+          </div>
           {resources.map((r) => {
             const content = r.type === "video" ? r.transcript : r.raw_text;
             const isExpanded = expandedResourceIds.has(r.id);
+            const isDeleting = deletingResourceId === r.id;
             return (
               <div className="card" key={r.id}>
                 <div className="row" style={{ justifyContent: "space-between" }}>
-                  <span>
+                  <span className="row" style={{ gap: 8 }}>
+                    <span style={{ fontSize: "1.1rem" }}>{RESOURCE_ICON[r.type] || "📎"}</span>
                     <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
                       {r.type}
                     </span>
                     <span className="card-title" style={{ fontSize: "1rem" }}>{r.title}</span>
                   </span>
-                  {content && (
-                    <button onClick={() => toggleResourceExpand(r.id)}>
-                      {isExpanded ? "Hide content" : "View content"}
+                  <div className="row">
+                    {content && (
+                      <button onClick={() => toggleResourceExpand(r.id)}>
+                        {isExpanded ? "Hide content" : "View content"}
+                      </button>
+                    )}
+                    <button onClick={() => removeResource(r)} disabled={isDeleting}>
+                      {isDeleting ? "Removing..." : "Remove"}
                     </button>
+                  </div>
+                </div>
+                <div className="muted" style={{ fontSize: "0.78rem", marginTop: 4 }}>
+                  Added {new Date(r.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  {r.source_url && (
+                    <>
+                      {" · "}
+                      <a href={r.source_url} target="_blank" rel="noreferrer">
+                        source link
+                      </a>
+                    </>
                   )}
                 </div>
                 {isExpanded && content && (
@@ -262,64 +369,88 @@ export default function CoachTopicBuilder() {
       <h2>
         <span className="step-badge">2</span> Concept explanations
       </h2>
-      <div className="row">
-        <button className="accent" onClick={generate} disabled={busy}>
-          {busy ? "Working..." : "✨ Generate concept explanations"}
-        </button>
-        <span className="muted">{approvedCount} approved</span>
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <div className="row">
+          <button className="accent" onClick={generate} disabled={busy}>
+            {busy ? "Working..." : "✨ Generate concept explanations"}
+          </button>
+          <span className="muted">
+            {approvedCount} of {concepts.length} approved
+          </span>
+        </div>
+        {concepts.length > 0 && approvedCount < concepts.length && (
+          <button onClick={approveAll} disabled={approveAllBusy}>
+            {approveAllBusy ? "Approving..." : `Approve all (${concepts.length - approvedCount})`}
+          </button>
+        )}
       </div>
-      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div className="stack" style={{ marginTop: 12 }}>
-        {concepts.map((c) => (
-          <div className="card accent-top" key={c.id}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <span className="card-title">{c.term}</span>
-              <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
-                {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
-              </span>
-            </div>
-            <label className="muted" style={{ marginTop: 4 }}>
-              Explanation
-            </label>
-            <textarea
-              defaultValue={c.explanation_md}
-              onBlur={(e) => e.target.value !== c.explanation_md && editExplanation(c, e.target.value)}
-            />
-            <label className="muted">Analogy</label>
-            <textarea
-              defaultValue={c.analogy}
-              placeholder="A short real-world comparison for the flashcard back"
-              style={{ minHeight: 50 }}
-              onBlur={(e) => e.target.value !== c.analogy && editAnalogy(c, e.target.value)}
-            />
-            <div className="row">
-              <input
-                placeholder="Feedback to refine this concept (e.g. 'too technical', 'add an example')"
-                style={{ flex: 1 }}
-                value={feedbackDrafts[c.id] || ""}
-                onChange={(e) => setFeedbackDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
-              />
-              <button onClick={() => refineConcept(c)} disabled={refiningId === c.id || !(feedbackDrafts[c.id] || "").trim()}>
-                {refiningId === c.id ? "Refining..." : "Refine"}
-              </button>
-            </div>
-            <div className="row" style={{ alignItems: "flex-start" }}>
-              {c.image_data_url && (
-                <img src={c.image_data_url} alt={c.term} className="concept-image-preview" />
+        {concepts.map((c) => {
+          const isEditing = expandedConceptIds.has(c.id);
+          return (
+            <div className="card accent-top concept-card" key={c.id}>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div className="row" style={{ gap: 12 }}>
+                  {c.image_data_url && <img src={c.image_data_url} alt={c.term} className="concept-thumb" />}
+                  <div>
+                    <span className="card-title">{c.term}</span>
+                    <div>
+                      <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
+                        {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button className={c.approved ? "primary" : ""} onClick={() => toggleApprove(c)}>
+                  {c.approved ? "✓ Approved" : "Approve"}
+                </button>
+              </div>
+
+              {c.analogy && <p className="flashcard-analogy concept-analogy">{c.analogy}</p>}
+
+              {!isEditing ? (
+                <button className="dropzone-text-toggle" onClick={() => toggleConceptExpand(c.id)}>
+                  Edit explanation, analogy, or image →
+                </button>
+              ) : (
+                <div className="stack" style={{ marginTop: 8 }}>
+                  <label className="muted">Explanation</label>
+                  <textarea
+                    defaultValue={c.explanation_md}
+                    onBlur={(e) => e.target.value !== c.explanation_md && editExplanation(c, e.target.value)}
+                  />
+                  <label className="muted">Analogy</label>
+                  <textarea
+                    defaultValue={c.analogy}
+                    placeholder="A short real-world comparison for the flashcard back"
+                    style={{ minHeight: 50 }}
+                    onBlur={(e) => e.target.value !== c.analogy && editAnalogy(c, e.target.value)}
+                  />
+                  <div className="row">
+                    <input
+                      placeholder="Feedback to refine this concept (e.g. 'too technical', 'add an example')"
+                      style={{ flex: 1 }}
+                      value={feedbackDrafts[c.id] || ""}
+                      onChange={(e) => setFeedbackDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                    />
+                    <button onClick={() => refineConcept(c)} disabled={refiningId === c.id || !(feedbackDrafts[c.id] || "").trim()}>
+                      {refiningId === c.id ? "Refining..." : "Refine"}
+                    </button>
+                  </div>
+                  <div className="row">
+                    <button onClick={() => generateImage(c)} disabled={imagingId === c.id}>
+                      {imagingId === c.id ? "Drawing..." : c.image_data_url ? "Regenerate image" : "Generate image"}
+                    </button>
+                    <button onClick={() => toggleConceptExpand(c.id)} style={{ marginLeft: "auto" }}>
+                      Done editing
+                    </button>
+                  </div>
+                </div>
               )}
-              <button onClick={() => generateImage(c)} disabled={imagingId === c.id}>
-                {imagingId === c.id ? "Drawing..." : c.image_data_url ? "Regenerate image" : "Generate image"}
-              </button>
             </div>
-            <div className="row">
-              <label className="row">
-                <input type="checkbox" checked={c.approved} onChange={() => toggleApprove(c)} />
-                Approved (used for both flashcards and assessment questions)
-              </label>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <h2>
