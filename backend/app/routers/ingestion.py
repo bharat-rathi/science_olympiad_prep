@@ -13,7 +13,7 @@ from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
 from app.rag.transcription import stream_upload_to_temp, transcribe_audio, transcribe_video
-from app.rag.vectorstore import add_chunks
+from app.rag.vectorstore import add_chunks, delete_resource as delete_resource_chunks
 from app.rag.web_research import research_topic
 from app.rag.youtube_fetch import fetch_youtube_transcript, is_youtube_url
 
@@ -124,6 +124,24 @@ def add_link_resource(
 
     _index_resource(db, resource, text)
     return resource
+
+
+@router.delete("/{topic_id}/resources/{resource_id}", status_code=204)
+def delete_resource(
+    topic_id: int,
+    resource_id: int,
+    db: Session = Depends(get_db),
+    coach: models.Coach = Depends(auth.require_coach),
+):
+    resource = db.get(models.Resource, resource_id)
+    if not resource or resource.topic_id != topic_id:
+        raise HTTPException(404, "Resource not found")
+    db.delete(resource)
+    db.commit()
+    # Concepts already generated from this resource keep their explanations --
+    # only the source material and its indexed chunks go away, so a coach
+    # removing a bad upload doesn't silently wipe content students already see.
+    delete_resource_chunks(resource_id)
 
 
 SUPPORTED_UPLOAD_EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS | PDF_EXTENSIONS
