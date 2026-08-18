@@ -138,11 +138,25 @@ export const api = {
   addLinkResource: (topicId: number, url: string) =>
     req<Resource>(`/api/topics/${topicId}/resources/link`, { method: "POST", body: JSON.stringify({ url }) }),
   uploadMediaResource: async (topicId: number, file: File): Promise<Resource[]> => {
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch(`${BASE}/api/topics/${topicId}/resources/upload`, { method: "POST", body: form });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    // Large uploads occasionally die mid-transfer with a raw network error
+    // (connection reset by a flaky wifi hop, a corporate/antivirus HTTPS
+    // inspection proxy, etc.) rather than a clean HTTP response -- that
+    // shows up as fetch() throwing instead of resolving. One silent retry
+    // papers over a one-off transient drop; a second real failure surfaces
+    // to the coach as before.
+    const attempt = async () => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${BASE}/api/topics/${topicId}/resources/upload`, { method: "POST", body: form });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    };
+    try {
+      return await attempt();
+    } catch (err) {
+      if (err instanceof TypeError) return await attempt();
+      throw err;
+    }
   },
   deleteResource: (topicId: number, resourceId: number) =>
     req<void>(`/api/topics/${topicId}/resources/${resourceId}`, { method: "DELETE" }),
