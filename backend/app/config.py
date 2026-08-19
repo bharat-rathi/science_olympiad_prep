@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     # tracks "who's logged in" afterward.
     session_secret: str = "dev-insecure-secret-change-me"
 
+    # Local SQLite by default (fine for dev). Production sets DATABASE_URL to
+    # a managed Postgres (Neon) connection string -- local disk turned out to
+    # not reliably persist on Render even on a paid plan, so the database no
+    # longer lives there. Chroma (chroma_dir below) is unaffected by this --
+    # it's a regenerable cache, not deliberately migrated off local disk.
     database_url: str = f"sqlite:///{DATA_DIR / 'sciolympiad.db'}"
     chroma_dir: str = str(DATA_DIR / "chroma")
 
@@ -69,4 +74,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+# Some providers (and older docs/examples) still hand back the legacy
+# `postgres://` scheme; SQLAlchemy 2.0 rejects it outright. Normalize once
+# here so every caller of settings.database_url gets a scheme it accepts.
+if settings.database_url.startswith("postgres://"):
+    settings.database_url = settings.database_url.replace("postgres://", "postgresql://", 1)
 DATA_DIR.mkdir(parents=True, exist_ok=True)

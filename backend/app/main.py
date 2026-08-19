@@ -20,11 +20,23 @@ logging.basicConfig(level=logging.INFO)
 def _ensure_column(table: str, column: str, ddl_type: str) -> None:
     """Add a column create_all won't add to an already-existing table.
 
-    SQLite-specific (PRAGMA table_info) -- fine since we're deliberately on
-    SQLite at this scale (see README); revisit if that ever changes.
+    Dialect-aware: production runs Postgres (Neon), local dev defaults to
+    SQLite (see README) -- the "does this column already exist" check needs
+    different introspection per dialect, since PRAGMA is SQLite-only. The
+    ALTER TABLE ADD COLUMN statement itself is portable across both and
+    needs no branching.
     """
     with engine.connect() as conn:
-        existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+        if engine.dialect.name == "sqlite":
+            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
+        else:
+            existing = {
+                row[0]
+                for row in conn.execute(
+                    text("SELECT column_name FROM information_schema.columns WHERE table_name = :table"),
+                    {"table": table},
+                )
+            }
         if column not in existing:
             conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
             conn.commit()
@@ -34,12 +46,17 @@ def _migrate_coach_table_to_google_auth() -> None:
     """One-time: the old password-based `coaches` table (password_hash NOT
     NULL, no email/google_sub) can't be patched with ALTER TABLE ADD COLUMN
     alone -- password_hash needs to go away and email needs to become the
-    required field. Production has zero rows in this table (confirmed before
-    writing this), so it's safe to just drop and let create_all below
-    recreate it with the new schema, instead of writing a real data
-    migration for accounts that don't exist yet. A no-op once the table
-    already has the new schema (or doesn't exist yet at all).
+    required field. Production had zero rows in this table when this was
+    written, so it's safe to just drop and let create_all below recreate it
+    with the new schema, instead of writing a real data migration for
+    accounts that don't exist yet. A no-op once the table already has the
+    new schema (or doesn't exist yet at all).
+
+    SQLite-only: a fresh Postgres database never has the old schema to begin
+    with, so there's nothing to migrate away from there -- skip entirely.
     """
+    if engine.dialect.name != "sqlite":
+        return
     with engine.connect() as conn:
         existing = {row[1] for row in conn.execute(text("PRAGMA table_info(coaches)"))}
         if existing and "email" not in existing:
@@ -51,9 +68,13 @@ def _migrate_coach_table_to_google_auth() -> None:
 _migrate_coach_table_to_google_auth()
 models.Base.metadata.create_all(bind=engine)
 
+# SQLite's permissive type affinity accepts a bare 0/1 literal for a boolean
+# column default; Postgres needs a real boolean literal.
+_bool_default = "0" if engine.dialect.name == "sqlite" else "false"
+
 _ensure_column("topics", "created_by_coach_id", "INTEGER")
 _ensure_column("assessments", "created_by_coach_id", "INTEGER")
-_ensure_column("topics", "content_published", "BOOLEAN DEFAULT 0")
+_ensure_column("topics", "content_published", f"BOOLEAN DEFAULT {_bool_default}")
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "analogy", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
