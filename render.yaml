@@ -18,9 +18,18 @@ services:
         sync: false # random string, e.g. `python -c "import secrets; print(secrets.token_hex(32))"`
       - key: CREDENTIAL_ENCRYPTION_KEY
         sync: false # optional -- enables per-coach "bring your own AI provider"; see backend/.env.example
+      - key: DATABASE_URL
+        sync: false # Neon Postgres connection string -- see README "Database (Neon Postgres)".
+        # IMPORTANT: this render.yaml file is NOT Blueprint-synced to the live
+        # service (it was created via the Render dashboard, not "New Blueprint"),
+        # so editing this alone does nothing -- DATABASE_URL must also be added
+        # manually in the dashboard's Environment tab.
       - key: PUBLIC_BASE_URL
         value: https://science-olympiad-prep.onrender.com # update if your service URL differs
     disk:
       name: sciolympiad-data
       mountPath: /opt/render/project/src/backend/data
       sizeGB: 1
+      # Only backs Chroma now (backend/data/chroma) -- the database moved to
+      # Neon Postgres (DATABASE_URL above) after this disk turned out not to
+      # actually persist across deploys. Not vestigial -- Chroma still uses it.

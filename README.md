@@ -37,12 +37,13 @@ sciolympiad-coach/
 │   │   ├── main.py          App wiring, session middleware, seeds a demo topic
 │   │   ├── config.py        Settings (.env)
 │   │   ├── auth.py           Google OAuth registry + session cookies + require_coach dependency
-│   │   ├── db.py, models.py, schemas.py   SQLite via SQLAlchemy
+│   │   ├── db.py, models.py, schemas.py   SQLAlchemy -- Postgres (Neon) in production,
+│   │   │                                  local SQLite by default for dev (DATABASE_URL)
 │   │   ├── routers/         auth, topics, ingestion, explain, assessment, attempts, tutor
 │   │   ├── rag/               chunking, embeddings, vectorstore (Chroma), transcription,
 │   │   │                      link_fetch, pdf_extract, youtube_fetch, retrieval
 │   │   └── llm/                Gemini client wrapper (with per-call logging) + prompt templates
-│   └── data/                  sqlite db + Chroma persistence (gitignored)
+│   └── data/                  Chroma persistence (gitignored) -- local SQLite db too, in dev
 ├── frontend/                  React + TypeScript (Vite)
 │   └── src/
 │       ├── api/client.ts      typed fetch wrapper for the backend
@@ -278,10 +279,12 @@ This is a small vertical slice, not a production app. Explicit corners cut:
 - **Approximate concept-to-resource attribution** — a concept's "video
   coverage" tag reflects whether *any* relevant retrieved chunk for the topic
   was a video, not a chunk-level citation per concept.
-- **SQLite + local-disk Chroma**, not a managed database — fine at this scale
-  (one small Render instance, ~13 users), but it means the app can only ever
-  run as a single instance/replica; it wouldn't survive being scaled
-  horizontally without moving to Postgres/pgvector or similar.
+- **Local-disk Chroma**, not a managed vector store — fine at this scale (one
+  small Render instance, ~13 users); it means the app can only ever run as a
+  single instance/replica, and Chroma's index doesn't survive a disk hiccup
+  (though it's a regenerable cache of resource text, not source-of-truth
+  data — see "Postgres migration" below for why that distinction mattered).
+  Moving it to a hosted vector store would be needed to scale horizontally.
 - **One shared topic library** — every coach sees and can edit every topic;
   there's no per-team data isolation. That's a deliberate fit for one
   coaching staff, not a multi-tenant product.
@@ -303,15 +306,54 @@ left out here to keep this iteration's scope bounded:
 - **Rate limiting / a per-coach cost budget** — nothing currently stops a
   coach from clicking "Generate" a hundred times in a row. The LLM-call
   logging (above) gives visibility, not a cap.
-- **Automated database backups** — the SQLite file lives on Render's
-  persistent disk, which survives redeploys but isn't backed up on a
-  schedule. Worth a periodic manual export until this exists.
+- **Automated database backups** — the database is now Neon Postgres (see
+  "Database (Neon Postgres)" below), which has its own point-in-time-recovery
+  story, but the **free tier's retention window is short**. Worth confirming
+  Neon's current free-tier retention and/or upgrading if this data ever
+  becomes hard to lose again.
 - **Structured monitoring/alerting** — logs exist (see "Reducing AI/token
   usage"), but nothing aggregates them or pages anyone if something breaks.
-- **Postgres migration path** — `DATABASE_URL` already isolates the DB choice
-  (see `app/config.py` / `app/db.py`), so moving off SQLite later is a
-  connection-string change plus a data migration, not a rewrite — just not
-  needed at ~13 users.
+
+## Database (Neon Postgres)
+
+Production data used to live in a SQLite file on Render's persistent disk.
+That disk turned out not to actually persist across deploys even on a paid
+plan (confirmed in the Render dashboard) — every redeploy silently started
+the app against an empty database. The database now lives in a separate,
+managed Postgres instance on [Neon](https://neon.tech) instead, which
+persists independently of anything happening to the Render service. Chroma
+(the vector store) is unaffected by this — it's still local disk, since it's
+a regenerable cache, not irreplaceable data (see "Simplifications" above).
+
+Local dev is unaffected either way — `DATABASE_URL` is optional and defaults
+to a local SQLite file (see `backend/.env.example`) unless you deliberately
+set it to test against Postgres too.
+
+**One-time setup, for whoever is standing up (or re-pointing) this app:**
+
+1. Go to [neon.tech](https://neon.tech), sign up (GitHub or Google both
+   work), and create a new project. Neon's default database name (`neondb`)
+   is fine — nothing in this app depends on the name.
+2. On the project's dashboard, open **Connection Details** and copy the
+   **Pooled connection** string — the app makes one connection per request
+   via `SessionLocal`/`get_db`, which is exactly what pooled connections are
+   for. It looks like:
+   `postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require`
+3. Set that string as `DATABASE_URL`:
+   - **Locally**, in `backend/.env`, if you want to test against real
+     Postgres before deploying a schema change.
+   - **On Render**, in the dashboard → this service → **Environment** tab —
+     add it there directly. (`render.yaml` also lists `DATABASE_URL`, but
+     this service isn't Blueprint-synced, so editing `render.yaml` alone
+     does **not** change the live service — the dashboard entry is the one
+     that actually matters.)
+4. No manual schema setup needed in Neon's SQL editor — the app's existing
+   `create_all()` + `_ensure_column` migration pattern (see `app/main.py`)
+   builds the schema on first boot against whatever `DATABASE_URL` points
+   to, the same way it always has for SQLite.
+
+Use a **separate Neon project for local testing** vs. the one you point
+production at, so poking around locally never risks the real data.
 
 ## Verification
 
@@ -341,12 +383,13 @@ to configure.
    [`render.yaml`](render.yaml) and creates the web service automatically.
 3. **Set the secrets** Render will prompt for (or add them under the
    service's **Environment** tab): `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`,
-   `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` (see "Google Cloud Console
-   setup" above for the Google values — make sure the OAuth client's
-   authorized redirect URIs include this service's actual `.onrender.com`
-   URL). `PUBLIC_BASE_URL` is already set in `render.yaml` to this repo's
-   known Render URL; update it there (or override in the dashboard) if
-   yours differs.
+   `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `DATABASE_URL` (a Neon Postgres
+   connection string — see "Database (Neon Postgres)" below) (see "Google
+   Cloud Console setup" above for the Google values — make sure the OAuth
+   client's authorized redirect URIs include this service's actual
+   `.onrender.com` URL). `PUBLIC_BASE_URL` is already set in `render.yaml`
+   to this repo's known Render URL; update it there (or override in the
+   dashboard) if yours differs.
 4. Deploy. Render builds the frontend (`npm run build`) and installs the
    backend, then starts `uvicorn` behind Render's own HTTPS. Python version is
    pinned via [`.python-version`](.python-version) at the repo root — Render
@@ -360,13 +403,22 @@ to configure.
    teammate by email (and remember to also add them as a Google Test user —
    see "Google Cloud Console setup" above).
 
-**Persistent data.** `render.yaml` provisions a small disk mounted at
-`backend/data`, where the SQLite database and the Chroma vector store live —
-without it, all topics/resources/concepts would reset on every redeploy.
-That requires Render's `starter` plan (a few dollars/month), which is what
-`render.yaml` specifies; the free tier has no persistent disk. If you just
-want a quick smoke-test deploy first, you can temporarily drop the `disk:`
-block and use the free plan — just know a redeploy will wipe the data.
+**Persistent data.** The actual database (coaches, topics, resources,
+concepts, assessments, attempts) lives in Neon Postgres via `DATABASE_URL` —
+see "Database (Neon Postgres)" above — not on Render's disk. This matters:
+an earlier version of this app stored everything in a SQLite file on
+Render's disk instead, and that disk turned out not to reliably persist
+across deploys even on the paid `starter` plan, silently wiping all
+production data. Don't rely on Render's disk for anything you can't afford
+to lose again.
+
+`render.yaml` still provisions a small disk mounted at `backend/data`, but
+it now only backs the local Chroma vector store — a regenerable cache of
+resource text (see "Simplifications" above), not source-of-truth data. If
+that disk doesn't persist, the fix is a coach re-clicking "Generate concept
+explanations," not data recovery. The disk still requires Render's
+`starter` plan; if you drop the `disk:` block and use the free plan, Chroma
+just rebuilds itself as needed instead of caching between deploys.
 
 **Updating the deployment:** push to `main` — Render auto-deploys on every
 push to the branch the Blueprint was created from.
