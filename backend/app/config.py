@@ -74,6 +74,16 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+# Neon's dashboard shows a ready-to-paste `psql '...'` terminal command right
+# next to the bare connection string -- easy to grab the wrong one when
+# copying DATABASE_URL into Render. Strip that wrapper if present so a
+# copy-paste mistake doesn't take down the whole deploy.
+_url = settings.database_url.strip()
+if _url.startswith("psql "):
+    _url = _url[len("psql ") :].strip()
+    if len(_url) >= 2 and _url[0] == _url[-1] and _url[0] in "'\"":
+        _url = _url[1:-1]
+    settings.database_url = _url
 # Some providers (and older docs/examples) still hand back the legacy
 # `postgres://` scheme; SQLAlchemy 2.0 rejects it outright. Normalize once
 # here so every caller of settings.database_url gets a scheme it accepts.
