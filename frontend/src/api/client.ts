@@ -16,6 +16,12 @@ export interface MeResponse {
   needs_bootstrap: boolean;
 }
 
+export interface AiSettings {
+  // null = using the team's shared default key
+  provider: "gemini" | "claude" | "openai" | null;
+  has_key: boolean;
+}
+
 export interface Topic {
   id: number;
   event_name: string;
@@ -126,6 +132,9 @@ export const api = {
   me: () => req<MeResponse>("/api/auth/me"),
   inviteCoach: (email: string) => req<Coach>("/api/auth/invite", { method: "POST", body: JSON.stringify({ email }) }),
   logout: () => req<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
+  getAiSettings: () => req<AiSettings>("/api/auth/ai-settings"),
+  updateAiSettings: (payload: { provider: AiSettings["provider"]; api_key: string | null }) =>
+    req<AiSettings>("/api/auth/ai-settings", { method: "PUT", body: JSON.stringify(payload) }),
 
   listTopics: () => req<Topic[]>("/api/topics"),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),

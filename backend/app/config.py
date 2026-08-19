@@ -47,6 +47,22 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{DATA_DIR / 'sciolympiad.db'}"
     chroma_dir: str = str(DATA_DIR / "chroma")
 
+    # Fernet key encrypting each coach's personal LLM API key at rest (see
+    # app/crypto.py). Generate once with:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Empty = the per-coach "bring your own key" feature is disabled (coaches
+    # can't save a personal key, but the shared Gemini key keeps working for
+    # everyone -- this is purely additive, never required).
+    credential_encryption_key: str = ""
+
+    # Defaults for coaches who choose Claude or OpenAI as their personal
+    # provider (app/llm/claude_adapter.py, app/llm/openai_adapter.py).
+    # Unrelated to the gemini_* settings above, which back the shared
+    # default key.
+    claude_model: str = "claude-sonnet-5"
+    openai_model: str = "gpt-4.1"
+    openai_image_model: str = "gpt-image-1"
+
     # Retrieval tuning for the "don't over-index on video" behavior
     retrieval_top_k: int = 8
     relevance_threshold: float = 0.5

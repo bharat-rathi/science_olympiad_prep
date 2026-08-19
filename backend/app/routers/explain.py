@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
 from app.db import get_db
-from app.llm.client import complete_json, generate_image
+from app.llm.router import get_llm_handle
 from app.llm.prompts import (
     CONCEPT_LIST_SCHEMA,
     REFINE_CONCEPT_SCHEMA,
@@ -28,12 +28,19 @@ def generate_explanations(
     if not topic:
         raise HTTPException(404, "Topic not found")
 
-    relevant_chunks = retrieve_relevant_chunks(topic.name, topic.description, topic_id)
+    llm = get_llm_handle(coach)
+    relevant_chunks = retrieve_relevant_chunks(topic.name, topic.description, topic_id, coach)
 
     labeled_snippets = [{"source_type": c["metadata"]["source_type"], "text": c["text"]} for c in relevant_chunks]
     system, user = explanation_prompt(topic.name, topic.description, labeled_snippets)
-    result = complete_json(
-        system, user, CONCEPT_LIST_SCHEMA, max_tokens=4000, effort="high", label="generate_explanations"
+    # max_tokens=8000 (not 4000): this generates a whole LIST of concepts in
+    # one JSON call, and Gemini's invisible "thinking" tokens at effort="high"
+    # count against this same budget -- 4000 was occasionally getting
+    # truncated mid-string on topics with several concepts (same class of
+    # issue already fixed for refine_concept/generate_story, just needed a
+    # bigger ceiling here since this call's real output is larger).
+    result = llm.complete_json(
+        system, user, CONCEPT_LIST_SCHEMA, max_tokens=8000, effort="high", label="generate_explanations"
     )
 
     grounding_resource_ids = sorted({c["metadata"]["resource_id"] for c in relevant_chunks})
@@ -93,7 +100,9 @@ def refine_concept(
     # from source material, so it doesn't need deep reasoning -- cheaper, and
     # avoids Gemini's invisible "thinking" tokens eating the whole max_tokens
     # budget before any visible output is written (see llm/client.py).
-    result = complete_json(system, user, REFINE_CONCEPT_SCHEMA, max_tokens=2000, effort="medium", label="refine_concept")
+    result = get_llm_handle(coach).complete_json(
+        system, user, REFINE_CONCEPT_SCHEMA, max_tokens=2000, effort="medium", label="refine_concept"
+    )
 
     concept.explanation_md = result["explanation_md"]
     concept.analogy = result["analogy"]
@@ -121,7 +130,7 @@ def generate_concept_image(
     topic = db.get(models.Topic, topic_id)
     prompt = image_prompt(topic.name, concept.term, concept.explanation_md, concept.analogy)
     try:
-        image_bytes = generate_image(prompt, label="generate_concept_image")
+        image_bytes = get_llm_handle(coach).generate_image(prompt, label="generate_concept_image")
     except ValueError as e:
         raise HTTPException(422, str(e))
 
@@ -147,7 +156,7 @@ def generate_story(topic_id: int, db: Session = Depends(get_db), coach: models.C
     # Generous max_tokens headroom -- Gemini's invisible "thinking" tokens at
     # effort="high" count against this budget before any visible output is
     # written, and a 300-600 word story plus thinking can add up fast.
-    result = complete_json(system, user, STORY_SCHEMA, max_tokens=4000, effort="high", label="generate_story")
+    result = get_llm_handle(coach).complete_json(system, user, STORY_SCHEMA, max_tokens=4000, effort="high", label="generate_story")
 
     topic.story_md = result["story_md"]
     db.commit()

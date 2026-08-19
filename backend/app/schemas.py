@@ -15,6 +15,16 @@ class InviteRequest(BaseModel):
     email: str
 
 
+class AiSettingsOut(BaseModel):
+    provider: str | None = None
+    has_key: bool = False
+
+
+class AiSettingsUpdate(BaseModel):
+    provider: str | None = None
+    api_key: str | None = None
+
+
 class MeResponse(BaseModel):
     authenticated: bool
     coach: CoachOut | None = None

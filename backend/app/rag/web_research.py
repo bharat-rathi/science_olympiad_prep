@@ -1,13 +1,13 @@
 import re
 
-from app.llm.client import complete_text_grounded
 from app.llm.prompts import research_prompt
+from app.llm.router import get_llm_handle
 
 _SOURCES_HEADER_RE = re.compile(r"\n\s*Sources:\s*\n?", re.IGNORECASE)
 _SOURCE_LINE_RE = re.compile(r"^[-*]\s*(.+?)\s*--\s*(https?://\S+)\s*$")
 
 
-def research_topic(query: str, topic_name: str, topic_description: str) -> dict:
+def research_topic(query: str, topic_name: str, topic_description: str, coach=None) -> dict:
     """Research agent: look up `query` on the web and synthesize findings.
 
     Uses Gemini's Google Search grounding tool (complete_text_grounded) so
@@ -21,7 +21,7 @@ def research_topic(query: str, topic_name: str, topic_description: str) -> dict:
 
     system, user = research_prompt(query, topic_name, topic_description)
     try:
-        raw = complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
+        raw = get_llm_handle(coach).complete_text_grounded(system, user, max_tokens=3000, effort="high", label="research_topic")
     except Exception as e:
         # Broad on purpose: google-genai's exception hierarchy for this call
         # path isn't stable across versions (see llm/client.py's

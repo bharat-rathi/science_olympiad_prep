@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pymupdf
 
-from app.llm.client import describe_image
+from app.llm.router import get_llm_handle
 
 # Below this many characters, treat a page as "not really text" -- a scanned
 # page, a diagram, a chart -- rather than trusting a sparse/garbled
@@ -20,7 +20,7 @@ _VISION_PROMPT = (
 )
 
 
-def extract_pdf_text(path: Path) -> str:
+def extract_pdf_text(path: Path, coach=None) -> str:
     """Extract a PDF's content, handling image-heavy pages, not just text.
 
     Most pages go through PyMuPDF's plain text extraction (free, instant).
@@ -30,6 +30,7 @@ def extract_pdf_text(path: Path) -> str:
     silently dropped. Capped at MAX_VISION_PAGES so a large scanned document
     doesn't turn into dozens of LLM calls from one upload.
     """
+    llm = get_llm_handle(coach)
     doc = pymupdf.open(str(path))
     parts: list[str] = []
     vision_calls = 0
@@ -43,7 +44,7 @@ def extract_pdf_text(path: Path) -> str:
             has_images = len(page.get_images()) > 0
             if has_images and vision_calls < MAX_VISION_PAGES:
                 pixmap = page.get_pixmap(dpi=150)
-                description = describe_image(_VISION_PROMPT, pixmap.tobytes("png"), label="pdf_page_vision")
+                description = llm.describe_image(_VISION_PROMPT, pixmap.tobytes("png"), label="pdf_page_vision")
                 vision_calls += 1
                 if description.strip():
                     parts.append(description)

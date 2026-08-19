@@ -23,6 +23,12 @@ class Coach(Base):
     google_sub: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     invited_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+    # NULL provider = use the app's shared default (Gemini) key -- today's
+    # behavior, unchanged. Non-NULL means this coach brought their own
+    # provider + key (see app/llm/router.py); the key itself is Fernet-
+    # encrypted at rest (app/crypto.py), never stored or returned in plaintext.
+    llm_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    llm_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class CoachSession(Base):

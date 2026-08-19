@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
 from app.db import get_db
-from app.llm.client import complete_json
+from app.llm.router import get_llm_handle
 from app.llm.prompts import QUIZ_SCHEMA, quiz_prompt
 
 router = APIRouter(prefix="/api", tags=["assessment"])
@@ -65,7 +65,7 @@ def generate_questions(
         payload.num_mcq,
         payload.num_short,
     )
-    result = complete_json(
+    result = get_llm_handle(coach).complete_json(
         system, user, QUIZ_SCHEMA, max_tokens=4000, effort="high", label="generate_assessment_questions"
     )
 

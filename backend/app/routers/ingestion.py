@@ -101,7 +101,7 @@ def add_link_resource(
             title, text = fetch_url_text(value)
         else:
             resource_type = "research"
-            found = research_topic(value, topic.name, topic.description)
+            found = research_topic(value, topic.name, topic.description, coach)
             title = found["title"]
             text = found["text"]
             if found["sources"]:
@@ -183,13 +183,13 @@ async def upload_media_resource(
                         if ext not in SUPPORTED_UPLOAD_EXTENSIONS:
                             continue
                         extracted_path = Path(zf.extract(name, path=extract_dir))
-                        created.append(_ingest_from_path(db, topic_id, Path(name).name, extracted_path, ext))
+                        created.append(_ingest_from_path(db, topic_id, Path(name).name, extracted_path, ext, coach))
             finally:
                 tmp_zip.unlink(missing_ok=True)
         elif suffix in SUPPORTED_UPLOAD_EXTENSIONS:
             tmp_path = stream_upload_to_temp(file.file, filename)
             try:
-                created.append(_ingest_from_path(db, topic_id, filename, tmp_path, suffix))
+                created.append(_ingest_from_path(db, topic_id, filename, tmp_path, suffix, coach))
             finally:
                 tmp_path.unlink(missing_ok=True)
         else:
@@ -200,9 +200,11 @@ async def upload_media_resource(
     return created
 
 
-def _ingest_from_path(db: Session, topic_id: int, filename: str, tmp_path: Path, ext: str) -> models.Resource:
+def _ingest_from_path(
+    db: Session, topic_id: int, filename: str, tmp_path: Path, ext: str, coach: models.Coach | None = None
+) -> models.Resource:
     if ext in PDF_EXTENSIONS:
-        text = extract_pdf_text(tmp_path)
+        text = extract_pdf_text(tmp_path, coach)
         resource = models.Resource(topic_id=topic_id, type="pdf", title=filename, raw_text=text, status="ready")
     else:
         text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)

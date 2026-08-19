@@ -11,6 +11,9 @@ from app.config import settings
 logger = logging.getLogger("llm_calls")
 
 _client: genai.Client | None = None
+# Per-coach personal Gemini keys build a fresh Client here rather than
+# mutating the shared singleton above -- keeps the shared-default path
+# (still the common case) byte-for-byte unchanged.
 
 # Gemini's "thinking" tokens are spent invisibly before the visible output
 # and count against max_output_tokens -- a low budget can truncate a response
@@ -35,6 +38,12 @@ def _get_client() -> genai.Client:
     if _client is None:
         _client = genai.Client(api_key=settings.gemini_api_key)
     return _client
+
+
+def _client_for(api_key: str | None) -> genai.Client:
+    """The shared singleton for the default app key, or a fresh one-off
+    client for a coach's personal Gemini key."""
+    return _get_client() if api_key is None else genai.Client(api_key=api_key)
 
 
 def _generation_config(max_tokens: int, effort: str) -> dict:
@@ -93,9 +102,13 @@ def _create_with_retry(fn=None, **kwargs):
     raise last_error  # pragma: no cover -- loop always returns or raises above
 
 
-def complete_text(system: str, user: str, max_tokens: int = 2000, effort: str = "medium", label: str = "") -> str:
+def complete_text(
+    system: str, user: str, max_tokens: int = 2000, effort: str = "medium", label: str = "", api_key: str | None = None
+) -> str:
     """Single place all generation calls go through -- swap providers here."""
+    client = _client_for(api_key)
     interaction = _create_with_retry(
+        fn=client.interactions.create,
         model=settings.gemini_model,
         system_instruction=system,
         input=user,
@@ -107,10 +120,12 @@ def complete_text(system: str, user: str, max_tokens: int = 2000, effort: str = 
 
 
 def complete_json(
-    system: str, user: str, schema: dict, max_tokens: int = 2000, effort: str = "medium", label: str = ""
+    system: str, user: str, schema: dict, max_tokens: int = 2000, effort: str = "medium", label: str = "", api_key: str | None = None
 ) -> dict:
     """Same as complete_text, but constrains the response to the given JSON schema."""
+    client = _client_for(api_key)
     interaction = _create_with_retry(
+        fn=client.interactions.create,
         model=settings.gemini_model,
         system_instruction=system,
         input=user,
@@ -123,7 +138,7 @@ def complete_json(
 
 
 def complete_text_grounded(
-    system: str, user: str, max_tokens: int = 3000, effort: str = "high", label: str = ""
+    system: str, user: str, max_tokens: int = 3000, effort: str = "high", label: str = "", api_key: str | None = None
 ) -> str:
     """Same as complete_text, but lets the model search Google before answering.
 
@@ -137,8 +152,9 @@ def complete_text_grounded(
     came back as bare restatements of the query), unlike the classic
     google_search Tool declaration used here.
     """
+    client = _client_for(api_key)
     response = _create_with_retry(
-        fn=_get_client().models.generate_content,
+        fn=client.models.generate_content,
         model=settings.gemini_model,
         contents=user,
         config={
@@ -152,7 +168,7 @@ def complete_text_grounded(
     return text
 
 
-def generate_image(prompt: str, label: str = "") -> bytes:
+def generate_image(prompt: str, label: str = "", api_key: str | None = None) -> bytes:
     """Generate one image from a text prompt via Gemini's native image model
     (settings.gemini_image_model, aka "nano banana").
 
@@ -161,9 +177,10 @@ def generate_image(prompt: str, label: str = "") -> bytes:
     refused the prompt) or the API call itself failed (e.g. rate-limited
     past the retry budget).
     """
+    client = _client_for(api_key)
     try:
         response = _create_with_retry(
-            fn=_get_client().models.generate_content,
+            fn=client.models.generate_content,
             model=settings.gemini_image_model,
             contents=prompt,
             config={"response_modalities": ["TEXT", "IMAGE"]},
@@ -179,13 +196,17 @@ def generate_image(prompt: str, label: str = "") -> bytes:
     raise ValueError("Image generation didn't return an image -- try again or reword the concept.")
 
 
-def describe_image(prompt: str, image_bytes: bytes, mime_type: str = "image/png", max_tokens: int = 800, label: str = "") -> str:
+def describe_image(
+    prompt: str, image_bytes: bytes, mime_type: str = "image/png", max_tokens: int = 800, label: str = "", api_key: str | None = None
+) -> str:
     """Vision call -- used for PDF pages where plain text extraction comes
     back thin (scans, diagrams, charts). Goes through interactions.create
     (the default _create_with_retry path), same as complete_text/
     complete_json/chat_turn.
     """
+    client = _client_for(api_key)
     interaction = _create_with_retry(
+        fn=client.interactions.create,
         model=settings.gemini_model,
         input=[
             {"type": "text", "text": prompt},
@@ -198,7 +219,9 @@ def describe_image(prompt: str, image_bytes: bytes, mime_type: str = "image/png"
     return text
 
 
-def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium", label: str = "") -> str:
+def chat_turn(
+    system: str, messages: list[dict], max_tokens: int = 1000, effort: str = "medium", label: str = "", api_key: str | None = None
+) -> str:
     """Multi-turn conversational call, used by the tutor chat.
 
     Conversation history lives in our own TutorMessage table (see
@@ -206,8 +229,10 @@ def chat_turn(system: str, messages: list[dict], max_tokens: int = 1000, effort:
     transcript rather than relying on the provider's own server-side session
     state -- keeps our DB the single source of truth for the conversation.
     """
+    client = _client_for(api_key)
     transcript = "\n\n".join(f"{'Student' if m['role'] == 'user' else 'Tutor'}: {m['content']}" for m in messages)
     interaction = _create_with_retry(
+        fn=client.interactions.create,
         model=settings.gemini_model,
         system_instruction=system,
         input=transcript,

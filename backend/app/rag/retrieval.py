@@ -1,11 +1,11 @@
 from app.config import settings
-from app.llm.client import complete_json
 from app.llm.prompts import BATCH_RELEVANCE_SCHEMA, batch_relevance_judge_prompt
+from app.llm.router import get_llm_handle
 from app.rag.embeddings import embed_text
 from app.rag.vectorstore import query_topic
 
 
-def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: int) -> list[dict]:
+def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: int, coach=None) -> list[dict]:
     """Retrieve then relevance-judge chunks for a topic.
 
     Two stages, deliberately kept separate:
@@ -30,7 +30,7 @@ def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: 
 
     indexed = [{"index": i, "source_type": c["metadata"]["source_type"], "text": c["text"]} for i, c in enumerate(candidates)]
     system, user = batch_relevance_judge_prompt(topic_name, topic_description, indexed)
-    result = complete_json(
+    result = get_llm_handle(coach).complete_json(
         system, user, BATCH_RELEVANCE_SCHEMA, max_tokens=1500, effort="low", label="relevance_judge_batch"
     )
 

@@ -6,6 +6,7 @@ import CoachTopicBuilder from "./pages/CoachTopicBuilder";
 import CoachAssessment from "./pages/CoachAssessment";
 import StudentPractice from "./pages/StudentPractice";
 import StudentTest from "./pages/StudentTest";
+import AiSettings from "./pages/AiSettings";
 import { api, Coach } from "./api/client";
 
 export default function App() {
@@ -52,8 +53,8 @@ function AuthedApp({
   // redirecting to Login, since React Router doesn't re-render plain parent
   // components on navigation, only hook consumers like this one.
   const location = useLocation();
-  const isCoachRoute = location.pathname.startsWith("/coach");
-  if (!coach && (isCoachRoute || needsBootstrap)) {
+  const isProtectedRoute = location.pathname.startsWith("/coach") || location.pathname.startsWith("/settings");
+  if (!coach && (isProtectedRoute || needsBootstrap)) {
     return <Login needsBootstrap={needsBootstrap} />;
   }
 
@@ -66,6 +67,7 @@ function AuthedApp({
         <NavLink to="/" end>
           Home
         </NavLink>
+        {coach && <NavLink to="/settings">AI Settings</NavLink>}
         <span style={{ marginLeft: "auto" }} className="nav-user">
           {coach ? (
             <>
@@ -85,6 +87,7 @@ function AuthedApp({
           <Route path="/coach/:topicId/assessment" element={<CoachAssessment />} />
           <Route path="/student/:topicId" element={<StudentPractice />} />
           <Route path="/student/:topicId/test/:assessmentId" element={<StudentTest />} />
+          <Route path="/settings" element={<AiSettings />} />
         </Routes>
       </div>
     </>

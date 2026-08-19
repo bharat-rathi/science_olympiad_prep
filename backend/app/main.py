@@ -57,6 +57,8 @@ _ensure_column("topics", "content_published", "BOOLEAN DEFAULT 0")
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "analogy", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
+_ensure_column("coaches", "llm_provider", "VARCHAR(20)")
+_ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
 
 app = FastAPI(title="Science Olympiad Coach")
 

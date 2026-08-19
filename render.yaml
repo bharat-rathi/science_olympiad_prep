@@ -16,6 +16,8 @@ services:
         sync: false
       - key: SESSION_SECRET
         sync: false # random string, e.g. `python -c "import secrets; print(secrets.token_hex(32))"`
+      - key: CREDENTIAL_ENCRYPTION_KEY
+        sync: false # optional -- enables per-coach "bring your own AI provider"; see backend/.env.example
       - key: PUBLIC_BASE_URL
         value: https://science-olympiad-prep.onrender.com # update if your service URL differs
     disk:
