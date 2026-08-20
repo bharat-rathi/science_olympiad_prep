@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, Assessment, ConceptTerm, Topic } from "../api/client";
+import TopicChat from "../components/TopicChat";
 
 export default function StudentPractice() {
   const { topicId } = useParams();
@@ -140,6 +141,9 @@ export default function StudentPractice() {
           )}
         </>
       )}
+
+      <h2 style={{ marginTop: 24 }}>Ask about this content</h2>
+      <TopicChat topicId={id} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ConceptTerm, Resource, Topic } from "../api/client";
+import TopicChat from "../components/TopicChat";
 
 const RESOURCE_ICON: Record<string, string> = {
   pdf: "📄",
@@ -367,7 +368,13 @@ export default function CoachTopicBuilder() {
       )}
 
       <h2>
-        <span className="step-badge">2</span> Concept explanations
+        <span className="step-badge">2</span> Ask about this content
+      </h2>
+      <p className="muted">Sanity-check retrieval against what you've just uploaded before generating concepts below.</p>
+      <TopicChat topicId={id} />
+
+      <h2>
+        <span className="step-badge">3</span> Concept explanations
       </h2>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div className="row">
@@ -454,7 +461,7 @@ export default function CoachTopicBuilder() {
       </div>
 
       <h2>
-        <span className="step-badge">3</span> Story (optional)
+        <span className="step-badge">4</span> Story (optional)
       </h2>
       <p className="muted">
         Weaves the approved concepts into one short narrative students can read as a story instead
@@ -476,10 +483,10 @@ export default function CoachTopicBuilder() {
       </div>
 
       <h2>
-        <span className="step-badge">4</span> Publish learning content
+        <span className="step-badge">5</span> Publish learning content
       </h2>
       <p className="muted">
-        Controls only the flashcards and story from step 3 above -- separate from publishing the
+        Controls only the flashcards and story from step 4 above -- separate from publishing the
         assessment, which has its own publish button on the assessment editor page.
       </p>
       <div className="card row" style={{ justifyContent: "space-between" }}>
@@ -497,10 +504,10 @@ export default function CoachTopicBuilder() {
       {approvedCount === 0 && <p className="muted">Approve at least one concept before publishing.</p>}
 
       <h2>
-        <span className="step-badge">5</span> Assessment
+        <span className="step-badge">6</span> Assessment
       </h2>
       <p className="muted">
-        Has its own publish step, independent of step 4 -- you can publish a test before or after
+        Has its own publish step, independent of step 5 -- you can publish a test before or after
         publishing the flashcards/story, or without ever publishing them at all.
       </p>
       <Link to={`/coach/${id}/assessment`}>

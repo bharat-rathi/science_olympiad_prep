@@ -45,3 +45,15 @@ def retrieve_relevant_chunks(topic_name: str, topic_description: str, topic_id: 
         if score >= settings.relevance_threshold:
             relevant.append({**candidate, "relevance_score": score, "relevance_reason": judged.get("reason", "")})
     return relevant
+
+
+def retrieve_chunks_for_message(message: str, topic_id: int, top_k: int | None = None) -> list[dict]:
+    """Embedding-similarity retrieval for one live chat turn.
+
+    Unlike retrieve_relevant_chunks, this embeds the user's actual message
+    (not a fixed topic name+description) and skips the relevance-judge LLM
+    stage -- a chat loop needs one round-trip per turn, not two, and the QA
+    prompt itself is expected to say so when nothing relevant comes back.
+    """
+    query_embedding = embed_text(message)
+    return query_topic(topic_id, query_embedding, top_k=top_k or settings.retrieval_top_k)
