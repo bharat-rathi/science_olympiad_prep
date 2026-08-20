@@ -105,6 +105,13 @@ export interface TutorMessage {
   created_at: string;
 }
 
+export interface TopicChatMessage {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -235,5 +242,13 @@ export const api = {
     req<TutorMessage>(`/api/tutor/turn`, {
       method: "POST",
       body: JSON.stringify({ attempt_id: attemptId, question_id: questionId, message }),
+    }),
+
+  getTopicChat: (topicId: number, sessionToken?: string) =>
+    req<TopicChatMessage[]>(`/api/topics/${topicId}/chat${sessionToken ? `?session_token=${encodeURIComponent(sessionToken)}` : ""}`),
+  topicChatTurn: (topicId: number, message: string, sessionToken?: string) =>
+    req<TopicChatMessage>(`/api/topics/${topicId}/chat/turn`, {
+      method: "POST",
+      body: JSON.stringify({ message, session_token: sessionToken }),
     }),
 };

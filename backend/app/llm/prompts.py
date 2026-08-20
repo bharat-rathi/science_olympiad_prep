@@ -330,6 +330,27 @@ def hint_prompt(topic_name: str, concept_context: str, question_prompt: str) -> 
     return system, user
 
 
+def topic_qa_system_prompt(topic_name: str, labeled_snippets: list[dict]) -> str:
+    """System prompt for the free-form "ask about this topic's content" chat.
+
+    Grounded strictly in retrieved snippets rather than general knowledge
+    (unlike explanation_prompt, which falls back to general knowledge when
+    team resources don't cover a concept) -- the point of this feature is to
+    answer from what the team actually uploaded, and say so plainly when it
+    doesn't cover the question.
+    """
+    snippet_block = "\n\n".join(f"[{s['source_type']}] {s['text']}" for s in labeled_snippets) or "(no relevant team resources found)"
+    return (
+        "You are a helpful assistant answering a Science Olympiad student's or coach's "
+        f"questions about the topic '{topic_name}', grounded strictly in the team's own "
+        "uploaded materials below. Answer using only this material. If the material doesn't "
+        "cover the question, say so clearly and explain what's missing -- do not fill the gap "
+        "with general knowledge. Keep answers concise (2-5 sentences) unless the question "
+        "needs more.\n\n"
+        f"Team's uploaded material relevant to this question:\n{snippet_block}"
+    )
+
+
 def tutor_system_prompt(topic_name: str, concept_context: str, question_prompt: str, correct_answer: str, student_answer: str) -> str:
     return (
         "You are a patient, Socratic Science Olympiad tutor. The student just "

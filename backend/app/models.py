@@ -170,3 +170,21 @@ class TutorMessage(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
     attempt_answer: Mapped["AttemptAnswer"] = relationship(back_populates="tutor_messages")
+
+
+class TopicChatMessage(Base):
+    __tablename__ = "topic_chat_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
+    # Exactly one of coach_id/session_token is set per row -- coach_id for an
+    # authenticated coach's own conversation, session_token (a UUID the
+    # frontend generates and stores in localStorage) for an anonymous
+    # student's, since students have no account in this app. Enforced by the
+    # router, not a DB constraint -- this file doesn't use CheckConstraint
+    # anywhere else.
+    coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    session_token: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    role: Mapped[str] = mapped_column(String(20))  # user | assistant
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)

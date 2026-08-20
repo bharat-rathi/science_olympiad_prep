@@ -211,3 +211,18 @@ class TutorTurnRequest(BaseModel):
     attempt_id: int
     question_id: int
     message: str
+
+
+class TopicChatMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    role: str
+    content: str
+    created_at: datetime.datetime
+
+
+class TopicChatTurnRequest(BaseModel):
+    message: str
+    # Only meaningful for an anonymous student; ignored server-side when the
+    # request carries an authenticated coach session cookie instead.
+    session_token: str | None = None

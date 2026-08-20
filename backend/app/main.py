@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import auth, models
 from app.config import settings
 from app.db import SessionLocal, engine
-from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, topics, tutor
+from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, topic_chat, topics, tutor
 
 # INFO so llm/client.py's per-call logging (label, effort, char counts) shows
 # up in Render's logs -- the app's cheapest way to see LLM call volume.
@@ -156,6 +156,7 @@ app.include_router(explain.router)
 app.include_router(assessment.router)
 app.include_router(attempts.router)
 app.include_router(tutor.router)
+app.include_router(topic_chat.router)
 
 
 @app.on_event("startup")
