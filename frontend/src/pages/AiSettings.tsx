@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, AiSettings as AiSettingsType } from "../api/client";
+import { api, AiSettings as AiSettingsType, DriveStatus } from "../api/client";
 
 const PROVIDER_LABELS: Record<string, string> = {
   gemini: "Gemini",
@@ -15,12 +15,25 @@ export default function AiSettings() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
+  const [disconnectingDrive, setDisconnectingDrive] = useState(false);
+
   useEffect(() => {
     api.getAiSettings().then((s) => {
       setSettings(s);
       setProvider(s.provider);
     });
+    api.getDriveStatus().then(setDriveStatus);
   }, []);
+
+  async function disconnectDrive() {
+    setDisconnectingDrive(true);
+    try {
+      setDriveStatus(await api.disconnectDrive());
+    } finally {
+      setDisconnectingDrive(false);
+    }
+  }
 
   async function save() {
     setError("");
@@ -101,6 +114,36 @@ export default function AiSettings() {
           setting -- Claude and OpenAI don't support that directly. Claude also has no image-generation API,
           so flashcard images fall back to the shared key when Claude is selected.
         </p>
+      </div>
+
+      <div className="card stack" style={{ marginTop: 24 }}>
+        <h2 style={{ margin: 0 }}>Google Drive</h2>
+        <p className="muted" style={{ margin: 0 }}>
+          Connect Google Drive to add a video straight from a share link when adding resources to a topic --
+          same as pasting a YouTube link. Optional; only needed if you have videos on Drive.
+        </p>
+        {driveStatus && (
+          <>
+            <span>
+              {driveStatus.connected ? (
+                <span className="tag success">Connected</span>
+              ) : (
+                <span className="tag general">Not connected</span>
+              )}
+            </span>
+            <div className="row">
+              {driveStatus.connected ? (
+                <button onClick={disconnectDrive} disabled={disconnectingDrive}>
+                  {disconnectingDrive ? "Disconnecting..." : "Disconnect"}
+                </button>
+              ) : (
+                <button className="primary" onClick={() => (window.location.href = "/api/auth/google/drive/connect")}>
+                  Connect Google Drive
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

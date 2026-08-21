@@ -31,6 +31,10 @@ class MeResponse(BaseModel):
     needs_bootstrap: bool = False
 
 
+class DriveStatusOut(BaseModel):
+    connected: bool
+
+
 class TopicOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

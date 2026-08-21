@@ -81,6 +81,7 @@ _ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "why_it_matters", "TEXT DEFAULT ''")
 _ensure_column("coaches", "llm_provider", "VARCHAR(20)")
 _ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
+_ensure_column("coaches", "google_drive_refresh_token_encrypted", "TEXT")
 
 app = FastAPI(title="Science Olympiad Coach")
 

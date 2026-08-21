@@ -16,6 +16,10 @@ export interface MeResponse {
   needs_bootstrap: boolean;
 }
 
+export interface DriveStatus {
+  connected: boolean;
+}
+
 export interface AiSettings {
   // null = using the team's shared default key
   provider: "gemini" | "claude" | "openai" | null;
@@ -151,6 +155,9 @@ export const api = {
   getAiSettings: () => req<AiSettings>("/api/auth/ai-settings"),
   updateAiSettings: (payload: { provider: AiSettings["provider"]; api_key: string | null }) =>
     req<AiSettings>("/api/auth/ai-settings", { method: "PUT", body: JSON.stringify(payload) }),
+
+  getDriveStatus: () => req<DriveStatus>("/api/auth/drive-status"),
+  disconnectDrive: () => req<DriveStatus>("/api/auth/drive/disconnect", { method: "POST" }),
 
   listTopics: () => req<Topic[]>("/api/topics"),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),
