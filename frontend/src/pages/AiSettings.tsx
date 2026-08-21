@@ -17,6 +17,10 @@ export default function AiSettings() {
 
   const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
   const [disconnectingDrive, setDisconnectingDrive] = useState(false);
+  // Set by the /google/drive/callback redirect (?drive_error=...) when the
+  // consent flow completed but the server couldn't save the result --
+  // surfaced here instead of failing silently.
+  const [driveError, setDriveError] = useState("");
 
   useEffect(() => {
     api.getAiSettings().then((s) => {
@@ -24,6 +28,15 @@ export default function AiSettings() {
       setProvider(s.provider);
     });
     api.getDriveStatus().then(setDriveStatus);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("drive_error") === "not_configured") {
+      setDriveError(
+        "Google Drive isn't set up on this server yet -- CREDENTIAL_ENCRYPTION_KEY needs to be configured. " +
+          "Ask whoever manages the deployment to add it.",
+      );
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   async function disconnectDrive() {
@@ -122,6 +135,7 @@ export default function AiSettings() {
           Connect Google Drive to add a video straight from a share link when adding resources to a topic --
           same as pasting a YouTube link. Optional; only needed if you have videos on Drive.
         </p>
+        {driveError && <p style={{ color: "var(--danger)" }}>{driveError}</p>}
         {driveStatus && (
           <>
             <span>

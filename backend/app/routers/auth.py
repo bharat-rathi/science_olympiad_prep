@@ -38,6 +38,12 @@ async def google_drive_connect(request: Request, coach: models.Coach = Depends(a
     coach pastes a Drive link long after this login-time exchange, not
     during it.
     """
+    # Fail fast, before sending the coach through Google's whole consent
+    # screen, if there's nowhere to store the result -- the refresh token
+    # gets Fernet-encrypted with the same key as personal LLM API keys
+    # (crypto.py), and encrypt() raises if that key isn't configured.
+    if not crypto.is_configured():
+        return RedirectResponse(f"{settings.public_base_url}/settings?drive_error=not_configured")
     redirect_uri = f"{settings.public_base_url}/api/auth/google/drive/callback"
     return await auth.oauth.google.authorize_redirect(
         request,
@@ -57,6 +63,11 @@ async def google_drive_callback(request: Request, db: Session = Depends(get_db))
     oauth_token = await auth.oauth.google.authorize_access_token(request)
     refresh_token = oauth_token.get("refresh_token")
     if refresh_token:
+        if not crypto.is_configured():
+            # Same fallback as the /connect guard above -- covers a config
+            # change between the two legs of this round-trip, or the
+            # callback being hit directly.
+            return RedirectResponse(f"{settings.public_base_url}/settings?drive_error=not_configured")
         row = db.get(models.Coach, coach.id)
         row.google_drive_refresh_token_encrypted = crypto.encrypt(refresh_token)
         db.commit()
