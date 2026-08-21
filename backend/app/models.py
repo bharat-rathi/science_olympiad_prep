@@ -80,6 +80,26 @@ class Resource(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
     topic: Mapped["Topic"] = relationship(back_populates="resources")
+    diagrams: Mapped[list["Diagram"]] = relationship(back_populates="resource", cascade="all, delete-orphan")
+
+
+class Diagram(Base):
+    """A page image captured during PDF ingestion (see rag/pdf_extract.py),
+    kept instead of discarded once its vision description is folded into the
+    resource's text -- shown as a per-topic visual gallery to coaches and
+    students alike."""
+
+    __tablename__ = "diagrams"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
+    resource_id: Mapped[int] = mapped_column(ForeignKey("resources.id"))
+    image_data_url: Mapped[str] = mapped_column(Text)
+    caption: Mapped[str] = mapped_column(Text, default="")
+    page_number: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+
+    resource: Mapped["Resource"] = relationship(back_populates="diagrams")
 
 
 class ConceptTerm(Base):

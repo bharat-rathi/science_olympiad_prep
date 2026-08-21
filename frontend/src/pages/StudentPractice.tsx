@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, Assessment, ConceptTerm, Topic } from "../api/client";
+import { api, Assessment, ConceptTerm, Diagram, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 
 export default function StudentPractice() {
@@ -10,6 +10,7 @@ export default function StudentPractice() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [concepts, setConcepts] = useState<ConceptTerm[]>([]);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [diagrams, setDiagrams] = useState<Diagram[]>([]);
   const [view, setView] = useState<"flashcards" | "story">("flashcards");
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -21,6 +22,7 @@ export default function StudentPractice() {
     // publish flag -- a coach can publish a test without (or before)
     // publishing the concepts/story, and vice versa.
     api.getLatestAssessment(id).then((a) => setAssessment(a && a.status === "published" ? a : null));
+    api.listDiagrams(id).then(setDiagrams);
   }, [id]);
 
   function toggleFlip(conceptId: number) {
@@ -139,6 +141,20 @@ export default function StudentPractice() {
               <p className="story-content" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{topic.story_md}</p>
             </div>
           )}
+        </>
+      )}
+
+      {diagrams.length > 0 && (
+        <>
+          <h2 style={{ marginTop: 24 }}>Diagrams from your resources</h2>
+          <div className="diagram-grid">
+            {diagrams.map((d) => (
+              <div className="card diagram-card" key={d.id}>
+                <img src={d.image_data_url} alt={d.caption} />
+                <p className="muted">{d.caption}</p>
+              </div>
+            ))}
+          </div>
         </>
       )}
 

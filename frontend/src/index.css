@@ -443,6 +443,24 @@ label {
   gap: 14px;
 }
 
+/* ---------- Diagram gallery ---------- */
+
+.diagram-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.diagram-card img {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  display: block;
+}
+
+.diagram-card p {
+  margin: 8px 0 0;
+}
+
 /* ---------- Flashcards ---------- */
 
 .flashcard {

@@ -85,6 +85,15 @@ class ResourceCreateLink(BaseModel):
     url: str
 
 
+class DiagramOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    resource_id: int
+    image_data_url: str
+    caption: str
+    page_number: int
+
+
 class ConceptTermOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

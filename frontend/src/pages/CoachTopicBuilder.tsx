@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ConceptTerm, Resource, Topic } from "../api/client";
+import { api, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 
 const RESOURCE_ICON: Record<string, string> = {
@@ -18,6 +18,7 @@ export default function CoachTopicBuilder() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [concepts, setConcepts] = useState<ConceptTerm[]>([]);
+  const [diagrams, setDiagrams] = useState<Diagram[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,6 +49,7 @@ export default function CoachTopicBuilder() {
     api.getTopic(id).then(setTopic);
     api.listResources(id).then(setResources);
     api.listConcepts(id).then(setConcepts);
+    api.listDiagrams(id).then(setDiagrams);
   }
 
   useEffect(refresh, [id]);
@@ -77,6 +79,7 @@ export default function CoachTopicBuilder() {
     try {
       await api.deleteResource(id, r.id);
       setResources((prev) => prev.filter((x) => x.id !== r.id));
+      setDiagrams((prev) => prev.filter((d) => d.resource_id !== r.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -364,6 +367,22 @@ export default function CoachTopicBuilder() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {diagrams.length > 0 && (
+        <div className="stack">
+          <div className="muted" style={{ fontWeight: 600, fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Diagrams extracted from your PDFs ({diagrams.length})
+          </div>
+          <div className="diagram-grid">
+            {diagrams.map((d) => (
+              <div className="card diagram-card" key={d.id}>
+                <img src={d.image_data_url} alt={d.caption} />
+                <p className="muted">{d.caption}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -45,6 +45,14 @@ export interface Resource {
   transcript: string;
 }
 
+export interface Diagram {
+  id: number;
+  resource_id: number;
+  image_data_url: string;
+  caption: string;
+  page_number: number;
+}
+
 export interface ConceptTerm {
   id: number;
   topic_id: number;
@@ -176,6 +184,7 @@ export const api = {
   },
   deleteResource: (topicId: number, resourceId: number) =>
     req<void>(`/api/topics/${topicId}/resources/${resourceId}`, { method: "DELETE" }),
+  listDiagrams: (topicId: number) => req<Diagram[]>(`/api/topics/${topicId}/diagrams`),
 
   listConcepts: (topicId: number) => req<ConceptTerm[]>(`/api/topics/${topicId}/concepts`),
   generateExplanations: (topicId: number) =>
