@@ -96,13 +96,20 @@ CONCEPT_LIST_SCHEMA = {
                     "term": {"type": "string"},
                     "explanation_md": {
                         "type": "string",
-                        "description": "First-principles explanation for a student meeting this concept for the "
-                        "first time, 3-6 sentences, markdown allowed",
+                        "description": "The plain-English core idea for a reader with zero prior science "
+                        "background meeting this concept for the first time, 2-4 short sentences, one idea at "
+                        "a time -- not the analogy and not the event-relevance, those are separate fields below",
                     },
                     "analogy": {
                         "type": "string",
                         "description": "One short, concrete real-world comparison that makes the concept click "
                         "-- not a restatement of the explanation, an actual analogy",
+                    },
+                    "why_it_matters": {
+                        "type": "string",
+                        "description": "1-2 sentences tying this concept directly to the actual competition "
+                        "event/task (e.g. a specific build decision or scoring rule it affects) -- concrete and "
+                        "specific to this event, not a generic 'this is important in physics' statement",
                     },
                     "source": {
                         "type": "string",
@@ -110,7 +117,7 @@ CONCEPT_LIST_SCHEMA = {
                         "description": "team_resource if grounded in provided snippets, general_knowledge otherwise",
                     },
                 },
-                "required": ["term", "explanation_md", "analogy", "source"],
+                "required": ["term", "explanation_md", "analogy", "why_it_matters", "source"],
                 "additionalProperties": False,
             },
         }
@@ -123,21 +130,25 @@ CONCEPT_LIST_SCHEMA = {
 def explanation_prompt(topic_name: str, topic_description: str, labeled_snippets: list[dict]) -> tuple[str, str]:
     system = (
         "You explain Science Olympiad concepts to a student meeting them for the very "
-        "first time -- not to a coach, not to someone with prior background. Write from "
-        "first principles: build the idea up from what the student already knows about "
-        "the everyday world, define every piece of jargon inline the moment you use it "
-        "(never assume a term is already understood), and avoid unexplained notation, "
-        "formulas, or domain shorthand. Prefer plain, concrete language over technical "
-        "precision -- it's fine to simplify as long as it's not wrong. Given relevant "
-        "snippets from the team's own resources (which may be sparse or absent), produce "
-        "a glossary of the key concepts and jargon a student must know for this topic. "
-        "For each concept: if the provided snippets actually cover it, ground the "
-        "explanation in them and mark source as 'team_resource'. If the snippets don't "
-        "cover it well, still explain it using your general knowledge of the event, and "
-        "mark source as 'general_knowledge' -- don't skip important concepts just "
-        "because the team's materials didn't happen to cover them, and don't stretch "
-        "thin snippets to cover concepts they don't really address. Also give each "
-        "concept a short, concrete analogy to something from ordinary life."
+        "first time -- assume zero prior science background, not just 'new to this "
+        "specific topic'. Write from first principles: build the idea up from what the "
+        "student already knows about the everyday world, define every piece of jargon "
+        "inline the moment you use it (never assume a term is already understood), and "
+        "avoid unexplained notation, formulas, or domain shorthand. Prefer plain, "
+        "concrete language over technical precision -- it's fine to simplify as long as "
+        "it's not wrong. Given relevant snippets from the team's own resources (which "
+        "may be sparse or absent), produce a glossary of the key concepts and jargon a "
+        "student must know for this topic. For each concept: if the provided snippets "
+        "actually cover it, ground the explanation in them and mark source as "
+        "'team_resource'. If the snippets don't cover it well, still explain it using "
+        "your general knowledge of the event, and mark source as 'general_knowledge' -- "
+        "don't skip important concepts just because the team's materials didn't happen "
+        "to cover them, and don't stretch thin snippets to cover concepts they don't "
+        "really address. Each concept has three distinct parts, each doing one job -- "
+        "don't blend them together: explanation_md is the plain idea itself, analogy is "
+        "a short relatable comparison, and why_it_matters is a concrete sentence or two "
+        "connecting the concept to an actual decision or rule in this specific event "
+        "(not a generic statement about physics being useful)."
     )
     snippet_block = "\n\n".join(
         f"[{s['source_type']}] {s['text']}" for s in labeled_snippets
@@ -195,18 +206,24 @@ def image_prompt(topic_name: str, term: str, explanation_md: str, analogy: str) 
     """
     analogy_hint = f" It may help to lean on this analogy: {analogy}." if analogy else ""
     return (
-        f"Create a simple explainer diagram for a Science Olympiad student meeting "
-        f"'{term}' for the first time, as part of the topic '{topic_name}'. Depict only "
-        "what's necessary to make the concept below click at a glance -- the real objects, "
-        "motion, or forces involved, shown clearly (e.g. with motion lines, arrows, or "
-        "before/after positioning to show cause and effect). This is a focused diagram, "
-        f"not a busy scene with unrelated decorative elements.{analogy_hint}\n\n"
+        f"Create a labeled explainer diagram (like one from a science textbook, not a "
+        f"decorative illustration) for a Science Olympiad student meeting '{term}' for "
+        f"the first time, as part of the topic '{topic_name}'. Depict only what's "
+        "necessary to make the concept below click at a glance -- the real objects, "
+        "motion, or forces involved, shown clearly via genuine diagram conventions: "
+        "labeled arrows (e.g. force or motion direction), a labeled before/after pair, "
+        "or a labeled cross-section, whichever actually fits this concept. This is a "
+        f"focused diagram, not a busy scene with unrelated decorative elements.{analogy_hint}\n\n"
         f"What it needs to explain:\n{explanation_md}\n\n"
-        "Style: simple, colorful, flat vector illustration on a plain or minimal "
-        "background, few elements, clear and uncluttered, friendly and appropriate for "
-        "kids. Do not include ANY text, letters, numbers, words, or labels anywhere in "
-        "the image, even small or stylized ones -- express the idea purely through the "
-        "imagery itself."
+        "Style: simple, colorful, flat vector diagram on a plain or minimal background, "
+        "clear and uncluttered, friendly and appropriate for kids. A small amount of "
+        "in-image text is allowed and encouraged where it aids understanding -- up to "
+        "3-4 short labels total (1-3 words each, e.g. a force name, 'before'/'after', a "
+        f"key value), placed clearly next to what they label. If a label uses this "
+        f"concept's own name, spell it exactly as given here, character for character: "
+        f"'{term}' -- do not rely on memory for technical spelling. Labels only, not "
+        "full sentences: do not add a caption, title, speech bubble, or any text longer "
+        "than a few words anywhere in the image."
     )
 
 
@@ -215,16 +232,18 @@ REFINE_CONCEPT_SCHEMA = {
     "properties": {
         "explanation_md": {"type": "string"},
         "analogy": {"type": "string"},
+        "why_it_matters": {"type": "string"},
     },
-    "required": ["explanation_md", "analogy"],
+    "required": ["explanation_md", "analogy", "why_it_matters"],
     "additionalProperties": False,
 }
 
 
 def refine_concept_prompt(
-    topic_name: str, term: str, explanation_md: str, analogy: str, feedback: str
+    topic_name: str, term: str, explanation_md: str, analogy: str, why_it_matters: str, feedback: str
 ) -> tuple[str, str]:
-    """Revise one concept's explanation/analogy per a coach's freeform feedback.
+    """Revise one concept's explanation/analogy/why-it-matters per a coach's
+    freeform feedback.
 
     Deliberately does not re-run retrieval -- the concept is already grounded;
     revising wording per feedback doesn't need new source material, so this
@@ -232,17 +251,22 @@ def refine_concept_prompt(
     """
     system = (
         "You revise a single Science Olympiad concept explanation for a student "
-        "audience, based on a coach's feedback. Keep it first-principles and "
-        "jargon-free unless the feedback says otherwise. Produce a complete revised "
-        "explanation and analogy, not just the delta."
+        "audience with zero prior science background, based on a coach's feedback. "
+        "Keep it first-principles and jargon-free unless the feedback says otherwise. "
+        "The concept has three distinct parts -- explanation_md (the plain idea), "
+        "analogy (a relatable comparison), and why_it_matters (how it connects to an "
+        "actual decision/rule in this event) -- keep them distinct rather than blending "
+        "them. Produce complete revised versions of all three, not just the delta, even "
+        "if the feedback only concerns one of them."
     )
     user = (
         f"Topic: {topic_name}\n"
         f"Concept: {term}\n\n"
         f"Current explanation:\n{explanation_md}\n\n"
         f"Current analogy:\n{analogy or '(none yet)'}\n\n"
+        f"Current why-it-matters:\n{why_it_matters or '(none yet)'}\n\n"
         f"Coach feedback:\n{feedback}\n\n"
-        "Revise the explanation and analogy to address this feedback."
+        "Revise the explanation, analogy, and why-it-matters to address this feedback."
     )
     return system, user
 

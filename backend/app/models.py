@@ -112,6 +112,11 @@ class ConceptTerm(Base):
     # Short relatable comparison generated alongside explanation_md -- the
     # "back of the flashcard" content beyond the plain explanation.
     analogy: Mapped[str] = mapped_column(Text, default="")
+    # Concrete link from the abstract concept to the actual competition
+    # task -- the "why should I care" a kid needs, kept separate from
+    # explanation_md so it renders as its own labeled section instead of
+    # being buried in prose.
+    why_it_matters: Mapped[str] = mapped_column(Text, default="")
     source_resource_ids: Mapped[list] = mapped_column(JSON, default=list)
     video_relevant: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)

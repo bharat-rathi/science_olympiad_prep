@@ -78,6 +78,7 @@ _ensure_column("topics", "content_published", f"BOOLEAN DEFAULT {_bool_default}"
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "analogy", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
+_ensure_column("concept_terms", "why_it_matters", "TEXT DEFAULT ''")
 _ensure_column("coaches", "llm_provider", "VARCHAR(20)")
 _ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
 

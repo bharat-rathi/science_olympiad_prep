@@ -544,11 +544,22 @@ label {
 }
 
 .concept-image-preview {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
+  width: 100%;
+  max-width: 320px;
+  max-height: 240px;
+  object-fit: contain;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.flashcard-diagram {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  flex-shrink: 0;
 }
 
 .flashcard-back {
@@ -590,6 +601,17 @@ label {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+.flashcard-why-it-matters {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--navy-soft);
+}
+
+.flashcard-why-it-matters strong {
+  color: var(--navy);
 }
 
 /* ---------- Dropzone ---------- */

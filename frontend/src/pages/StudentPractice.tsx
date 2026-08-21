@@ -112,6 +112,7 @@ export default function StudentPractice() {
                           </span>
                         </div>
                         <div className="flashcard-face flashcard-back">
+                          {c.image_data_url && <img src={c.image_data_url} alt={c.term} className="flashcard-diagram" />}
                           {c.analogy ? (
                             <>
                               <p className="flashcard-analogy">{c.analogy}</p>
@@ -123,6 +124,11 @@ export default function StudentPractice() {
                           ) : (
                             <p className="flashcard-explanation" style={{ margin: 0 }}>
                               {c.explanation_md}
+                            </p>
+                          )}
+                          {c.why_it_matters && (
+                            <p className="flashcard-why-it-matters">
+                              <strong>Why it matters:</strong> {c.why_it_matters}
                             </p>
                           )}
                           <span className={`tag ${c.video_relevant ? "video" : "general"}`} style={{ marginTop: "auto" }}>

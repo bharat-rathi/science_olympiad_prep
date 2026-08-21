@@ -59,6 +59,7 @@ export interface ConceptTerm {
   term: string;
   explanation_md: string;
   analogy: string;
+  why_it_matters: string;
   source_resource_ids: number[];
   video_relevant: boolean;
   approved: boolean;
@@ -192,7 +193,7 @@ export const api = {
   updateConcept: (
     topicId: number,
     conceptId: number,
-    payload: Partial<Pick<ConceptTerm, "term" | "explanation_md" | "analogy" | "approved">>,
+    payload: Partial<Pick<ConceptTerm, "term" | "explanation_md" | "analogy" | "why_it_matters" | "approved">>,
   ) => req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   refineConcept: (topicId: number, conceptId: number, feedback: string) =>
     req<ConceptTerm>(`/api/topics/${topicId}/concepts/${conceptId}/refine`, {

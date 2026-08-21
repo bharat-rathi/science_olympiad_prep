@@ -101,6 +101,7 @@ class ConceptTermOut(BaseModel):
     term: str
     explanation_md: str
     analogy: str = ""
+    why_it_matters: str = ""
     source_resource_ids: list[int]
     video_relevant: bool
     approved: bool
@@ -111,6 +112,7 @@ class ConceptTermUpdate(BaseModel):
     term: str | None = None
     explanation_md: str | None = None
     analogy: str | None = None
+    why_it_matters: str | None = None
     approved: bool | None = None
 
 
