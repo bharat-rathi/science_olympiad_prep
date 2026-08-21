@@ -291,7 +291,7 @@ export default function CoachTopicBuilder() {
 
         <div className="row">
           <input
-            placeholder="Paste a link (YouTube or any web page), or type a topic to research"
+            placeholder="Paste a link (YouTube, Google Drive video, or any web page), or type a topic to research"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             style={{ flex: 1 }}

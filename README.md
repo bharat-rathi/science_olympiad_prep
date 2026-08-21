@@ -84,14 +84,35 @@ the sign-in):
      card on the home page). Two lists, same people.
 3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**:
    - Application type: **Web application**.
-   - **Authorized redirect URIs** — add both:
-     - `http://localhost:5173/api/auth/google/callback` (local dev)
-     - `https://<your-render-url>/api/auth/google/callback` (production —
-       use the actual `.onrender.com` URL from your Render dashboard)
+   - **Authorized redirect URIs** — add all four:
+     - `http://localhost:5173/api/auth/google/callback` (local dev, login)
+     - `http://localhost:5173/api/auth/google/drive/callback` (local dev,
+       optional Drive video connect -- see below)
+     - `https://<your-render-url>/api/auth/google/callback` (production
+       login — use the actual `.onrender.com` URL from your Render
+       dashboard)
+     - `https://<your-render-url>/api/auth/google/drive/callback`
+       (production Drive connect)
    - Create, then copy the **Client ID** and **Client secret**.
 4. Put those in `backend/.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
    for local dev, and in the Render service's **Environment** tab for
    production (see "Deploying" below).
+
+**Optional: Google Drive video ingestion**
+
+A coach can add a video straight from a Google Drive share link (same
+"paste a link" box used for YouTube), once they've clicked "Connect Google
+Drive" on the AI Settings page — a separate, opt-in consent step from
+login, since it asks for a bigger permission (`drive.readonly`) than
+sign-in needs. To enable it:
+
+1. **APIs & Services → Library** → search "Google Drive API" → **Enable**
+   (on the same Cloud project as above).
+2. Nothing else — it reuses the same OAuth client (Client ID/secret) from
+   the sign-in setup, just with the two extra redirect URIs added above.
+
+If you skip this, everything else works exactly as before; coaches just
+won't see a working "Connect Google Drive" button.
 
 **Backend**
 

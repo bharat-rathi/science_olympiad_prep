@@ -29,6 +29,11 @@ class Coach(Base):
     # encrypted at rest (app/crypto.py), never stored or returned in plaintext.
     llm_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
     llm_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # NULL = coach hasn't connected Google Drive (a separate opt-in from
+    # login, requested only when they actually try to add a Drive video --
+    # see routers/auth.py's /google/drive/connect). Fernet-encrypted at
+    # rest via app/crypto.py, same as llm_api_key_encrypted above.
+    google_drive_refresh_token_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class CoachSession(Base):

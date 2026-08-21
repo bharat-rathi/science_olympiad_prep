@@ -27,6 +27,58 @@ async def google_login(request: Request):
     return await auth.oauth.google.authorize_redirect(request, redirect_uri)
 
 
+@router.get("/google/drive/connect")
+async def google_drive_connect(request: Request, coach: models.Coach = Depends(auth.require_coach)):
+    """Separate, opt-in consent flow for Google Drive access -- distinct
+    from the plain login above, only triggered when a coach explicitly
+    wants to add a Drive video, not bundled into every sign-in.
+
+    access_type=offline + prompt=consent forces Google to return a
+    refresh_token (it only does so on first consent otherwise), since a
+    coach pastes a Drive link long after this login-time exchange, not
+    during it.
+    """
+    redirect_uri = f"{settings.public_base_url}/api/auth/google/drive/callback"
+    return await auth.oauth.google.authorize_redirect(
+        request,
+        redirect_uri,
+        scope="openid email profile https://www.googleapis.com/auth/drive.readonly",
+        access_type="offline",
+        prompt="consent",
+    )
+
+
+@router.get("/google/drive/callback")
+async def google_drive_callback(request: Request, db: Session = Depends(get_db)):
+    coach = request.state.coach
+    if coach is None:
+        return RedirectResponse(f"{settings.public_base_url}/login")
+
+    oauth_token = await auth.oauth.google.authorize_access_token(request)
+    refresh_token = oauth_token.get("refresh_token")
+    if refresh_token:
+        row = db.get(models.Coach, coach.id)
+        row.google_drive_refresh_token_encrypted = crypto.encrypt(refresh_token)
+        db.commit()
+    # No refresh_token in the response means the coach had already granted
+    # this scope before and Google didn't re-issue one -- their existing
+    # stored token (if any) is left as-is rather than overwritten with None.
+    return RedirectResponse(f"{settings.public_base_url}/settings")
+
+
+@router.post("/drive/disconnect", response_model=schemas.DriveStatusOut)
+def drive_disconnect(coach: models.Coach = Depends(auth.require_coach), db: Session = Depends(get_db)):
+    row = db.get(models.Coach, coach.id)
+    row.google_drive_refresh_token_encrypted = None
+    db.commit()
+    return schemas.DriveStatusOut(connected=False)
+
+
+@router.get("/drive-status", response_model=schemas.DriveStatusOut)
+def drive_status(coach: models.Coach = Depends(auth.require_coach)):
+    return schemas.DriveStatusOut(connected=bool(coach.google_drive_refresh_token_encrypted))
+
+
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     """Finish the OAuth round-trip and turn a Google identity into a Coach.

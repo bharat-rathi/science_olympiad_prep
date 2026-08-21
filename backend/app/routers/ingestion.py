@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import auth, models, schemas
 from app.db import get_db
 from app.rag.chunking import chunk_text
+from app.rag.drive_fetch import fetch_drive_video, is_drive_url
 from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
@@ -80,8 +81,10 @@ def add_link_resource(
 ):
     """Fetch a real URL and ingest its content -- no copy/paste required.
 
-    YouTube links are detected and routed to the official captions track
-    (no LLM, no video download); other http(s) URLs go through the generic
+    Google Drive video links are downloaded and transcribed via Gemini
+    (requires the coach to have connected Drive in Settings first); YouTube
+    links are detected and routed to the official captions track (no LLM,
+    no video download); other http(s) URLs go through the generic
     readable-content extractor. If the coach didn't paste a URL at all --
     just typed a keyword or topic name -- this falls back to the research
     agent (rag/web_research.py), which searches the web and synthesizes
@@ -94,7 +97,10 @@ def add_link_resource(
 
     value = payload.url.strip()
     try:
-        if is_youtube_url(value):
+        if is_drive_url(value):
+            resource_type = "video"
+            title, text = fetch_drive_video(value, coach)
+        elif is_youtube_url(value):
             resource_type = "video"
             title, text = fetch_youtube_transcript(value)
         elif _looks_like_url(value):
