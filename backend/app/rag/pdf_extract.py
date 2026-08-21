@@ -20,7 +20,7 @@ _VISION_PROMPT = (
 )
 
 
-def extract_pdf_text(path: Path, coach=None) -> str:
+def extract_pdf_text(path: Path, coach=None) -> tuple[str, list[dict]]:
     """Extract a PDF's content, handling image-heavy pages, not just text.
 
     Most pages go through PyMuPDF's plain text extraction (free, instant).
@@ -29,10 +29,16 @@ def extract_pdf_text(path: Path, coach=None) -> str:
     with photos of a whiteboard or a labeled diagram doesn't just get
     silently dropped. Capped at MAX_VISION_PAGES so a large scanned document
     doesn't turn into dozens of LLM calls from one upload.
+
+    Also returns the diagram pages themselves (not just their text
+    description) as {"image_bytes", "caption", "page_number"} dicts, so
+    callers can surface the actual image as a visual aid instead of
+    discarding it once the description is folded into the returned text.
     """
     llm = get_llm_handle(coach)
     doc = pymupdf.open(str(path))
     parts: list[str] = []
+    diagrams: list[dict] = []
     vision_calls = 0
     try:
         for page in doc:
@@ -48,6 +54,18 @@ def extract_pdf_text(path: Path, coach=None) -> str:
                 vision_calls += 1
                 if description.strip():
                     parts.append(description)
+                    # Separate, lower-dpi render just for storage/display --
+                    # the dpi=150 PNG above is only ever used for the vision
+                    # call itself, so its accuracy is untouched; this is a
+                    # much lighter copy sized for showing in a browser gallery.
+                    thumb = page.get_pixmap(dpi=96)
+                    diagrams.append(
+                        {
+                            "image_bytes": thumb.tobytes(output="jpg", jpg_quality=85),
+                            "caption": description,
+                            "page_number": page.number,
+                        }
+                    )
             elif text:
                 parts.append(text)
     finally:
@@ -59,4 +77,4 @@ def extract_pdf_text(path: Path, coach=None) -> str:
             "Couldn't extract any content from that PDF -- it may be empty or unreadable. "
             "Try pasting the text directly instead."
         )
-    return result
+    return result, diagrams

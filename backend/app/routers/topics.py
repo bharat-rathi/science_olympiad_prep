@@ -76,6 +76,11 @@ def list_resources(topic_id: int, db: Session = Depends(get_db)):
     return db.query(models.Resource).filter(models.Resource.topic_id == topic_id).order_by(models.Resource.id).all()
 
 
+@router.get("/{topic_id}/diagrams", response_model=list[schemas.DiagramOut])
+def list_diagrams(topic_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Diagram).filter(models.Diagram.topic_id == topic_id).order_by(models.Diagram.id).all()
+
+
 @router.get("/{topic_id}/concepts", response_model=list[schemas.ConceptTermOut])
 def list_concepts(topic_id: int, db: Session = Depends(get_db)):
     return db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic_id).order_by(models.ConceptTerm.id).all()

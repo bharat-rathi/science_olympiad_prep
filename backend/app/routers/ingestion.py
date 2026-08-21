@@ -1,3 +1,4 @@
+import base64
 import tempfile
 import zipfile
 from pathlib import Path
@@ -203,8 +204,9 @@ async def upload_media_resource(
 def _ingest_from_path(
     db: Session, topic_id: int, filename: str, tmp_path: Path, ext: str, coach: models.Coach | None = None
 ) -> models.Resource:
+    diagram_data: list[dict] = []
     if ext in PDF_EXTENSIONS:
-        text = extract_pdf_text(tmp_path, coach)
+        text, diagram_data = extract_pdf_text(tmp_path, coach)
         resource = models.Resource(topic_id=topic_id, type="pdf", title=filename, raw_text=text, status="ready")
     else:
         text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)
@@ -213,6 +215,19 @@ def _ingest_from_path(
     db.add(resource)
     db.commit()
     db.refresh(resource)
+
+    for d in diagram_data:
+        db.add(
+            models.Diagram(
+                topic_id=topic_id,
+                resource_id=resource.id,
+                image_data_url="data:image/jpeg;base64," + base64.b64encode(d["image_bytes"]).decode("ascii"),
+                caption=d["caption"],
+                page_number=d["page_number"],
+            )
+        )
+    if diagram_data:
+        db.commit()
 
     _index_resource(db, resource, text)
     return resource
