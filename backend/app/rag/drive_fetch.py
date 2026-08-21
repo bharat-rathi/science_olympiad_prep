@@ -66,12 +66,22 @@ def _refresh_access_token(coach: models.Coach) -> str:
 
 
 def fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
-    """Download a Drive-hosted video and transcribe it.
-
-    Returns (title, transcript). Raises ValueError -- safe to show a coach
-    directly -- for anything that isn't a clean success: not connected, the
-    file isn't a video, too large, or not accessible to this coach.
+    """Download a Drive-hosted video and transcribe it -- entry point, wraps
+    _fetch_drive_video so any network/API failure that isn't one of the
+    explicit, specific ValueErrors below (a transient Drive 5xx, a request
+    timeout, an unexpected response shape) still surfaces as a clean,
+    readable message instead of propagating as a raw 500. transcribe_video's
+    own Gemini-side failures are its own concern and pass through as-is.
     """
+    try:
+        return _fetch_drive_video(url, coach)
+    except ValueError:
+        raise
+    except (httpx.HTTPError, KeyError) as e:
+        raise ValueError(f"Something went wrong reaching Google Drive ({e}) -- try again in a moment.") from e
+
+
+def _fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
     file_id = _extract_file_id(url)
     if not file_id:
         raise ValueError("Couldn't find a file ID in that Google Drive URL.")
@@ -82,10 +92,10 @@ def fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
     meta_response = httpx.get(
         f"{DRIVE_API}/{file_id}", params={"fields": "name,mimeType,size"}, headers=headers, timeout=15
     )
-    if meta_response.status_code in (403, 404):
+    if meta_response.status_code in (401, 403, 404):
         raise ValueError(
             "Couldn't access that Google Drive file -- make sure it's shared with your Google account "
-            "(or with 'Anyone with the link')."
+            "(or with 'Anyone with the link'), and that your Drive connection in Settings is still active."
         )
     meta_response.raise_for_status()
     meta = meta_response.json()
