@@ -183,6 +183,12 @@ def generate_image(prompt: str, label: str = "", api_key: str | None = None) -> 
             fn=client.models.generate_content,
             model=settings.gemini_image_model,
             contents=prompt,
+            # image_config.image_size is documented in the SDK but verified
+            # (see test in the PR) to have zero effect on this model's
+            # output -- gemini-2.5-flash-image always returns 1024x1024
+            # regardless of 1K/2K/4K, so it's deliberately not set here.
+            # The actual fix for "images too small" was display-side (CSS),
+            # not generation-side -- see flashcard-diagram/concept-image-preview.
             config={"response_modalities": ["TEXT", "IMAGE"]},
         )
     except Exception as e:

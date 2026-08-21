@@ -178,6 +178,11 @@ export default function CoachTopicBuilder() {
     setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
   }
 
+  async function editWhyItMatters(c: ConceptTerm, why_it_matters: string) {
+    const updated = await api.updateConcept(id, c.id, { why_it_matters });
+    setConcepts((prev) => prev.map((x) => (x.id === c.id ? updated : x)));
+  }
+
   async function refineConcept(c: ConceptTerm) {
     const feedback = (feedbackDrafts[c.id] || "").trim();
     if (!feedback) return;
@@ -437,7 +442,7 @@ export default function CoachTopicBuilder() {
 
               {!isEditing ? (
                 <button className="dropzone-text-toggle" onClick={() => toggleConceptExpand(c.id)}>
-                  Edit explanation, analogy, or image →
+                  Edit explanation, analogy, why it matters, or image →
                 </button>
               ) : (
                 <div className="stack" style={{ marginTop: 8 }}>
@@ -453,6 +458,13 @@ export default function CoachTopicBuilder() {
                     style={{ minHeight: 50 }}
                     onBlur={(e) => e.target.value !== c.analogy && editAnalogy(c, e.target.value)}
                   />
+                  <label className="muted">Why it matters</label>
+                  <textarea
+                    defaultValue={c.why_it_matters}
+                    placeholder="How this concept connects to an actual decision or rule in this event"
+                    style={{ minHeight: 50 }}
+                    onBlur={(e) => e.target.value !== c.why_it_matters && editWhyItMatters(c, e.target.value)}
+                  />
                   <div className="row">
                     <input
                       placeholder="Feedback to refine this concept (e.g. 'too technical', 'add an example')"
@@ -464,6 +476,7 @@ export default function CoachTopicBuilder() {
                       {refiningId === c.id ? "Refining..." : "Refine"}
                     </button>
                   </div>
+                  {c.image_data_url && <img src={c.image_data_url} alt={c.term} className="concept-image-preview" />}
                   <div className="row">
                     <button onClick={() => generateImage(c)} disabled={imagingId === c.id}>
                       {imagingId === c.id ? "Drawing..." : c.image_data_url ? "Regenerate image" : "Generate image"}

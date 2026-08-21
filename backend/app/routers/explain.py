@@ -64,6 +64,7 @@ def generate_explanations(
             term=concept["term"],
             explanation_md=concept["explanation_md"],
             analogy=concept.get("analogy", ""),
+            why_it_matters=concept.get("why_it_matters", ""),
             source_resource_ids=grounding_resource_ids if grounded else [],
             video_relevant=grounded and bool(video_resource_ids),
             approved=False,
@@ -95,7 +96,9 @@ def refine_concept(
         raise HTTPException(404, "Concept not found")
 
     topic = db.get(models.Topic, topic_id)
-    system, user = refine_concept_prompt(topic.name, concept.term, concept.explanation_md, concept.analogy, payload.feedback)
+    system, user = refine_concept_prompt(
+        topic.name, concept.term, concept.explanation_md, concept.analogy, concept.why_it_matters, payload.feedback
+    )
     # effort="medium" (not "high"): this is a wording revision, not synthesis
     # from source material, so it doesn't need deep reasoning -- cheaper, and
     # avoids Gemini's invisible "thinking" tokens eating the whole max_tokens
@@ -106,6 +109,7 @@ def refine_concept(
 
     concept.explanation_md = result["explanation_md"]
     concept.analogy = result["analogy"]
+    concept.why_it_matters = result["why_it_matters"]
     db.commit()
     db.refresh(concept)
     return concept
