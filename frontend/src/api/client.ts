@@ -47,6 +47,7 @@ export interface Resource {
   created_at: string;
   raw_text: string;
   transcript: string;
+  error_message: string;
 }
 
 export interface Diagram {

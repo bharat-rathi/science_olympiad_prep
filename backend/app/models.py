@@ -82,6 +82,9 @@ class Resource(Base):
     raw_text: Mapped[str] = mapped_column(Text, default="")
     transcript: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(20), default="ready")  # pending | ready | failed
+    # Why status="failed" -- shown to the coach instead of a bare "Failed"
+    # tag with no explanation. Empty for pending/ready.
+    error_message: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
     topic: Mapped["Topic"] = relationship(back_populates="resources")

@@ -1,16 +1,17 @@
 import base64
+import shutil
 import tempfile
 import zipfile
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
-from app.db import get_db
+from app.db import SessionLocal, get_db
 from app.rag.chunking import chunk_text
-from app.rag.drive_fetch import fetch_drive_video, is_drive_url
+from app.rag.drive_fetch import fetch_drive_video, get_drive_video_info, is_drive_url
 from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
@@ -38,6 +39,70 @@ def _index_resource(db: Session, resource: models.Resource, text: str) -> None:
         return
     embeddings = embed_texts(chunks)
     add_chunks(resource.topic_id, resource.id, resource.type, chunks, embeddings)
+
+
+def _fail_resource(db: Session, resource: models.Resource, error: Exception) -> None:
+    resource.status = "failed"
+    resource.error_message = str(error) if isinstance(error, ValueError) else (
+        "Something went wrong processing this video -- try again."
+    )
+    db.commit()
+
+
+def _process_drive_video(resource_id: int, url: str, coach_id: int) -> None:
+    """Background task: download + transcribe a Drive video and finish
+    setting up its Resource row.
+
+    Uses its own fresh DB session -- never the request's, which is long
+    closed by the time this runs regardless. This is the whole point of
+    moving this off the request/response cycle: a Drive video can take
+    10+ minutes to download and transcribe, and holding the request's
+    session open (idle, doing nothing DB-related) for that long against
+    Neon's serverless Postgres reliably triggered a PendingRollbackError
+    once the connection got closed server-side for being idle too long.
+    """
+    db = SessionLocal()
+    try:
+        resource = db.get(models.Resource, resource_id)
+        if not resource:
+            return  # deleted before processing started
+        try:
+            coach = db.get(models.Coach, coach_id)
+            title, text = fetch_drive_video(url, coach)
+            resource.title = title
+            resource.transcript = text
+            resource.status = "ready"
+            db.commit()
+            _index_resource(db, resource, text)
+        except Exception as e:
+            _fail_resource(db, resource, e)
+    finally:
+        db.close()
+
+
+def _process_uploaded_media(resource_id: int, tmp_path_str: str, ext: str) -> None:
+    """Background task: transcribe an already-saved video/audio file and
+    finish setting up its Resource row. Same rationale as
+    _process_drive_video above -- transcription can take a while, so it
+    can't happen on the request's DB session.
+    """
+    tmp_path = Path(tmp_path_str)
+    db = SessionLocal()
+    try:
+        resource = db.get(models.Resource, resource_id)
+        if not resource:
+            return
+        try:
+            text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)
+            resource.transcript = text
+            resource.status = "ready"
+            db.commit()
+            _index_resource(db, resource, text)
+        except Exception as e:
+            _fail_resource(db, resource, e)
+    finally:
+        db.close()
+        tmp_path.unlink(missing_ok=True)
 
 
 @router.post("/{topic_id}/resources/text", response_model=schemas.ResourceOut)
@@ -76,6 +141,7 @@ def _looks_like_url(value: str) -> bool:
 def add_link_resource(
     topic_id: int,
     payload: schemas.ResourceCreateLink,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     coach: models.Coach = Depends(auth.require_coach),
 ):
@@ -96,11 +162,29 @@ def add_link_resource(
         raise HTTPException(404, "Topic not found")
 
     value = payload.url.strip()
+
+    if is_drive_url(value):
+        # Drive videos can take 10+ minutes to download and transcribe --
+        # only the fast metadata/validation check happens here, synchronously,
+        # for instant feedback on bad input; the actual work runs as a
+        # background task (see _process_drive_video) so this request can
+        # return immediately instead of holding the DB session open for the
+        # whole thing (see that function's docstring for why that matters).
+        try:
+            info = get_drive_video_info(value, coach)
+        except ValueError as e:
+            raise HTTPException(422, str(e))
+        resource = models.Resource(
+            topic_id=topic_id, type="video", title=info["title"], source_url=value, status="pending"
+        )
+        db.add(resource)
+        db.commit()
+        db.refresh(resource)
+        background_tasks.add_task(_process_drive_video, resource.id, value, coach.id)
+        return resource
+
     try:
-        if is_drive_url(value):
-            resource_type = "video"
-            title, text = fetch_drive_video(value, coach)
-        elif is_youtube_url(value):
+        if is_youtube_url(value):
             resource_type = "video"
             title, text = fetch_youtube_transcript(value)
         elif _looks_like_url(value):
@@ -158,14 +242,19 @@ SUPPORTED_UPLOAD_EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS | PDF_EXTENSIO
 async def upload_media_resource(
     topic_id: int,
     file: UploadFile,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     coach: models.Coach = Depends(auth.require_coach),
 ):
     """Upload a video/audio/PDF file, or a zip of several, for ingestion.
 
-    Video/audio go through Gemini transcription; PDFs go through plain text
-    extraction (no LLM). A zip is unpacked and each supported file inside it
-    is processed the same way.
+    PDFs go through plain text extraction (no LLM) synchronously, same as
+    always. Video/audio go through Gemini transcription -- which can take
+    a long time for a longer file -- as a background task (see
+    _process_uploaded_media): this endpoint creates a "pending" Resource
+    and returns immediately rather than holding the request (and its DB
+    session) open for however long transcription takes. A zip is unpacked
+    and each supported file inside it is processed the same way, per-file.
 
     Streams straight to disk (stream_upload_to_temp / zf.extract) rather than
     ever holding the whole upload in memory as one bytes object -- a
@@ -190,15 +279,20 @@ async def upload_media_resource(
                         if ext not in SUPPORTED_UPLOAD_EXTENSIONS:
                             continue
                         extracted_path = Path(zf.extract(name, path=extract_dir))
-                        created.append(_ingest_from_path(db, topic_id, Path(name).name, extracted_path, ext, coach))
+                        if ext not in PDF_EXTENSIONS:
+                            # extract_dir is deleted when this `with` block
+                            # exits -- well before a background task would
+                            # run -- so a video/audio file needs a durable
+                            # copy outside it first.
+                            extracted_path = _persist_temp_copy(extracted_path)
+                        created.append(
+                            _ingest_from_path(db, background_tasks, topic_id, Path(name).name, extracted_path, ext, coach)
+                        )
             finally:
                 tmp_zip.unlink(missing_ok=True)
         elif suffix in SUPPORTED_UPLOAD_EXTENSIONS:
             tmp_path = stream_upload_to_temp(file.file, filename)
-            try:
-                created.append(_ingest_from_path(db, topic_id, filename, tmp_path, suffix, coach))
-            finally:
-                tmp_path.unlink(missing_ok=True)
+            created.append(_ingest_from_path(db, background_tasks, topic_id, filename, tmp_path, suffix, coach))
         else:
             raise HTTPException(400, f"Unsupported file type: {suffix}")
     except ValueError as e:
@@ -207,33 +301,60 @@ async def upload_media_resource(
     return created
 
 
-def _ingest_from_path(
-    db: Session, topic_id: int, filename: str, tmp_path: Path, ext: str, coach: models.Coach | None = None
-) -> models.Resource:
-    diagram_data: list[dict] = []
-    if ext in PDF_EXTENSIONS:
-        text, diagram_data = extract_pdf_text(tmp_path, coach)
-        resource = models.Resource(topic_id=topic_id, type="pdf", title=filename, raw_text=text, status="ready")
-    else:
-        text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)
-        resource = models.Resource(topic_id=topic_id, type="video", title=filename, transcript=text, status="ready")
+def _persist_temp_copy(path: Path) -> Path:
+    """Copy a file to a new standalone temp file that will survive past
+    this request -- used for a video/audio file extracted from a zip into
+    a TemporaryDirectory that gets deleted as soon as that `with` block
+    exits, before a background task handed the path would get a chance to
+    read it.
+    """
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=path.suffix)
+    try:
+        with open(path, "rb") as src:
+            shutil.copyfileobj(src, tmp)
+    finally:
+        tmp.close()
+    return Path(tmp.name)
 
+
+def _ingest_from_path(
+    db: Session, background_tasks: BackgroundTasks, topic_id: int, filename: str, tmp_path: Path, ext: str,
+    coach: models.Coach | None = None,
+) -> models.Resource:
+    if ext in PDF_EXTENSIONS:
+        try:
+            text, diagram_data = extract_pdf_text(tmp_path, coach)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+        resource = models.Resource(topic_id=topic_id, type="pdf", title=filename, raw_text=text, status="ready")
+        db.add(resource)
+        db.commit()
+        db.refresh(resource)
+
+        for d in diagram_data:
+            db.add(
+                models.Diagram(
+                    topic_id=topic_id,
+                    resource_id=resource.id,
+                    image_data_url="data:image/jpeg;base64," + base64.b64encode(d["image_bytes"]).decode("ascii"),
+                    caption=d["caption"],
+                    page_number=d["page_number"],
+                )
+            )
+        if diagram_data:
+            db.commit()
+
+        _index_resource(db, resource, text)
+        return resource
+
+    # Video/audio: transcription can take a long time (Gemini has to
+    # process the whole file), so it's handed off to a background task
+    # instead of blocking this request -- see _process_uploaded_media.
+    # That task owns tmp_path from here on, including deleting it when done.
+    resource = models.Resource(topic_id=topic_id, type="video", title=filename, status="pending")
     db.add(resource)
     db.commit()
     db.refresh(resource)
-
-    for d in diagram_data:
-        db.add(
-            models.Diagram(
-                topic_id=topic_id,
-                resource_id=resource.id,
-                image_data_url="data:image/jpeg;base64," + base64.b64encode(d["image_bytes"]).decode("ascii"),
-                caption=d["caption"],
-                page_number=d["page_number"],
-            )
-        )
-    if diagram_data:
-        db.commit()
-
-    _index_resource(db, resource, text)
+    background_tasks.add_task(_process_uploaded_media, resource.id, str(tmp_path), ext)
     return resource
