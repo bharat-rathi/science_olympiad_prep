@@ -74,6 +74,7 @@ class ResourceOut(BaseModel):
     created_at: datetime.datetime
     raw_text: str = ""
     transcript: str = ""
+    error_message: str = ""
 
 
 class ResourceCreateText(BaseModel):

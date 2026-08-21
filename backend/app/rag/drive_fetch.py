@@ -65,23 +65,14 @@ def _refresh_access_token(coach: models.Coach) -> str:
     return response.json()["access_token"]
 
 
-def fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
-    """Download a Drive-hosted video and transcribe it -- entry point, wraps
-    _fetch_drive_video so any network/API failure that isn't one of the
-    explicit, specific ValueErrors below (a transient Drive 5xx, a request
-    timeout, an unexpected response shape) still surfaces as a clean,
-    readable message instead of propagating as a raw 500. transcribe_video's
-    own Gemini-side failures are its own concern and pass through as-is.
+def get_drive_video_info(url: str, coach: models.Coach) -> dict:
+    """Fast path: validate a Drive URL and return its metadata, without
+    downloading or transcribing anything. Raises ValueError -- safe to show
+    a coach directly -- for anything that isn't a clean success: not
+    connected, the file isn't a video, too large, or not accessible to this
+    coach. Used both for instant feedback on bad input before committing to
+    a background job, and as the first step of fetch_drive_video below.
     """
-    try:
-        return _fetch_drive_video(url, coach)
-    except ValueError:
-        raise
-    except (httpx.HTTPError, KeyError) as e:
-        raise ValueError(f"Something went wrong reaching Google Drive ({e}) -- try again in a moment.") from e
-
-
-def _fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
     file_id = _extract_file_id(url)
     if not file_id:
         raise ValueError("Couldn't find a file ID in that Google Drive URL.")
@@ -109,8 +100,41 @@ def _fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
             f"{MAX_DRIVE_VIDEO_BYTES // (1024 * 1024)}MB) -- try a shorter clip or a lower-resolution export."
         )
 
-    title = meta.get("name", "Google Drive video")
-    suffix = _MIME_TO_SUFFIX.get(meta["mimeType"], ".mp4")
+    return {
+        "file_id": file_id,
+        "title": meta.get("name", "Google Drive video"),
+        "mime_type": meta["mimeType"],
+        "size": size,
+        "access_token": access_token,
+    }
+
+
+def fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
+    """Download a Drive-hosted video and transcribe it -- entry point, wraps
+    _fetch_drive_video so any network/API failure that isn't one of the
+    explicit, specific ValueErrors below (a transient Drive 5xx, a request
+    timeout, an unexpected response shape) still surfaces as a clean,
+    readable message instead of propagating as a raw 500. transcribe_video's
+    own Gemini-side failures are its own concern and pass through as-is.
+    """
+    try:
+        return _fetch_drive_video(url, coach)
+    except ValueError:
+        raise
+    except (httpx.HTTPError, KeyError) as e:
+        raise ValueError(f"Something went wrong reaching Google Drive ({e}) -- try again in a moment.") from e
+
+
+def _fetch_drive_video(url: str, coach: models.Coach) -> tuple[str, str]:
+    # Re-validates even if the router already called get_drive_video_info
+    # once -- this function is called from a background task started well
+    # after that initial check, and a coach could disconnect Drive or the
+    # access token could need refreshing in the meantime; the extra cheap
+    # metadata call is worth not trusting stale state.
+    info = get_drive_video_info(url, coach)
+    file_id, title, size, access_token = info["file_id"], info["title"], info["size"], info["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    suffix = _MIME_TO_SUFFIX.get(info["mime_type"], ".mp4")
 
     downloaded_bytes = 0
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)

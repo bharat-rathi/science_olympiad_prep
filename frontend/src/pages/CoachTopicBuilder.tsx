@@ -54,6 +54,17 @@ export default function CoachTopicBuilder() {
 
   useEffect(refresh, [id]);
 
+  // Video resources (Drive links, uploaded video/audio) process in the
+  // background and start out status="pending" -- poll while any are still
+  // pending so the UI picks up "ready"/"failed" without a manual refresh.
+  useEffect(() => {
+    if (!resources.some((r) => r.status === "pending")) return;
+    const interval = setInterval(() => {
+      api.listResources(id).then(setResources);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [id, resources]);
+
   async function addTextResource() {
     if (!resText.trim()) return;
     await api.addTextResource(id, { title: resTitle || "Untitled resource", text: resText, source_url: resUrl });
@@ -340,6 +351,8 @@ export default function CoachTopicBuilder() {
                     <span className={`tag ${r.type === "video" ? "video" : r.type === "research" ? "general" : ""}`}>
                       {r.type}
                     </span>
+                    {r.status === "pending" && <span className="tag general">Processing...</span>}
+                    {r.status === "failed" && <span className="tag" style={{ background: "var(--danger-soft)", color: "var(--danger)" }}>Failed</span>}
                     <span className="card-title" style={{ fontSize: "1rem" }}>{r.title}</span>
                   </span>
                   <div className="row">
@@ -364,6 +377,11 @@ export default function CoachTopicBuilder() {
                     </>
                   )}
                 </div>
+                {r.status === "failed" && r.error_message && (
+                  <p style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: 8, marginBottom: 0 }}>
+                    {r.error_message}
+                  </p>
+                )}
                 {isExpanded && content && (
                   <p className="muted" style={{ whiteSpace: "pre-wrap", marginTop: 10, marginBottom: 0 }}>
                     {content}
