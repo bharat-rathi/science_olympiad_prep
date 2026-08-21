@@ -108,8 +108,18 @@ sign-in needs. To enable it:
 
 1. **APIs & Services → Library** → search "Google Drive API" → **Enable**
    (on the same Cloud project as above).
-2. Nothing else — it reuses the same OAuth client (Client ID/secret) from
-   the sign-in setup, just with the two extra redirect URIs added above.
+2. **APIs & Services → OAuth consent screen → Edit App → Scopes step →
+   Add or Remove Scopes** → filter for "drive" → check the one described
+   as "See and download all your Google Drive files" (`.../auth/
+   drive.readonly`) → **Update** → continue through to save. This step is
+   easy to miss and *not* covered by adding the redirect URIs alone —
+   without it, Google blocks the consent screen entirely with "Access
+   blocked: ... has not completed the Google verification process," even
+   for accounts already on the Test users list. `drive.readonly` is a
+   sensitive (not restricted) scope, so declaring it here is enough in
+   Testing mode — no full verification review needed.
+3. It otherwise reuses the same OAuth client (Client ID/secret) from the
+   sign-in setup, just with the two extra redirect URIs added above.
 
 If you skip this, everything else works exactly as before; coaches just
 won't see a working "Connect Google Drive" button.
