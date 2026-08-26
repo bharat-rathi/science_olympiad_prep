@@ -84,6 +84,31 @@ _ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
 _ensure_column("coaches", "google_drive_refresh_token_encrypted", "TEXT")
 _ensure_column("resources", "error_message", "TEXT DEFAULT ''")
 
+
+def _fail_orphaned_pending_resources() -> None:
+    """Video/audio resources are processed by a FastAPI BackgroundTask
+    (see routers/ingestion.py), which does not survive a process restart --
+    if the app is starting up fresh, nothing could still be working on a
+    resource that's status="pending" from before this boot, so it's
+    guaranteed orphaned (a crash, a redeploy, an OOM kill mid-transcription).
+    Left as "pending" it looks identical to "still processing" to a coach,
+    with no way to tell the difference or know to retry -- mark it failed
+    immediately instead, on every boot.
+    """
+    db = SessionLocal()
+    try:
+        stuck = db.query(models.Resource).filter(models.Resource.status == "pending").all()
+        for r in stuck:
+            r.status = "failed"
+            r.error_message = "Processing was interrupted by a server restart -- remove this and try again."
+        if stuck:
+            db.commit()
+    finally:
+        db.close()
+
+
+_fail_orphaned_pending_resources()
+
 app = FastAPI(title="Science Olympiad Coach")
 
 # Only for Authlib's OAuth state/nonce during the Google login handshake

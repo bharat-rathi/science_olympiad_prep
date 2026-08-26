@@ -1,6 +1,7 @@
 import base64
 import shutil
 import tempfile
+import threading
 import zipfile
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 from app import auth, models, schemas
 from app.db import SessionLocal, get_db
 from app.rag.chunking import chunk_text
-from app.rag.drive_fetch import fetch_drive_video, get_drive_video_info, is_drive_url
+from app.rag.drive_fetch import MAX_DRIVE_VIDEO_BYTES, fetch_drive_video, get_drive_video_info, is_drive_url
 from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
 from app.rag.pdf_extract import extract_pdf_text
@@ -25,6 +26,23 @@ router = APIRouter(prefix="/api/topics", tags=["ingestion"])
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".flac"}
 PDF_EXTENSIONS = {".pdf"}
+
+# Uploaded video/audio shares the same cap reasoning as Drive videos
+# (MAX_DRIVE_VIDEO_BYTES) -- reused directly rather than a second constant
+# that could drift out of sync, since both paths ultimately hit the same
+# memory-constrained transcription step on the same 512MB-RAM instance.
+MAX_UPLOAD_VIDEO_BYTES = MAX_DRIVE_VIDEO_BYTES
+
+# Background video/audio processing (Drive or uploaded) is capped to one at
+# a time, app-wide -- a single ~99MB video already pushed this instance's
+# 512MB RAM to the point of an OOM-triggered restart, so letting several run
+# concurrently (e.g. a coach re-submitting while an earlier one is still
+# processing, or two coaches uploading around the same time) is a real risk,
+# not a theoretical one. A coach's second video just waits its turn; nothing
+# breaks, it's only slower. BackgroundTasks callables run in a threadpool
+# (not the event loop), so a plain blocking threading.Semaphore is correct
+# here -- it blocks only that worker thread, not the whole server.
+_VIDEO_PROCESSING_LOCK = threading.Semaphore(1)
 
 
 def _index_resource(db: Session, resource: models.Resource, text: str) -> None:
@@ -68,7 +86,8 @@ def _process_drive_video(resource_id: int, url: str, coach_id: int) -> None:
             return  # deleted before processing started
         try:
             coach = db.get(models.Coach, coach_id)
-            title, text = fetch_drive_video(url, coach)
+            with _VIDEO_PROCESSING_LOCK:
+                title, text = fetch_drive_video(url, coach)
             resource.title = title
             resource.transcript = text
             resource.status = "ready"
@@ -93,7 +112,8 @@ def _process_uploaded_media(resource_id: int, tmp_path_str: str, ext: str) -> No
         if not resource:
             return
         try:
-            text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)
+            with _VIDEO_PROCESSING_LOCK:
+                text = transcribe_audio(tmp_path) if ext in AUDIO_EXTENSIONS else transcribe_video(tmp_path)
             resource.transcript = text
             resource.status = "ready"
             db.commit()
@@ -352,6 +372,20 @@ def _ingest_from_path(
     # process the whole file), so it's handed off to a background task
     # instead of blocking this request -- see _process_uploaded_media.
     # That task owns tmp_path from here on, including deleting it when done.
+    #
+    # Same size cap as Drive videos (MAX_UPLOAD_VIDEO_BYTES), checked here
+    # rather than relying solely on main.py's generic MAX_REQUEST_BYTES --
+    # that limit exists for overall request-body safety (and stays large
+    # enough for big PDFs), not tuned for what a 512MB-RAM instance can
+    # actually transcribe without risking an OOM.
+    file_size = tmp_path.stat().st_size
+    if file_size > MAX_UPLOAD_VIDEO_BYTES:
+        tmp_path.unlink(missing_ok=True)
+        raise ValueError(
+            f"That file is too large to transcribe ({file_size // (1024 * 1024)}MB, max "
+            f"{MAX_UPLOAD_VIDEO_BYTES // (1024 * 1024)}MB) -- try a shorter clip or a lower-resolution export."
+        )
+
     resource = models.Resource(topic_id=topic_id, type="video", title=filename, status="pending")
     db.add(resource)
     db.commit()
