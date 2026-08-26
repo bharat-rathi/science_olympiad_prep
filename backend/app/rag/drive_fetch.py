@@ -10,11 +10,12 @@ from app.config import settings
 from app.rag.transcription import transcribe_video
 
 DRIVE_HOSTS = {"drive.google.com"}
-# 200MB, not the 120MB browser-upload cap in main.py's MAX_REQUEST_BYTES --
-# this is a server-to-server download, not a browser upload, so it isn't
-# bounded by request-body limits, but still needs a ceiling on a 512MB-RAM
-# instance.
-MAX_DRIVE_VIDEO_BYTES = 200 * 1024 * 1024
+# A 99MB video already contributed to this Render instance (512MB RAM total)
+# hitting its memory limit and getting OOM-killed mid-processing -- 200MB
+# was too optimistic a ceiling. Kept deliberately conservative until actual
+# headroom is better understood; revisit alongside the instance's memory
+# metrics, not by feel.
+MAX_DRIVE_VIDEO_BYTES = 60 * 1024 * 1024
 _DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 
 # Drive's mimeType is authoritative -- more reliable than guessing an
