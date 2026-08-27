@@ -1,7 +1,11 @@
+import logging
 from urllib.parse import parse_qs, urlparse
 
 import requests
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import RequestBlocked
+
+logger = logging.getLogger(__name__)
 
 OEMBED_TIMEOUT_SECONDS = 5
 YOUTUBE_HOSTS = {"www.youtube.com", "youtube.com", "m.youtube.com", "youtu.be"}
@@ -48,8 +52,23 @@ def fetch_youtube_transcript(url: str) -> tuple[str, str]:
     try:
         fetched = YouTubeTranscriptApi().fetch(video_id)
     except Exception as e:
-        # The library's failure modes here (disabled captions, no captions in
-        # any language, private/unavailable video, etc.) all mean the same
+        # Logged before being converted to a clean ValueError -- the coach
+        # only ever sees the sanitized message below, but the real exception
+        # (previously swallowed entirely) is what actually shows up in
+        # Render's logs when something needs debugging.
+        logger.warning("YouTube transcript fetch failed for video_id=%s: %s: %s", video_id, type(e).__name__, e)
+        if isinstance(e, RequestBlocked):
+            # Distinct from "this video has no captions" -- YouTube is
+            # blocking/rate-limiting requests from this server's IP (a known,
+            # fairly common issue for cloud-hosted apps calling this library,
+            # unrelated to whether the video itself has captions).
+            raise ValueError(
+                "YouTube is temporarily blocking caption requests from this server -- this is a "
+                "server-side issue, not a problem with this video. Try again in a bit, or upload the "
+                "video file directly instead."
+            ) from e
+        # Every other failure mode here (disabled captions, no captions in
+        # any language, private/unavailable video, etc.) means the same
         # thing from a coach's point of view: nothing to ingest from this
         # video's captions, so uploading the file for transcription instead.
         raise ValueError(
