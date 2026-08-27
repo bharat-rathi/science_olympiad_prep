@@ -4,6 +4,7 @@ import logging
 import random
 import time
 
+import httpx
 from google import genai
 from google.genai import types
 
@@ -76,6 +77,23 @@ def _status_code(exc: Exception) -> int | None:
     return None
 
 
+def _is_retryable(exc: Exception) -> bool:
+    """A recognizable rate-limit/server status code (see _status_code), OR a
+    raw transport-level failure -- httpx.TransportError covers a dropped/
+    reset connection mid-response (e.g. RemoteProtocolError: "peer closed
+    connection without sending complete message body"), which carries no
+    HTTP status code at all since the response never completed. Both are
+    transient and worth one clean retry rather than failing the whole
+    request outright. The transport case is more likely to actually bite on
+    a large, slow-to-stream response (a full video transcript) than this
+    file's typically much shorter calls -- seen in practice on
+    transcribe_youtube_url.
+    """
+    if isinstance(exc, httpx.TransportError):
+        return True
+    return _status_code(exc) in _RETRYABLE_CODES
+
+
 def _create_with_retry(fn=None, **kwargs):
     """Call a Gemini SDK method with backoff on rate-limit/server errors.
 
@@ -94,8 +112,7 @@ def _create_with_retry(fn=None, **kwargs):
                 logger.info("llm_call retrying after rate-limit/server error, attempt=%d", attempt)
             return call(**kwargs)
         except Exception as e:
-            code = _status_code(e)
-            if code not in _RETRYABLE_CODES or attempt == _MAX_RETRIES:
+            if not _is_retryable(e) or attempt == _MAX_RETRIES:
                 raise
             last_error = e
             delay = _BASE_DELAY_SECONDS * (2**attempt) + random.uniform(0, 1)
