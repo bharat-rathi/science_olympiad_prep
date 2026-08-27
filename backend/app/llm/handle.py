@@ -4,7 +4,7 @@ from typing import Callable
 
 @dataclass
 class LLMHandle:
-    """A bound set of the 6 generation calls, backed by one provider+key.
+    """A bound set of the 7 generation calls, backed by one provider+key.
 
     Every adapter (gemini_client, claude_adapter, openai_adapter) exposes
     functions with these same signatures, so router.py can wire them up
@@ -18,3 +18,4 @@ class LLMHandle:
     generate_image: Callable[..., bytes]
     describe_image: Callable[..., str]
     chat_turn: Callable[..., str]
+    transcribe_youtube_url: Callable[..., str]

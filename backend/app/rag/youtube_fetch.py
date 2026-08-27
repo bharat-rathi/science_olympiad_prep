@@ -27,7 +27,10 @@ def _extract_video_id(url: str) -> str | None:
     return None
 
 
-def _fetch_title(url: str) -> str:
+def fetch_title(url: str) -> str:
+    """Public (not module-private) -- also used by ingestion.py's Gemini-
+    direct fallback (llm/client.py transcribe_youtube_url) to get a title
+    when captions aren't available, since that path has no title of its own."""
     try:
         response = requests.get(
             "https://www.youtube.com/oembed", params={"url": url, "format": "json"}, timeout=OEMBED_TIMEOUT_SECONDS
@@ -80,4 +83,4 @@ def fetch_youtube_transcript(url: str) -> tuple[str, str]:
     if not text:
         raise ValueError("This YouTube video's captions came back empty.")
 
-    return _fetch_title(url), text
+    return fetch_title(url), text
