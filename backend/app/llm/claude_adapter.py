@@ -138,7 +138,8 @@ def chat_turn(
 def build(api_key: str, fallback: LLMHandle) -> LLMHandle:
     """Claude has no image-generation API -- generate_image delegates to the
     shared Gemini fallback handle so a Claude-configured coach's flashcard
-    images still work, just not on their own key/budget.
+    images still work, just not on their own key/budget. Same reasoning for
+    transcribe_youtube_url -- Claude has no YouTube-URL video understanding.
     """
     bind = functools.partial
     return LLMHandle(
@@ -149,4 +150,5 @@ def build(api_key: str, fallback: LLMHandle) -> LLMHandle:
         generate_image=fallback.generate_image,
         describe_image=bind(describe_image, api_key=api_key),
         chat_turn=bind(chat_turn, api_key=api_key),
+        transcribe_youtube_url=fallback.transcribe_youtube_url,
     )

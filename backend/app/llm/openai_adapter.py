@@ -151,6 +151,9 @@ def chat_turn(
 
 
 def build(api_key: str, fallback: LLMHandle) -> LLMHandle:
+    """OpenAI has no YouTube-URL video understanding -- transcribe_youtube_url
+    delegates to the shared Gemini fallback handle, same reasoning as
+    claude_adapter.build's generate_image fallback."""
     bind = functools.partial
     return LLMHandle(
         provider="openai",
@@ -160,4 +163,5 @@ def build(api_key: str, fallback: LLMHandle) -> LLMHandle:
         generate_image=bind(generate_image, api_key=api_key),
         describe_image=bind(describe_image, api_key=api_key),
         chat_turn=bind(chat_turn, api_key=api_key),
+        transcribe_youtube_url=fallback.transcribe_youtube_url,
     )

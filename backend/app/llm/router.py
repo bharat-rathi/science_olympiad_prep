@@ -17,6 +17,7 @@ def _gemini_handle(api_key: str | None) -> LLMHandle:
         generate_image=bind(gemini_client.generate_image, api_key=api_key),
         describe_image=bind(gemini_client.describe_image, api_key=api_key),
         chat_turn=bind(gemini_client.chat_turn, api_key=api_key),
+        transcribe_youtube_url=bind(gemini_client.transcribe_youtube_url, api_key=api_key),
     )
 
 

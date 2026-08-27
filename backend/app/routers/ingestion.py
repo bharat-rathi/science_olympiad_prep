@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app import auth, models, schemas
 from app.db import SessionLocal, get_db
 from app.rag.chunking import chunk_text
+from app.llm.router import get_llm_handle
 from app.rag.drive_fetch import MAX_DRIVE_VIDEO_BYTES, fetch_drive_video, get_drive_video_info, is_drive_url
 from app.rag.embeddings import embed_texts
 from app.rag.link_fetch import fetch_url_text
@@ -19,7 +20,7 @@ from app.rag.pdf_extract import extract_pdf_text
 from app.rag.transcription import stream_upload_to_temp, transcribe_audio, transcribe_video
 from app.rag.vectorstore import add_chunks, delete_resource as delete_resource_chunks
 from app.rag.web_research import research_topic
-from app.rag.youtube_fetch import fetch_youtube_transcript, is_youtube_url
+from app.rag.youtube_fetch import fetch_title, fetch_youtube_transcript, is_youtube_url
 
 router = APIRouter(prefix="/api/topics", tags=["ingestion"])
 
@@ -169,8 +170,10 @@ def add_link_resource(
 
     Google Drive video links are downloaded and transcribed via Gemini
     (requires the coach to have connected Drive in Settings first); YouTube
-    links are detected and routed to the official captions track (no LLM,
-    no video download); other http(s) URLs go through the generic
+    links try the official captions track first (no LLM, no video download),
+    falling back to Gemini transcribing the video directly by URL if
+    captions are unavailable or blocked (see llm/client.py
+    transcribe_youtube_url); other http(s) URLs go through the generic
     readable-content extractor. If the coach didn't paste a URL at all --
     just typed a keyword or topic name -- this falls back to the research
     agent (rag/web_research.py), which searches the web and synthesizes
@@ -203,11 +206,30 @@ def add_link_resource(
         background_tasks.add_task(_process_drive_video, resource.id, value, coach.id)
         return resource
 
-    try:
-        if is_youtube_url(value):
-            resource_type = "video"
+    if is_youtube_url(value):
+        try:
             title, text = fetch_youtube_transcript(value)
-        elif _looks_like_url(value):
+        except ValueError:
+            # Captions unavailable or blocked -- fall back to Gemini
+            # transcribing the video directly by URL. No download here (see
+            # transcribe_youtube_url's docstring for why that matters), so
+            # unlike the Drive branch above this stays synchronous rather
+            # than a pending/background-task split.
+            title = fetch_title(value)
+            text = get_llm_handle(coach).transcribe_youtube_url(value, label="youtube_fallback")
+            if not text.strip():
+                raise HTTPException(422, "Couldn't get a transcript for that YouTube video.")
+        resource = models.Resource(
+            topic_id=topic_id, type="video", title=title, source_url=value, transcript=text, status="ready"
+        )
+        db.add(resource)
+        db.commit()
+        db.refresh(resource)
+        _index_resource(db, resource, text)
+        return resource
+
+    try:
+        if _looks_like_url(value):
             resource_type = "link"
             title, text = fetch_url_text(value)
         else:

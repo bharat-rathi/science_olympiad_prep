@@ -5,6 +5,7 @@ import random
 import time
 
 from google import genai
+from google.genai import types
 
 from app.config import settings
 
@@ -200,6 +201,38 @@ def generate_image(prompt: str, label: str = "", api_key: str | None = None) -> 
         if getattr(part, "inline_data", None) and part.inline_data.data:
             return part.inline_data.data
     raise ValueError("Image generation didn't return an image -- try again or reword the concept.")
+
+
+def transcribe_youtube_url(url: str, label: str = "", api_key: str | None = None) -> str:
+    """Ask Gemini to transcribe a YouTube video directly by URL -- no
+    download. Google's own infrastructure fetches the video, so this app's
+    server never touches the video bytes; that's what makes this immune to
+    the IP-blocking issue that affects the official captions API (see
+    rag/youtube_fetch.py -- youtube-transcript-api gets blocked/rate-limited
+    from cloud-hosting IPs like Render's) and would affect any download-
+    based approach equally, since those still originate from this server.
+
+    Goes through models.generate_content with a file_data/file_uri part
+    (like complete_text_grounded/generate_image do for their own reasons)
+    rather than interactions.create -- verified working this way against a
+    real video that was failing captions; not re-tested against
+    interactions.create's separate input= dict format, which may or may not
+    support an arbitrary external URI the same way.
+    """
+    client = _client_for(api_key)
+    response = _create_with_retry(
+        fn=client.models.generate_content,
+        model=settings.gemini_model,
+        contents=types.Content(
+            parts=[
+                types.Part(text="Generate a transcript of the speech in this video."),
+                types.Part(file_data=types.FileData(file_uri=url)),
+            ]
+        ),
+    )
+    text = response.text or ""
+    _log_call(label or "transcribe_youtube_url", "n/a", len(url), len(text))
+    return text
 
 
 def describe_image(
