@@ -17,31 +17,36 @@ def _get_client() -> genai.Client:
     return _client
 
 
-def _transcribe_media(path: Path) -> str:
+def _transcribe_media(path: Path, media_type: str) -> str:
     """Upload a video/audio file to Gemini and ask for a transcript.
 
     Gemini accepts video and audio natively (multimodal), so there's no
     separate audio-extraction step -- the file goes up as-is and the model
     reads the audio track directly.
+
+    media_type ("audio" or "video") is passed explicitly by the caller
+    rather than re-derived from the file's extension -- this used to guess
+    from a hardcoded suffix list ({.mp3, .wav, .m4a, .flac}), which silently
+    mis-tagged any audio format outside it (e.g. yt-dlp's downloaded
+    audio-only streams, commonly .webm/.opus) as "video".
     """
     uploaded = _get_client().files.upload(file=str(path))
     interaction = _get_client().interactions.create(
         model=settings.gemini_model,
         input=[
             {"type": "text", "text": "Generate a transcript of the speech in this file."},
-            {"type": "audio" if path.suffix.lower() in {".mp3", ".wav", ".m4a", ".flac"} else "video",
-             "uri": uploaded.uri, "mime_type": uploaded.mime_type},
+            {"type": media_type, "uri": uploaded.uri, "mime_type": uploaded.mime_type},
         ],
     )
     return interaction.output_text or ""
 
 
 def transcribe_video(video_path: Path) -> str:
-    return _transcribe_media(video_path)
+    return _transcribe_media(video_path, "video")
 
 
 def transcribe_audio(audio_path: Path) -> str:
-    return _transcribe_media(audio_path)
+    return _transcribe_media(audio_path, "audio")
 
 
 def save_upload_to_temp(filename: str, data: bytes) -> Path:
