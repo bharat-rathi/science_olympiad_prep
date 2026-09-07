@@ -433,6 +433,11 @@ export default function CoachTopicBuilder() {
           </button>
         )}
       </div>
+      {approvedCount > 0 && (
+        <Link to={`/student/${id}/present`}>
+          <button style={{ marginTop: 10 }}>▶ Preview presentation</button>
+        </Link>
+      )}
 
       <div className="stack" style={{ marginTop: 12 }}>
         {concepts.map((c) => {
