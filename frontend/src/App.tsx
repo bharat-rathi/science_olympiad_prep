@@ -6,6 +6,7 @@ import CoachTopicBuilder from "./pages/CoachTopicBuilder";
 import CoachAssessment from "./pages/CoachAssessment";
 import StudentPractice from "./pages/StudentPractice";
 import StudentTest from "./pages/StudentTest";
+import TopicPresentation from "./pages/TopicPresentation";
 import AiSettings from "./pages/AiSettings";
 import { api, Coach } from "./api/client";
 
@@ -86,6 +87,7 @@ function AuthedApp({
           <Route path="/coach/:topicId" element={<CoachTopicBuilder />} />
           <Route path="/coach/:topicId/assessment" element={<CoachAssessment />} />
           <Route path="/student/:topicId" element={<StudentPractice />} />
+          <Route path="/student/:topicId/present" element={<TopicPresentation />} />
           <Route path="/student/:topicId/test/:assessmentId" element={<StudentTest />} />
           <Route path="/settings" element={<AiSettings />} />
         </Routes>

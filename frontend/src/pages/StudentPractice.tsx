@@ -79,6 +79,11 @@ export default function StudentPractice() {
                 Story
               </button>
             )}
+            {concepts.length > 0 && (
+              <Link to={`/student/${id}/present`}>
+                <button>Watch presentation</button>
+              </Link>
+            )}
           </div>
 
           {view === "flashcards" ? (

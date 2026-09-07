@@ -1,0 +1,261 @@
+/* Presentation mode -- reuses this app's existing tokens (index.css) rather
+   than importing a separate theme system, per CHAPTER-CRAFT.md's rule to
+   never hardcode colors/fonts, just applied to this app's own palette
+   instead of the vendored skill's. */
+
+.pres-page {
+  min-height: calc(100vh - 64px); /* fills below the top nav, not a literal viewport takeover */
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.pres-stage {
+  width: 100%;
+  max-width: 1100px;
+  aspect-ratio: 16 / 9;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pres-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8% 10%;
+  gap: 18px;
+}
+
+.pres-kicker {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.pres-hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--navy);
+  margin: 0;
+}
+
+.pres-title-desc {
+  font-family: var(--font-story);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  color: var(--muted);
+  max-width: 640px;
+  margin: 0;
+}
+
+/* ---------- Concept chapters ---------- */
+
+.pres-concept-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 32%) 1fr;
+  gap: 6%;
+  align-items: center;
+  flex: 1;
+}
+
+.pres-concept-visual {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  background: var(--navy-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.pres-concept-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pres-concept-monogram {
+  font-family: var(--font-head);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.pres-concept-text {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pres-concept-term {
+  font-family: var(--font-head);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+}
+
+.pres-concept-beats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pres-concept-analogy {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+  color: var(--text);
+  margin: 0;
+}
+
+.pres-concept-explanation {
+  font-family: var(--font-ui);
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0;
+}
+
+.pres-concept-why {
+  font-family: var(--font-ui);
+  font-size: clamp(1rem, 1.7vw, 1.15rem);
+  line-height: 1.45;
+  color: var(--gold-contrast);
+  background: var(--gold-soft);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin: 0;
+}
+
+.pres-why-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+/* ---------- Summary chapter ---------- */
+
+.pres-summary-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0;
+}
+
+.pres-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px 20px;
+  max-height: 60%;
+  overflow-y: auto;
+}
+
+.pres-summary-item {
+  font-family: var(--font-ui);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  font-weight: 600;
+  color: var(--navy);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- Reveal animation ---------- */
+
+.pres-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  clip-path: inset(0 0 100% 0);
+  transition: opacity 0.5s ease, transform 0.5s ease, clip-path 0.6s ease;
+}
+
+.pres-reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+  clip-path: inset(0 0 0% 0);
+}
+
+/* ---------- Controls / progress ---------- */
+
+.pres-controls {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pres-hint {
+  color: var(--gold-soft);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  margin-top: 10px;
+  opacity: 0.75;
+}
+
+.pres-dial {
+  display: flex;
+  gap: 8px;
+}
+
+.pres-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--navy-soft);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pres-dot.active {
+  background: var(--gold-bright);
+  transform: scale(1.3);
+}
+
+.pres-exit {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+}
+
+@media (max-width: 640px) {
+  .pres-concept-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .pres-concept-visual {
+    max-height: 30%;
+    max-width: 140px;
+    margin: 0 auto;
+  }
+}
