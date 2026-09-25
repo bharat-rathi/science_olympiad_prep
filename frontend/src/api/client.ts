@@ -31,11 +31,24 @@ export interface Topic {
   event_name: string;
   name: string;
   description: string;
+  assessment_type: "test" | "practical" | "test_practical";
   created_at: string;
   created_by: string | null;
   content_published: boolean;
   story_md: string;
 }
+
+export const ASSESSMENT_TYPE_LABELS: Record<Topic["assessment_type"], string> = {
+  test: "Written Test",
+  practical: "Hands-on / Practical",
+  test_practical: "Test + Practical",
+};
+
+export const ASSESSMENT_TYPE_TAG_CLASS: Record<Topic["assessment_type"], string> = {
+  test: "general",
+  practical: "video",
+  test_practical: "success",
+};
 
 export interface Resource {
   id: number;
@@ -162,7 +175,7 @@ export const api = {
 
   listTopics: () => req<Topic[]>("/api/topics"),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),
-  createTopic: (payload: { event_name: string; name: string; description?: string }) =>
+  createTopic: (payload: { event_name: string; name: string; description?: string; assessment_type?: string }) =>
     req<Topic>("/api/topics", { method: "POST", body: JSON.stringify(payload) }),
 
   listResources: (topicId: number) => req<Resource[]>(`/api/topics/${topicId}/resources`),
