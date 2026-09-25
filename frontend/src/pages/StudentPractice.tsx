@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, Assessment, ConceptTerm, Diagram, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 
 export default function StudentPractice() {
@@ -51,6 +51,9 @@ export default function StudentPractice() {
       <div className="page-header">
         <h1>{topic.name}</h1>
         <p className="muted">{topic.description}</p>
+        <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[topic.assessment_type]}`}>
+          {ASSESSMENT_TYPE_LABELS[topic.assessment_type]}
+        </span>
       </div>
 
       {assessment && (

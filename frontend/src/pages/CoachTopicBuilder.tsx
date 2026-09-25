@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 
 const RESOURCE_ICON: Record<string, string> = {
@@ -259,6 +259,9 @@ export default function CoachTopicBuilder() {
       <div className="page-header">
         <h1>{topic.name}</h1>
         <p className="muted">{topic.description}</p>
+        <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[topic.assessment_type]}`}>
+          {ASSESSMENT_TYPE_LABELS[topic.assessment_type]}
+        </span>
       </div>
 
       <h2>

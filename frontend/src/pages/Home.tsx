@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, Coach, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Coach, Topic } from "../api/client";
 
 export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onCoachAdded: () => void }) {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -8,6 +8,7 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
   const [eventName, setEventName] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [assessmentType, setAssessmentType] = useState<Topic["assessment_type"]>("test");
 
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -20,12 +21,13 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
 
   async function createTopic() {
     if (!name.trim()) return;
-    const topic = await api.createTopic({ event_name: eventName || name, name, description });
+    const topic = await api.createTopic({ event_name: eventName || name, name, description, assessment_type: assessmentType });
     setTopics((prev) => [...prev, topic]);
     setShowNew(false);
     setEventName("");
     setName("");
     setDescription("");
+    setAssessmentType("test");
   }
 
   async function invite() {
@@ -82,6 +84,10 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
                 {t.content_published ? "Live" : "Draft"}
               </span>
             </div>
+            {t.description && <p className="muted" style={{ margin: 0 }}>{t.description}</p>}
+            <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[t.assessment_type]}`} style={{ alignSelf: "flex-start" }}>
+              {ASSESSMENT_TYPE_LABELS[t.assessment_type]}
+            </span>
             <div className="row">
               <Link to={`/coach/${t.id}`}>
                 <button>Coach view</button>
@@ -101,6 +107,20 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
             <input placeholder="Topic name (e.g. Optics - refraction)" value={name} onChange={(e) => setName(e.target.value)} />
             <input placeholder="Event name (e.g. Roller Coaster)" value={eventName} onChange={(e) => setEventName(e.target.value)} />
             <textarea placeholder="Short description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <label className="muted">
+              Assessment type
+              <select
+                value={assessmentType}
+                onChange={(e) => setAssessmentType(e.target.value as Topic["assessment_type"])}
+                style={{ display: "block", marginTop: 4 }}
+              >
+                {Object.entries(ASSESSMENT_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="row">
               <button className="accent" onClick={createTopic}>
                 Create topic
