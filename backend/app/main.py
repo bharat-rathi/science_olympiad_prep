@@ -83,6 +83,18 @@ _ensure_column("coaches", "llm_provider", "VARCHAR(20)")
 _ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
 _ensure_column("coaches", "google_drive_refresh_token_encrypted", "TEXT")
 _ensure_column("resources", "error_message", "TEXT DEFAULT ''")
+_ensure_column("topics", "assessment_type", "VARCHAR(20) DEFAULT 'test'")
+
+# One-time backfill: the original demo seed (below) predates assessment_type
+# and always used this exact name, so any pre-existing "Roller Coaster" row
+# just got defaulted to 'test' by the ALTER TABLE above -- wrong, it's a
+# build event. Only touches rows still sitting at that default, so it won't
+# clobber a coach who already set this explicitly.
+with engine.connect() as conn:
+    conn.execute(
+        text("UPDATE topics SET assessment_type = 'practical' WHERE name = 'Roller Coaster' AND assessment_type = 'test'")
+    )
+    conn.commit()
 
 
 def _fail_orphaned_pending_resources() -> None:
@@ -188,23 +200,74 @@ app.include_router(topic_chat.router)
 
 
 @app.on_event("startup")
-def seed_demo_topic() -> None:
+def seed_official_topics() -> None:
+    """Pre-populate every official 2027 Division B event as a topic, so a
+    coach starts with the real competition slate instead of having to type
+    each one in by hand -- the "+ New topic" flow (routers/topics.py) still
+    exists for a coach who wants a narrower custom topic on top of one of
+    these (e.g. splitting "Dynamic Planet" into sub-topics).
+
+    Assembled from soinc.org's 2027 Division B event slate (not scraped live
+    -- this app has no route to that site at build time) -- a coach should
+    still sanity-check names/groupings against the official page, especially
+    Code Craze, which was still a trial event as of this writing and may not
+    count toward the official 23-event slate the rest of this list assumes.
+
+    Matched by `name`, so this is a no-op for any event a coach has already
+    got (e.g. by editing one of these, or by name colliding with a manually
+    created topic) -- never overwrites existing rows.
+    """
+    # (name, description, assessment_type) -- assessment_type is one of
+    # "test" (written exam only), "practical" (hands-on/build, no separate
+    # written exam), or "test_practical" (both).
+    catalog = [
+        # Earth & Space Science
+        ("Dynamic Planet", "Written test on Earth science processes; the 2027 rotation focuses on fresh water systems -- rivers, lakes, groundwater, and watersheds.", "test"),
+        ("Meteorology", "Written test on atmospheric science and weather; the 2027 rotation focuses on severe storms -- thunderstorms, tornadoes, and hurricanes.", "test"),
+        ("Remote Sensing", "Written test on interpreting satellite and aerial imagery to study Earth's surface, atmosphere, and oceans.", "test"),
+        ("Rocks and Minerals", "Written test on identifying and classifying rocks and minerals and understanding the processes that form them.", "test"),
+        ("Solar System", "Written test on the Sun, planets, moons, and other bodies that make up our solar system.", "test"),
+        # Technology & Engineering (build events)
+        ("Hovercraft", "Build event: design and build a hovercraft that travels a course, scored on performance criteria like distance and time.", "practical"),
+        ("Circuit Lab", "Combines a written test on circuit theory with a hands-on task building and analyzing real circuits.", "test_practical"),
+        ("Thermodynamics", "Build a device that insulates a container of hot water for as long as possible, plus a written test on heat and thermodynamics concepts.", "test_practical"),
+        ("Boomilever", "Build a lightweight wood structure that cantilevers from a wall and holds as much weight as possible before breaking.", "practical"),
+        ("Elastic Launch Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
+        ("Roller Coaster", "Build a device that transports a marble/ball through a course using only gravity and track design, applying concepts of energy conservation and forces.", "practical"),
+        ("Scrambler", "Build a device that carries an egg across a set distance as fast as possible, stopping just short of a wall without breaking it.", "practical"),
+        # Life, Personal & Social Science
+        ("Anatomy & Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
+        ("Disease Detectives", "Written test on epidemiology -- how diseases spread through a population and how outbreaks are investigated and controlled.", "test"),
+        ("Heredity", "Written test on genetics -- inheritance patterns, Punnett squares, pedigrees, and molecular genetics.", "test"),
+        ("Botany", "Written test on plant biology -- structure, physiology, classification, and ecology.", "test"),
+        ("Water Quality", "Written test on aquatic ecosystems and water testing; the 2027 rotation focuses on marine and estuary environments.", "test"),
+        # Inquiry & Nature of Science
+        ("Crime Busters", "Hands-on forensic lab event (chemical tests, fingerprint analysis, and more) combined with a written test, applied to solving a mock crime scenario.", "test_practical"),
+        ("Food Science", "Hands-on food science lab tasks combined with a written test on food chemistry, nutrition, and food safety.", "test_practical"),
+        ("Codebusters", "Written test: decode cryptograms and ciphers (Aristocrats, Patristocrats, and other classical ciphers) under time pressure.", "test"),
+        ("Experimental Design", "Hands-on event: design, carry out, and write up a controlled experiment using materials provided on the spot.", "practical"),
+        ("Ping Pong Parachute", "Build a parachute-and-capsule device that protects and slows the descent of a dropped ping pong ball.", "practical"),
+        ("Write It Do It", "Practical communication event: one partner writes instructions describing a structure, and the other builds it from the instructions alone.", "practical"),
+        ("Protein Modeling", "Build a physical 3D model of a given protein or molecule from a supplied description, judged for structural accuracy.", "practical"),
+        # Trial event as of this writing -- verify it's on the current official slate
+        ("Code Craze", "Quiz and coding activities testing computer science concepts -- programming basics, AI/ML, and cryptography. Still a trial event as of this writing; confirm it's on the current official slate.", "test_practical"),
+    ]
+
     db = SessionLocal()
     try:
-        exists = db.query(models.Topic).filter(models.Topic.name == "Roller Coaster").first()
-        if not exists:
+        existing_names = {row[0] for row in db.query(models.Topic.name)}
+        for name, description, assessment_type in catalog:
+            if name in existing_names:
+                continue
             db.add(
                 models.Topic(
-                    event_name="Roller Coaster",
-                    name="Roller Coaster",
-                    description=(
-                        "Division B/C event: teams design and build a roller coaster that "
-                        "transports a marble/ball through a course, applying concepts of "
-                        "energy conservation, forces, and track design."
-                    ),
+                    event_name=name,
+                    name=name,
+                    description=description,
+                    assessment_type=assessment_type,
                 )
             )
-            db.commit()
+        db.commit()
     finally:
         db.close()
 

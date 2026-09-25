@@ -41,6 +41,7 @@ class TopicOut(BaseModel):
     event_name: str
     name: str
     description: str
+    assessment_type: str = "test"
     created_at: datetime.datetime
     created_by: str | None = None
     content_published: bool = False
@@ -57,6 +58,7 @@ class TopicCreate(BaseModel):
     event_name: str
     name: str
     description: str = ""
+    assessment_type: str = "test"
 
 
 class TopicStoryUpdate(BaseModel):

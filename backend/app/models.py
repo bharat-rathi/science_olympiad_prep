@@ -52,6 +52,10 @@ class Topic(Base):
     event_name: Mapped[str] = mapped_column(String(200))
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text, default="")
+    # test | practical | test_practical -- what a competitor actually does at
+    # this event, shown alongside the description so a coach can tell at a
+    # glance what to prepare a student for.
+    assessment_type: Mapped[str] = mapped_column(String(20), default="test")
     created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
     # Gates student visibility of concepts/story, independent of each
