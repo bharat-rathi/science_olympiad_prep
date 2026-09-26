@@ -10,17 +10,6 @@ from app.llm.router import get_llm_handle
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _set_session_cookie(response: Response, request: Request, token: str) -> None:
-    response.set_cookie(
-        auth.SESSION_COOKIE_NAME,
-        token,
-        max_age=auth.SESSION_TTL_DAYS * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        secure=request.url.scheme == "https",
-    )
-
-
 @router.get("/google/login")
 async def google_login(request: Request):
     redirect_uri = f"{settings.public_base_url}/api/auth/google/callback"
@@ -120,7 +109,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
     session_token = auth.create_session(db, coach)
     response = RedirectResponse(f"{settings.public_base_url}/")
-    _set_session_cookie(response, request, session_token)
+    auth.set_session_cookie(response, request, session_token)
     return response
 
 
@@ -141,7 +130,7 @@ def invite(payload: schemas.InviteRequest, coach: models.Coach = Depends(auth.re
 def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     token = request.cookies.get(auth.SESSION_COOKIE_NAME)
     if token:
-        auth.delete_session(db, token)
+        auth.delete_any_session(db, token)
     response.delete_cookie(auth.SESSION_COOKIE_NAME)
     return {"ok": True}
 
@@ -151,6 +140,9 @@ def me(request: Request, db: Session = Depends(get_db)):
     coach = request.state.coach
     if coach:
         return schemas.MeResponse(authenticated=True, coach=coach)
+    student = request.state.student
+    if student:
+        return schemas.MeResponse(authenticated=True, student=student)
     needs_bootstrap = db.query(models.Coach).count() == 0
     return schemas.MeResponse(authenticated=False, needs_bootstrap=needs_bootstrap)
 

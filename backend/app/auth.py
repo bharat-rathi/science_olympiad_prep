@@ -2,7 +2,7 @@ import datetime
 import secrets
 
 from authlib.integrations.starlette_client import OAuth
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from app import models
@@ -22,6 +22,20 @@ oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
+
+
+def set_session_cookie(response: Response, request: Request, token: str) -> None:
+    """Shared by both login paths (Google OAuth for coaches, username+PIN for
+    students, see routers/auth.py and routers/students.py) -- one cookie
+    regardless of which kind of session it points to."""
+    response.set_cookie(
+        SESSION_COOKIE_NAME,
+        token,
+        max_age=SESSION_TTL_DAYS * 24 * 3600,
+        httponly=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
+    )
 
 
 def create_session(db: Session, coach: models.Coach) -> str:
@@ -49,6 +63,39 @@ def get_coach_from_token(db: Session, token: str) -> models.Coach | None:
 
 def delete_session(db: Session, token: str) -> None:
     session = db.get(models.CoachSession, token)
+    if session is not None:
+        db.delete(session)
+        db.commit()
+
+
+def create_student_session(db: Session, student: models.Student) -> str:
+    token = secrets.token_urlsafe(32)
+    session = models.StudentSession(
+        token=token,
+        student_id=student.id,
+        expires_at=datetime.datetime.utcnow() + datetime.timedelta(days=SESSION_TTL_DAYS),
+    )
+    db.add(session)
+    db.commit()
+    return token
+
+
+def get_student_from_token(db: Session, token: str) -> models.Student | None:
+    session = db.get(models.StudentSession, token)
+    if session is None:
+        return None
+    if session.expires_at < datetime.datetime.utcnow():
+        db.delete(session)
+        db.commit()
+        return None
+    return db.get(models.Student, session.student_id)
+
+
+def delete_any_session(db: Session, token: str) -> None:
+    """Logout doesn't know in advance whether the cookie belongs to a coach
+    or a student -- try both; at most one will ever match."""
+    delete_session(db, token)
+    session = db.get(models.StudentSession, token)
     if session is not None:
         db.delete(session)
         db.commit()

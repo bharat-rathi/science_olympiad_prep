@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { api, TopicChatMessage } from "../api/client";
-import { getOrCreateSessionToken } from "../lib/sessionToken";
 
 export default function TopicChat({ topicId }: { topicId: number }) {
   const [messages, setMessages] = useState<TopicChatMessage[]>([]);
@@ -10,10 +9,7 @@ export default function TopicChat({ topicId }: { topicId: number }) {
 
   useEffect(() => {
     setLoaded(false);
-    // Coaches are identified by their session cookie server-side; the token
-    // is only used when there's no coach in that cookie (an anonymous
-    // student), but it's cheap to always send.
-    api.getTopicChat(topicId, getOrCreateSessionToken()).then((msgs) => {
+    api.getTopicChat(topicId).then((msgs) => {
       setMessages(msgs);
       setLoaded(true);
     });
@@ -27,7 +23,7 @@ export default function TopicChat({ topicId }: { topicId: number }) {
     setMessages((prev) => [...prev, userMsg]);
     setBusy(true);
     try {
-      const reply = await api.topicChatTurn(topicId, text, getOrCreateSessionToken());
+      const reply = await api.topicChatTurn(topicId, text);
       setMessages((prev) => [...prev, reply]);
     } finally {
       setBusy(false);

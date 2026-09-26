@@ -1,18 +1,39 @@
-export default function Login({ needsBootstrap }: { needsBootstrap: boolean }) {
+import { useState } from "react";
+import { api } from "../api/client";
+
+export default function Login({
+  needsBootstrap,
+  onStudentLogin,
+}: {
+  needsBootstrap: boolean;
+  onStudentLogin: () => void;
+}) {
   const notInvited = new URLSearchParams(window.location.search).get("error") === "not_invited";
+
+  const [username, setUsername] = useState("");
+  const [pin, setPin] = useState("");
+  const [studentError, setStudentError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function studentSignIn() {
+    if (!username.trim() || !pin.trim()) return;
+    setBusy(true);
+    setStudentError("");
+    try {
+      await api.studentLogin(username.trim(), pin.trim());
+      onStudentLogin();
+    } catch (err) {
+      setStudentError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="auth-shell">
       <div className="auth-logo">🧪</div>
       <h1>Empower Your Future Scientists</h1>
-      {needsBootstrap ? (
-        <p className="muted">
-          No coach accounts exist yet -- sign in with Google to create the first one. You'll be
-          logged in immediately, and can invite teammates by email from the home page afterward.
-        </p>
-      ) : (
-        <p className="muted">Coaches sign in with the Google account they were invited with.</p>
-      )}
+
       {notInvited && (
         <div className="card" style={{ background: "var(--danger-soft)", borderColor: "transparent" }}>
           <p style={{ color: "var(--danger)", margin: 0 }}>
@@ -21,7 +42,19 @@ export default function Login({ needsBootstrap }: { needsBootstrap: boolean }) {
           </p>
         </div>
       )}
-      <div className="card" style={{ marginTop: 20 }}>
+
+      <div className="card stack" style={{ marginTop: 20, textAlign: "left" }}>
+        <strong>Coaches</strong>
+        {needsBootstrap ? (
+          <p className="muted" style={{ margin: 0 }}>
+            No coach accounts exist yet -- sign in with Google to create the first one. You'll be
+            logged in immediately, and can invite teammates by email from the home page afterward.
+          </p>
+        ) : (
+          <p className="muted" style={{ margin: 0 }}>
+            Sign in with the Google account you were invited with.
+          </p>
+        )}
         <a href="/api/auth/google/login">
           <button className="google pill">
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -45,6 +78,24 @@ export default function Login({ needsBootstrap }: { needsBootstrap: boolean }) {
             Sign in with Google
           </button>
         </a>
+      </div>
+
+      <div className="card stack" style={{ marginTop: 14, textAlign: "left" }}>
+        <strong>Students</strong>
+        <p className="muted" style={{ margin: 0 }}>
+          Sign in with the username and PIN your coach gave you.
+        </p>
+        <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+        <input
+          placeholder="PIN"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && studentSignIn()}
+        />
+        {studentError && <p style={{ color: "var(--danger)", margin: 0 }}>{studentError}</p>}
+        <button className="primary" onClick={studentSignIn} disabled={busy}>
+          {busy ? "Signing in..." : "Sign in"}
+        </button>
       </div>
     </div>
   );

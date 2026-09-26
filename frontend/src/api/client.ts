@@ -10,9 +10,23 @@ export interface Coach {
   name: string | null;
 }
 
+export interface Student {
+  id: number;
+  name: string;
+  username: string;
+  created_at: string;
+}
+
+export interface StudentCreated {
+  student: Student;
+  // Shown once, at creation/reset time -- never retrievable again.
+  pin: string;
+}
+
 export interface MeResponse {
   authenticated: boolean;
   coach: Coach | null;
+  student: Student | null;
   needs_bootstrap: boolean;
 }
 
@@ -170,6 +184,14 @@ export const api = {
   updateAiSettings: (payload: { provider: AiSettings["provider"]; api_key: string | null }) =>
     req<AiSettings>("/api/auth/ai-settings", { method: "PUT", body: JSON.stringify(payload) }),
 
+  studentLogin: (username: string, pin: string) =>
+    req<Student>("/api/students/login", { method: "POST", body: JSON.stringify({ username, pin }) }),
+  listStudents: () => req<Student[]>("/api/students"),
+  addStudent: (name: string, username: string) =>
+    req<StudentCreated>("/api/students", { method: "POST", body: JSON.stringify({ name, username }) }),
+  resetStudentPin: (studentId: number) =>
+    req<StudentCreated>(`/api/students/${studentId}/reset-pin`, { method: "POST" }),
+
   getDriveStatus: () => req<DriveStatus>("/api/auth/drive-status"),
   disconnectDrive: () => req<DriveStatus>("/api/auth/drive/disconnect", { method: "POST" }),
 
@@ -251,11 +273,8 @@ export const api = {
   deleteQuestion: (assessmentId: number, questionId: number) =>
     req<{ ok: boolean }>(`/api/assessments/${assessmentId}/questions/${questionId}`, { method: "DELETE" }),
 
-  startAttempt: (assessmentId: number, studentName: string) =>
-    req<Attempt>(`/api/assessments/${assessmentId}/attempts`, {
-      method: "POST",
-      body: JSON.stringify({ student_name: studentName }),
-    }),
+  startAttempt: (assessmentId: number) =>
+    req<Attempt>(`/api/assessments/${assessmentId}/attempts`, { method: "POST" }),
   requestHint: (attemptId: number, questionId: number) =>
     req<{ hint: string }>(`/api/attempts/${attemptId}/hint`, {
       method: "POST",
@@ -275,11 +294,10 @@ export const api = {
       body: JSON.stringify({ attempt_id: attemptId, question_id: questionId, message }),
     }),
 
-  getTopicChat: (topicId: number, sessionToken?: string) =>
-    req<TopicChatMessage[]>(`/api/topics/${topicId}/chat${sessionToken ? `?session_token=${encodeURIComponent(sessionToken)}` : ""}`),
-  topicChatTurn: (topicId: number, message: string, sessionToken?: string) =>
+  getTopicChat: (topicId: number) => req<TopicChatMessage[]>(`/api/topics/${topicId}/chat`),
+  topicChatTurn: (topicId: number, message: string) =>
     req<TopicChatMessage>(`/api/topics/${topicId}/chat/turn`, {
       method: "POST",
-      body: JSON.stringify({ message, session_token: sessionToken }),
+      body: JSON.stringify({ message }),
     }),
 };

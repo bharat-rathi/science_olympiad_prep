@@ -15,6 +15,35 @@ class InviteRequest(BaseModel):
     email: str
 
 
+class StudentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    username: str
+    created_at: datetime.datetime
+
+
+class StudentCreate(BaseModel):
+    name: str
+    # Suggested client-side (e.g. slug of name + a number if taken), but the
+    # coach can edit it before submitting -- final uniqueness is enforced
+    # server-side (routers/students.py), not here.
+    username: str
+
+
+class StudentCreated(BaseModel):
+    student: StudentOut
+    # Shown to the coach exactly once, at creation time -- not retrievable
+    # again afterward (only its hash is stored). A forgotten PIN means using
+    # the reset endpoint, not a "show me the PIN again" one.
+    pin: str
+
+
+class StudentLoginRequest(BaseModel):
+    username: str
+    pin: str
+
+
 class AiSettingsOut(BaseModel):
     provider: str | None = None
     has_key: bool = False
@@ -28,6 +57,7 @@ class AiSettingsUpdate(BaseModel):
 class MeResponse(BaseModel):
     authenticated: bool
     coach: CoachOut | None = None
+    student: StudentOut | None = None
     needs_bootstrap: bool = False
 
 
@@ -175,10 +205,6 @@ class AssessmentOut(BaseModel):
         return out
 
 
-class AttemptStart(BaseModel):
-    student_name: str
-
-
 class AttemptOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -241,6 +267,3 @@ class TopicChatMessageOut(BaseModel):
 
 class TopicChatTurnRequest(BaseModel):
     message: str
-    # Only meaningful for an anonymous student; ignored server-side when the
-    # request carries an authenticated coach session cookie instead.
-    session_token: str | None = None
