@@ -21,6 +21,7 @@ export default function CoachTopicBuilder() {
   const [diagrams, setDiagrams] = useState<Diagram[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<"build" | "publish">("build");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -264,9 +265,24 @@ export default function CoachTopicBuilder() {
         </span>
       </div>
 
-      <h2>
-        <span className="step-badge">1</span> Resources
-      </h2>
+      <div className="tabs">
+        <button className={`tab ${activeTab === "build" ? "active" : ""}`} onClick={() => setActiveTab("build")}>
+          Build
+        </button>
+        <button className={`tab ${activeTab === "publish" ? "active" : ""}`} onClick={() => setActiveTab("publish")}>
+          Publish
+        </button>
+        <Link to={`/coach/${id}/schedule`} className="tab">
+          Schedule
+        </Link>
+        <Link to={`/coach/${id}/assessment`} className={`tab ${approvedCount === 0 ? "disabled" : ""}`}>
+          Assessment
+        </Link>
+      </div>
+
+      {activeTab === "build" && (
+        <>
+          <h2>Resources</h2>
       <p className="muted">
         Upload a document, PDF, video/audio clip (or a zip of several), paste a link, or type a
         topic to research. Video is one possible source among several -- it's only used where the
@@ -412,15 +428,11 @@ export default function CoachTopicBuilder() {
         </div>
       )}
 
-      <h2>
-        <span className="step-badge">2</span> Ask about this content
-      </h2>
+      <h2>Ask about this content</h2>
       <p className="muted">Sanity-check retrieval against what you've just uploaded before generating concepts below.</p>
       <TopicChat topicId={id} />
 
-      <h2>
-        <span className="step-badge">3</span> Concept explanations
-      </h2>
+      <h2>Concept explanations</h2>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div className="row">
           <button className="accent" onClick={generate} disabled={busy}>
@@ -518,9 +530,7 @@ export default function CoachTopicBuilder() {
         })}
       </div>
 
-      <h2>
-        <span className="step-badge">4</span> Story (optional)
-      </h2>
+      <h2>Story (optional)</h2>
       <p className="muted">
         Weaves the approved concepts into one short narrative students can read as a story instead
         of a list of definitions. Only generated when you ask for it.
@@ -539,12 +549,14 @@ export default function CoachTopicBuilder() {
           />
         )}
       </div>
+        </>
+      )}
 
-      <h2>
-        <span className="step-badge">5</span> Publish learning content
-      </h2>
+      {activeTab === "publish" && (
+        <>
+      <h2>Publish learning content</h2>
       <p className="muted">
-        Controls only the flashcards and story from step 4 above -- separate from publishing the
+        Controls only the flashcards and story from the Build tab -- separate from publishing the
         assessment, which has its own publish button on the assessment editor page.
       </p>
       <div className="card row" style={{ justifyContent: "space-between" }}>
@@ -560,28 +572,8 @@ export default function CoachTopicBuilder() {
         </button>
       </div>
       {approvedCount === 0 && <p className="muted">Approve at least one concept before publishing.</p>}
-
-      <h2>
-        <span className="step-badge">6</span> Assessment
-      </h2>
-      <p className="muted">
-        Has its own publish step, independent of step 5 -- you can publish a test before or after
-        publishing the flashcards/story, or without ever publishing them at all.
-      </p>
-      <Link to={`/coach/${id}/assessment`}>
-        <button disabled={approvedCount === 0}>Go to assessment editor</button>
-      </Link>
-      {approvedCount === 0 && <p className="muted">Approve at least one concept first.</p>}
-
-      <h2>
-        <span className="step-badge">7</span> Schedule
-      </h2>
-      <p className="muted">
-        Plan when to study this topic, or spin off a focused sub-topic for a scheduled deep dive.
-      </p>
-      <Link to={`/coach/${id}/schedule`}>
-        <button>Go to schedule</button>
-      </Link>
+        </>
+      )}
     </div>
   );
 }

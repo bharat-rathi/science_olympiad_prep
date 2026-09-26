@@ -193,6 +193,43 @@ p {
   flex-shrink: 0;
 }
 
+/* ---------- Tabs ---------- */
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 9px 16px;
+  border: none;
+  background: none;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--navy);
+}
+
+.tab:hover:not(.active):not(.disabled) {
+  color: var(--text);
+}
+
+.tab.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
