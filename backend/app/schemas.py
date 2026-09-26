@@ -72,6 +72,7 @@ class TopicOut(BaseModel):
     name: str
     description: str
     assessment_type: str = "test"
+    parent_topic_id: int | None = None
     created_at: datetime.datetime
     created_by: str | None = None
     content_published: bool = False
@@ -89,10 +90,27 @@ class TopicCreate(BaseModel):
     name: str
     description: str = ""
     assessment_type: str = "test"
+    parent_topic_id: int | None = None
 
 
 class TopicStoryUpdate(BaseModel):
     story_md: str
+
+
+class ScheduleEntryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    topic_id: int
+    scheduled_at: datetime.datetime
+    title: str
+    notes: str
+    created_at: datetime.datetime
+
+
+class ScheduleEntryCreate(BaseModel):
+    scheduled_at: datetime.datetime
+    title: str = ""
+    notes: str = ""
 
 
 class ResourceOut(BaseModel):

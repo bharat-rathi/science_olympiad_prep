@@ -46,10 +46,20 @@ export interface Topic {
   name: string;
   description: string;
   assessment_type: "test" | "practical" | "test_practical";
+  parent_topic_id: number | null;
   created_at: string;
   created_by: string | null;
   content_published: boolean;
   story_md: string;
+}
+
+export interface ScheduleEntry {
+  id: number;
+  topic_id: number;
+  scheduled_at: string;
+  title: string;
+  notes: string;
+  created_at: string;
 }
 
 export const ASSESSMENT_TYPE_LABELS: Record<Topic["assessment_type"], string> = {
@@ -197,8 +207,20 @@ export const api = {
 
   listTopics: () => req<Topic[]>("/api/topics"),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),
-  createTopic: (payload: { event_name: string; name: string; description?: string; assessment_type?: string }) =>
-    req<Topic>("/api/topics", { method: "POST", body: JSON.stringify(payload) }),
+  createTopic: (payload: {
+    event_name: string;
+    name: string;
+    description?: string;
+    assessment_type?: string;
+    parent_topic_id?: number;
+  }) => req<Topic>("/api/topics", { method: "POST", body: JSON.stringify(payload) }),
+  listSubTopics: (topicId: number) => req<Topic[]>(`/api/topics/${topicId}/sub-topics`),
+
+  listSchedule: (topicId: number) => req<ScheduleEntry[]>(`/api/topics/${topicId}/schedule`),
+  createScheduleEntry: (topicId: number, payload: { scheduled_at: string; title?: string; notes?: string }) =>
+    req<ScheduleEntry>(`/api/topics/${topicId}/schedule`, { method: "POST", body: JSON.stringify(payload) }),
+  deleteScheduleEntry: (topicId: number, entryId: number) =>
+    req<void>(`/api/topics/${topicId}/schedule/${entryId}`, { method: "DELETE" }),
 
   listResources: (topicId: number) => req<Resource[]>(`/api/topics/${topicId}/resources`),
   addTextResource: (topicId: number, payload: { title: string; text: string; source_url?: string }) =>

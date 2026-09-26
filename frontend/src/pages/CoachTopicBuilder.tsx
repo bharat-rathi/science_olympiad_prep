@@ -572,6 +572,16 @@ export default function CoachTopicBuilder() {
         <button disabled={approvedCount === 0}>Go to assessment editor</button>
       </Link>
       {approvedCount === 0 && <p className="muted">Approve at least one concept first.</p>}
+
+      <h2>
+        <span className="step-badge">7</span> Schedule
+      </h2>
+      <p className="muted">
+        Plan when to study this topic, or spin off a focused sub-topic for a scheduled deep dive.
+      </p>
+      <Link to={`/coach/${id}/schedule`}>
+        <button>Go to schedule</button>
+      </Link>
     </div>
   );
 }

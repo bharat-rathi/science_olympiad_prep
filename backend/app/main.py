@@ -86,6 +86,7 @@ _ensure_column("resources", "error_message", "TEXT DEFAULT ''")
 _ensure_column("topics", "assessment_type", "VARCHAR(20) DEFAULT 'test'")
 _ensure_column("attempts", "student_id", "INTEGER")
 _ensure_column("topic_chat_messages", "student_id", "INTEGER")
+_ensure_column("topics", "parent_topic_id", "INTEGER")
 
 # One-time backfill: the original demo seed (below) predates assessment_type
 # and always used this exact name, so any pre-existing "Roller Coaster" row

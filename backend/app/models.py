@@ -84,6 +84,12 @@ class Topic(Base):
     assessment_type: Mapped[str] = mapped_column(String(20), default="test")
     created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+    # Set when this Topic is a sub-topic (a scheduled deep dive) of a main
+    # event Topic -- e.g. "Roller Coaster: Track Friction" under "Roller
+    # Coaster". NULL for a main-event Topic. Self-FK, not a new table: a
+    # sub-topic is a regular Topic in every other way (own resources,
+    # concepts, assessment).
+    parent_topic_id: Mapped[int | None] = mapped_column(ForeignKey("topics.id"), nullable=True)
     # Gates student visibility of concepts/story, independent of each
     # concept's own `approved` flag -- lets a coach approve concepts
     # incrementally while iterating, then flip this once ready.
@@ -99,6 +105,23 @@ class Topic(Base):
     # TopicOut.created_by (a plain string) when Pydantic validates from
     # attributes -- schemas.py resolves the name explicitly in from_model().
     created_by_coach: Mapped["Coach | None"] = relationship(foreign_keys=[created_by_coach_id])
+
+
+class ScheduleEntry(Base):
+    """A coach-planned date/time to study a topic (or a sub-topic deep dive
+    created from this entry -- see Topic.parent_topic_id). Deliberately just
+    a date/title/notes pointer to a Topic, not a recurring-event system --
+    each session gets its own row."""
+
+    __tablename__ = "schedule_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
+    scheduled_at: Mapped[datetime.datetime] = mapped_column(DateTime)
+    title: Mapped[str] = mapped_column(String(200), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
 
 class Resource(Base):

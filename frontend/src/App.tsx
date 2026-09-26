@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import CoachTopicBuilder from "./pages/CoachTopicBuilder";
 import CoachAssessment from "./pages/CoachAssessment";
+import CoachSchedule from "./pages/CoachSchedule";
 import CoachStudents from "./pages/CoachStudents";
 import StudentPractice from "./pages/StudentPractice";
 import StudentTest from "./pages/StudentTest";
@@ -113,6 +114,14 @@ function AuthedApp({
             element={
               <CoachOnly coach={coach}>
                 <CoachAssessment />
+              </CoachOnly>
+            }
+          />
+          <Route
+            path="/coach/:topicId/schedule"
+            element={
+              <CoachOnly coach={coach}>
+                <CoachSchedule />
               </CoachOnly>
             }
           />
