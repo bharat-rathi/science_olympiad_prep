@@ -89,9 +89,11 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
               {ASSESSMENT_TYPE_LABELS[t.assessment_type]}
             </span>
             <div className="row">
-              <Link to={`/coach/${t.id}`}>
-                <button>Coach view</button>
-              </Link>
+              {coach && (
+                <Link to={`/coach/${t.id}`}>
+                  <button>Coach view</button>
+                </Link>
+              )}
               <Link to={`/student/${t.id}`}>
                 <button className="primary">Student view</button>
               </Link>
@@ -134,7 +136,7 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
           </button>
         )
       ) : (
-        <p className="muted">Log in as a coach to add a topic.</p>
+        <p className="muted">Only coaches can add topics.</p>
       )}
 
       {coach && (

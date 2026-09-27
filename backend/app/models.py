@@ -45,6 +45,32 @@ class CoachSession(Base):
     expires_at: Mapped[datetime.datetime] = mapped_column(DateTime)
 
 
+class Student(Base):
+    """A real student account -- username + coach-issued PIN (app/passwords.py),
+    not Google OAuth like Coach, since students may not have a personal Google
+    account. Shared across all coaches (like Topic), not owned by whichever
+    coach added them -- added_by_coach_id is attribution only.
+    """
+
+    __tablename__ = "students"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    username: Mapped[str] = mapped_column(String(64), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(200))
+    added_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+
+
+class StudentSession(Base):
+    __tablename__ = "student_sessions"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"))
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime)
+
+
 class Topic(Base):
     __tablename__ = "topics"
 
@@ -58,6 +84,12 @@ class Topic(Base):
     assessment_type: Mapped[str] = mapped_column(String(20), default="test")
     created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+    # Set when this Topic is a sub-topic (a scheduled deep dive) of a main
+    # event Topic -- e.g. "Roller Coaster: Track Friction" under "Roller
+    # Coaster". NULL for a main-event Topic. Self-FK, not a new table: a
+    # sub-topic is a regular Topic in every other way (own resources,
+    # concepts, assessment).
+    parent_topic_id: Mapped[int | None] = mapped_column(ForeignKey("topics.id"), nullable=True)
     # Gates student visibility of concepts/story, independent of each
     # concept's own `approved` flag -- lets a coach approve concepts
     # incrementally while iterating, then flip this once ready.
@@ -73,6 +105,23 @@ class Topic(Base):
     # TopicOut.created_by (a plain string) when Pydantic validates from
     # attributes -- schemas.py resolves the name explicitly in from_model().
     created_by_coach: Mapped["Coach | None"] = relationship(foreign_keys=[created_by_coach_id])
+
+
+class ScheduleEntry(Base):
+    """A coach-planned date/time to study a topic (or a sub-topic deep dive
+    created from this entry -- see Topic.parent_topic_id). Deliberately just
+    a date/title/notes pointer to a Topic, not a recurring-event system --
+    each session gets its own row."""
+
+    __tablename__ = "schedule_entries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
+    scheduled_at: Mapped[datetime.datetime] = mapped_column(DateTime)
+    title: Mapped[str] = mapped_column(String(200), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
 
 class Resource(Base):
@@ -175,7 +224,12 @@ class Attempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     assessment_id: Mapped[int] = mapped_column(ForeignKey("assessments.id"))
+    # Denormalized snapshot of the student's name at attempt time -- kept even
+    # though student_id is now the real link, so history stays readable if a
+    # Student is later renamed or removed. Nullable pre-accounts rows have
+    # this but not student_id; new rows always have both.
     student_name: Mapped[str] = mapped_column(String(200))
+    student_id: Mapped[int | None] = mapped_column(ForeignKey("students.id"), nullable=True)
     started_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
     submitted_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
     score: Mapped[float | None] = mapped_column(nullable=True)
@@ -214,13 +268,13 @@ class TopicChatMessage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
-    # Exactly one of coach_id/session_token is set per row -- coach_id for an
-    # authenticated coach's own conversation, session_token (a UUID the
-    # frontend generates and stores in localStorage) for an anonymous
-    # student's, since students have no account in this app. Enforced by the
+    # Exactly one of coach_id/student_id is set per row (enforced by the
     # router, not a DB constraint -- this file doesn't use CheckConstraint
-    # anywhere else.
+    # anywhere else). session_token is legacy: rows from before students had
+    # real accounts, identified by a localStorage UUID -- kept for old
+    # history, nothing writes it anymore.
     coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
+    student_id: Mapped[int | None] = mapped_column(ForeignKey("students.id"), nullable=True)
     session_token: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     role: Mapped[str] = mapped_column(String(20))  # user | assistant
     content: Mapped[str] = mapped_column(Text)

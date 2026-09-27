@@ -7,7 +7,6 @@ export default function StudentTest() {
   const aid = Number(assessmentId);
 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [studentName, setStudentName] = useState("");
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [hints, setHints] = useState<Record<number, string[]>>({});
@@ -22,8 +21,7 @@ export default function StudentTest() {
   }, [aid]);
 
   async function start() {
-    if (!studentName.trim()) return;
-    const a = await api.startAttempt(aid, studentName);
+    const a = await api.startAttempt(aid);
     setAttempt(a);
   }
 
@@ -76,7 +74,6 @@ export default function StudentTest() {
         <div className="auth-logo">📝</div>
         <h1>{assessment.status === "published" ? "Ready to start" : "This test is not published yet"}</h1>
         <div className="card stack" style={{ marginTop: 20, textAlign: "left" }}>
-          <input placeholder="Your name" value={studentName} onChange={(e) => setStudentName(e.target.value)} />
           <button className="primary" onClick={start} disabled={assessment.status !== "published"}>
             Start test
           </button>

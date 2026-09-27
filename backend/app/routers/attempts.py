@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -50,11 +50,14 @@ def _topic_concept_context(db: Session, topic_id: int) -> str:
 
 
 @router.post("/assessments/{assessment_id}/attempts", response_model=schemas.AttemptOut)
-def start_attempt(assessment_id: int, payload: schemas.AttemptStart, db: Session = Depends(get_db)):
+def start_attempt(assessment_id: int, request: Request, db: Session = Depends(get_db)):
+    student = request.state.student
+    if not student:
+        raise HTTPException(401, "Log in as a student to start a test.")
     assessment = db.get(models.Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
-    attempt = models.Attempt(assessment_id=assessment_id, student_name=payload.student_name)
+    attempt = models.Attempt(assessment_id=assessment_id, student_id=student.id, student_name=student.name)
     db.add(attempt)
     db.commit()
     db.refresh(attempt)

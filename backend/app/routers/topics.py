@@ -102,3 +102,49 @@ def update_concept(
     db.commit()
     db.refresh(concept)
     return concept
+
+
+@router.get("/{topic_id}/schedule", response_model=list[schemas.ScheduleEntryOut])
+def list_schedule(topic_id: int, db: Session = Depends(get_db)):
+    return (
+        db.query(models.ScheduleEntry)
+        .filter(models.ScheduleEntry.topic_id == topic_id)
+        .order_by(models.ScheduleEntry.scheduled_at)
+        .all()
+    )
+
+
+@router.post("/{topic_id}/schedule", response_model=schemas.ScheduleEntryOut)
+def create_schedule_entry(
+    topic_id: int,
+    payload: schemas.ScheduleEntryCreate,
+    db: Session = Depends(get_db),
+    coach: models.Coach = Depends(auth.require_coach),
+):
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    entry = models.ScheduleEntry(topic_id=topic_id, created_by_coach_id=coach.id, **payload.model_dump())
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.delete("/{topic_id}/schedule/{entry_id}", status_code=204)
+def delete_schedule_entry(
+    topic_id: int, entry_id: int, db: Session = Depends(get_db), coach: models.Coach = Depends(auth.require_coach)
+):
+    entry = db.get(models.ScheduleEntry, entry_id)
+    if not entry or entry.topic_id != topic_id:
+        raise HTTPException(404, "Schedule entry not found")
+    db.delete(entry)
+    db.commit()
+
+
+@router.get("/{topic_id}/sub-topics", response_model=list[schemas.TopicOut])
+def list_sub_topics(topic_id: int, db: Session = Depends(get_db)):
+    """Sub-topics created for a scheduled deep dive (see ScheduleEntry) --
+    just Topic rows with parent_topic_id set to this one."""
+    subs = db.query(models.Topic).filter(models.Topic.parent_topic_id == topic_id).order_by(models.Topic.id).all()
+    return [schemas.TopicOut.from_model(t) for t in subs]

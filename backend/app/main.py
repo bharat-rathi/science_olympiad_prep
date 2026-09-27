@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import auth, models
 from app.config import settings
 from app.db import SessionLocal, engine
-from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, topic_chat, topics, tutor
+from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, students, topic_chat, topics, tutor
 
 # INFO so llm/client.py's per-call logging (label, effort, char counts) shows
 # up in Render's logs -- the app's cheapest way to see LLM call volume.
@@ -84,6 +84,9 @@ _ensure_column("coaches", "llm_api_key_encrypted", "TEXT")
 _ensure_column("coaches", "google_drive_refresh_token_encrypted", "TEXT")
 _ensure_column("resources", "error_message", "TEXT DEFAULT ''")
 _ensure_column("topics", "assessment_type", "VARCHAR(20) DEFAULT 'test'")
+_ensure_column("attempts", "student_id", "INTEGER")
+_ensure_column("topic_chat_messages", "student_id", "INTEGER")
+_ensure_column("topics", "parent_topic_id", "INTEGER")
 
 # One-time backfill: the original demo seed (below) predates assessment_type
 # and always used this exact name, so any pre-existing "Roller Coaster" row
@@ -166,25 +169,32 @@ async def limit_request_size(request: Request, call_next):
 
 
 @app.middleware("http")
-async def attach_coach_session(request: Request, call_next):
-    """Resolve the session cookie to a Coach (if any) for every request.
+async def attach_identity(request: Request, call_next):
+    """Resolve the session cookie to a Coach or a Student (if either) for
+    every request. Only attaches request.state.coach/student -- it does NOT
+    block unauthenticated requests; the frontend gate (App.tsx) handles that
+    for every page now that students have real accounts too. Coach-only
+    endpoints still enforce login themselves via auth.require_coach; see
+    routers/topics.py, ingestion.py, explain.py, and assessment.py for where
+    that's applied.
 
-    Only attaches request.state.coach -- it does NOT block unauthenticated
-    requests. Coaches and students share this API: coaches log in to author
-    content, students never log in at all (they just enter a name per
-    attempt). Individual coach-only endpoints enforce login themselves via
-    the auth.require_coach dependency; see routers/topics.py, ingestion.py,
-    explain.py, and assessment.py for where that's applied.
+    One cookie, two tables: the token is looked up in CoachSession first,
+    then StudentSession, since a browser is signed in as at most one of the
+    two at a time (see auth.py's create_session/create_student_session).
     """
     token = request.cookies.get(auth.SESSION_COOKIE_NAME)
     coach = None
+    student = None
     if token:
         db = SessionLocal()
         try:
             coach = auth.get_coach_from_token(db, token)
+            if coach is None:
+                student = auth.get_student_from_token(db, token)
         finally:
             db.close()
     request.state.coach = coach
+    request.state.student = student
 
     return await call_next(request)
 
@@ -197,6 +207,7 @@ app.include_router(assessment.router)
 app.include_router(attempts.router)
 app.include_router(tutor.router)
 app.include_router(topic_chat.router)
+app.include_router(students.router)
 
 
 @app.on_event("startup")
