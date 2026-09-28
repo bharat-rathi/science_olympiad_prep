@@ -113,6 +113,20 @@ class ScheduleEntryCreate(BaseModel):
     notes: str = ""
 
 
+class SuggestSequenceRequest(BaseModel):
+    num_sessions: int = 4
+
+
+class SuggestedSession(BaseModel):
+    title: str
+    description: str
+
+
+class BranchConceptsRequest(BaseModel):
+    concept_ids: list[int]
+    new_topic_name: str
+
+
 class ResourceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
