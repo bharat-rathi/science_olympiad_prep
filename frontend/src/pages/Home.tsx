@@ -55,6 +55,23 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
         </p>
       </div>
 
+      {coach && (
+        <div className="card stack" style={{ marginBottom: 20 }}>
+          <strong>Getting started</strong>
+          <p className="muted" style={{ margin: 0 }}>
+            1. Build out a topic below (add resources, approve concepts, publish it), then add your{" "}
+            students on the <Link to="/students">Students</Link> page -- add each by their Google
+            account email, and check which topics they can see. They'll sign in with that same
+            email using the "Sign in with Google" button.
+          </p>
+          <p className="muted" style={{ margin: 0 }}>
+            2. (Optional) On <Link to="/settings">AI Settings</Link>, you can bring your own Gemini,
+            Claude, or OpenAI API key instead of using the app's shared key -- not required, everything
+            works out of the box without one.
+          </p>
+        </div>
+      )}
+
       {coach && topics.length > 0 && (
         <div className="stat-row">
           <div className="stat-tile">
