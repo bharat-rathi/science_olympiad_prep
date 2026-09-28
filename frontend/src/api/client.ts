@@ -67,6 +67,11 @@ export interface ScheduleEntry {
   created_at: string;
 }
 
+export interface SuggestedSession {
+  title: string;
+  description: string;
+}
+
 export const ASSESSMENT_TYPE_LABELS: Record<Topic["assessment_type"], string> = {
   test: "Written Test",
   practical: "Hands-on / Practical",
@@ -224,6 +229,16 @@ export const api = {
     req<ScheduleEntry>(`/api/topics/${topicId}/schedule`, { method: "POST", body: JSON.stringify(payload) }),
   deleteScheduleEntry: (topicId: number, entryId: number) =>
     req<void>(`/api/topics/${topicId}/schedule/${entryId}`, { method: "DELETE" }),
+  suggestSequence: (topicId: number, numSessions: number) =>
+    req<SuggestedSession[]>(`/api/topics/${topicId}/suggest-sequence`, {
+      method: "POST",
+      body: JSON.stringify({ num_sessions: numSessions }),
+    }),
+  branchConcepts: (topicId: number, conceptIds: number[], newTopicName: string) =>
+    req<Topic>(`/api/topics/${topicId}/concepts/branch`, {
+      method: "POST",
+      body: JSON.stringify({ concept_ids: conceptIds, new_topic_name: newTopicName }),
+    }),
 
   listResources: (topicId: number) => req<Resource[]>(`/api/topics/${topicId}/resources`),
   addTextResource: (topicId: number, payload: { title: string; text: string; source_url?: string }) =>

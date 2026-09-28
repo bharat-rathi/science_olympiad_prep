@@ -388,3 +388,53 @@ def tutor_system_prompt(topic_name: str, concept_context: str, question_prompt: 
         f"Correct answer: {correct_answer}\n"
         f"Student's (incorrect) answer: {student_answer}"
     )
+
+
+SEQUENCE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "sessions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "description": {"type": "string"},
+                },
+                "required": ["title", "description"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["sessions"],
+    "additionalProperties": False,
+}
+
+
+def sequence_prompt(topic_name: str, topic_description: str, assessment_type: str, overview: dict, num_sessions: int) -> tuple[str, str]:
+    """Suggest how to break one big event into a sequence of session-sized
+    sub-topics, before any content has been generated for it yet -- the
+    coach reviews/edits this before it drives what gets built next (see
+    routers/topics.py's suggest_sequence). Distinct from story_prompt/
+    quiz_prompt, which both weave together concepts that already exist;
+    this one has nothing to ground on but the topic itself.
+    """
+    system = (
+        "You are an experienced Science Olympiad coach helping plan how to teach one "
+        "competition event across several practice sessions, in a logical teaching "
+        "order -- easier/foundational ideas first, building up to harder or more "
+        "specific ones, the way a textbook breaks a subject into chapters. Each "
+        "session should be a coherent, focused chunk a middle-schooler could learn "
+        "in one sitting, not a random slice. Titles should be short and concrete "
+        "(e.g. 'The water cycle' not 'Session 1'); descriptions are 1-2 sentences "
+        "on what that session covers and why it comes at that point in the sequence."
+    )
+    overview_block = "\n".join(f"{k}: {v}" for k, v in overview.items() if v)
+    user = (
+        f"Event: {topic_name}\n"
+        f"Description: {topic_description}\n"
+        f"Assessment format: {assessment_type}\n"
+        + (f"Reference overview:\n{overview_block}\n" if overview_block else "")
+        + f"\nSuggest {num_sessions} sessions covering this event, in teaching order."
+    )
+    return system, user

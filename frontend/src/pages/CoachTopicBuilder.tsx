@@ -47,6 +47,12 @@ export default function CoachTopicBuilder() {
   const [publishBusy, setPublishBusy] = useState(false);
   const [approveAllBusy, setApproveAllBusy] = useState(false);
 
+  const [selectedConceptIds, setSelectedConceptIds] = useState<Set<number>>(new Set());
+  const [showBranchForm, setShowBranchForm] = useState(false);
+  const [branchName, setBranchName] = useState("");
+  const [branchBusy, setBranchBusy] = useState(false);
+  const [branchError, setBranchError] = useState("");
+
   function refresh() {
     api.getTopic(id).then(setTopic);
     api.listResources(id).then(setResources);
@@ -107,6 +113,32 @@ export default function CoachTopicBuilder() {
       else next.add(conceptId);
       return next;
     });
+  }
+
+  function toggleConceptSelect(conceptId: number) {
+    setSelectedConceptIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(conceptId)) next.delete(conceptId);
+      else next.add(conceptId);
+      return next;
+    });
+  }
+
+  async function branchSelected() {
+    if (!branchName.trim() || selectedConceptIds.size === 0) return;
+    setBranchBusy(true);
+    setBranchError("");
+    try {
+      await api.branchConcepts(id, Array.from(selectedConceptIds), branchName.trim());
+      setConcepts((prev) => prev.filter((c) => !selectedConceptIds.has(c.id)));
+      setSelectedConceptIds(new Set());
+      setBranchName("");
+      setShowBranchForm(false);
+    } catch (err) {
+      setBranchError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBranchBusy(false);
+    }
   }
 
   async function addLink() {
@@ -457,6 +489,37 @@ export default function CoachTopicBuilder() {
         </Link>
       )}
 
+      {concepts.length > 0 && (
+        <div className="card row" style={{ marginTop: 12, justifyContent: "space-between" }}>
+          <span className="muted">
+            {selectedConceptIds.size > 0
+              ? `${selectedConceptIds.size} concept${selectedConceptIds.size === 1 ? "" : "s"} selected`
+              : "Teaching this in multiple sessions? Select concepts below to branch them into a sub-topic."}
+          </span>
+          {selectedConceptIds.size > 0 && (
+            <button className="accent" onClick={() => setShowBranchForm(true)}>
+              Branch into sub-topic
+            </button>
+          )}
+        </div>
+      )}
+      {showBranchForm && (
+        <div className="card stack" style={{ marginTop: 8 }}>
+          <input
+            placeholder={`Sub-topic name (e.g. "${topic.name}: session 1")`}
+            value={branchName}
+            onChange={(e) => setBranchName(e.target.value)}
+          />
+          {branchError && <p style={{ color: "var(--danger)" }}>{branchError}</p>}
+          <div className="row">
+            <button className="primary" onClick={branchSelected} disabled={branchBusy || !branchName.trim()}>
+              {branchBusy ? "Branching..." : `Move ${selectedConceptIds.size} concept${selectedConceptIds.size === 1 ? "" : "s"}`}
+            </button>
+            <button onClick={() => setShowBranchForm(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div className="stack" style={{ marginTop: 12 }}>
         {concepts.map((c) => {
           const isEditing = expandedConceptIds.has(c.id);
@@ -464,6 +527,12 @@ export default function CoachTopicBuilder() {
             <div className="card accent-top concept-card" key={c.id}>
               <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div className="row" style={{ gap: 12 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedConceptIds.has(c.id)}
+                    onChange={() => toggleConceptSelect(c.id)}
+                    title="Select to branch into a sub-topic"
+                  />
                   {c.image_data_url && <img src={c.image_data_url} alt={c.term} className="concept-thumb" />}
                   <div>
                     <span className="card-title">{c.term}</span>
