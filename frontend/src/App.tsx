@@ -44,7 +44,7 @@ export default function App() {
   // student (username+PIN, see routers/students.py) -- there's no more
   // anonymous browsing of topics.
   if (!coach && !student) {
-    return <Login needsBootstrap={needsBootstrap} onStudentLogin={refreshAuth} />;
+    return <Login needsBootstrap={needsBootstrap} />;
   }
 
   return (

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
@@ -118,7 +118,8 @@ def add_question(
 
 
 @router.get("/topics/{topic_id}/assessment", response_model=schemas.AssessmentOut | None)
-def get_latest_assessment(topic_id: int, db: Session = Depends(get_db)):
+def get_latest_assessment(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    auth.require_topic_visible(db, request, topic_id)
     assessment = (
         db.query(models.Assessment)
         .filter(models.Assessment.topic_id == topic_id)

@@ -81,12 +81,16 @@ def drive_status(coach: models.Coach = Depends(auth.require_coach)):
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    """Finish the OAuth round-trip and turn a Google identity into a Coach.
+    """Finish the OAuth round-trip and turn a Google identity into a Coach or
+    a Student -- both sign in through this same callback, distinguished only
+    by which table their email matches.
 
     A Coach row with email set but google_sub still NULL means "invited but
-    hasn't signed in yet" (see /invite below) -- this is where that row gets
-    claimed. The very first account ever (nobody invited, nobody exists) is
-    allowed to self-create, same bootstrap rule the old password flow had.
+    hasn't signed in yet" (see /invite below); a Student row the same way
+    means "added by a coach but hasn't signed in yet" (see routers/students.py)
+    -- either way, this is where that row gets claimed. The very first
+    account ever (nobody invited, nobody exists) is allowed to self-create
+    as a coach, same bootstrap rule the old password flow had.
     """
     oauth_token = await auth.oauth.google.authorize_access_token(request)
     userinfo = oauth_token["userinfo"]
@@ -95,22 +99,40 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     google_sub = userinfo["sub"]
 
     coach = db.query(models.Coach).filter(models.Coach.email == email).first()
-    if coach is None:
-        is_bootstrap = db.query(models.Coach).count() == 0
-        if not is_bootstrap:
-            return RedirectResponse(f"{settings.public_base_url}/login?error=not_invited")
-        coach = models.Coach(email=email, name=name, google_sub=google_sub)
-        db.add(coach)
-    else:
+    if coach is not None:
         coach.google_sub = google_sub
         coach.name = name
-    db.commit()
-    db.refresh(coach)
+        db.commit()
+        db.refresh(coach)
+        session_token = auth.create_session(db, coach)
+        response = RedirectResponse(f"{settings.public_base_url}/")
+        auth.set_session_cookie(response, request, session_token)
+        return response
 
-    session_token = auth.create_session(db, coach)
-    response = RedirectResponse(f"{settings.public_base_url}/")
-    auth.set_session_cookie(response, request, session_token)
-    return response
+    student = db.query(models.Student).filter(models.Student.email == email).first()
+    if student is not None:
+        # Name stays whatever the coach entered on the roster (that's the
+        # attendance-list name a coach recognizes) -- unlike a coach's own
+        # profile name, it's not this account's to overwrite on login.
+        student.google_sub = google_sub
+        db.commit()
+        db.refresh(student)
+        session_token = auth.create_student_session(db, student)
+        response = RedirectResponse(f"{settings.public_base_url}/")
+        auth.set_session_cookie(response, request, session_token)
+        return response
+
+    if db.query(models.Coach).count() == 0:
+        coach = models.Coach(email=email, name=name, google_sub=google_sub)
+        db.add(coach)
+        db.commit()
+        db.refresh(coach)
+        session_token = auth.create_session(db, coach)
+        response = RedirectResponse(f"{settings.public_base_url}/")
+        auth.set_session_cookie(response, request, session_token)
+        return response
+
+    return RedirectResponse(f"{settings.public_base_url}/login?error=not_invited")
 
 
 @router.post("/invite", response_model=schemas.CoachOut)

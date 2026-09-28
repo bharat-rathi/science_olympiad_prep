@@ -1,48 +1,31 @@
 import { useEffect, useState } from "react";
-import { api, Student } from "../api/client";
-
-function suggestUsername(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s.-]/g, "")
-    .replace(/\s+/g, ".")
-    .slice(0, 64);
-}
+import { api, Student, Topic } from "../api/client";
 
 export default function CoachStudents() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [usernameEdited, setUsernameEdited] = useState(false);
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  // Most recently generated PIN, shown once until the coach adds/resets
-  // another student -- there is no "show me the PIN again" endpoint.
-  const [lastPin, setLastPin] = useState<{ username: string; pin: string } | null>(null);
+  const [openTopicsFor, setOpenTopicsFor] = useState<number | null>(null);
 
   function refresh() {
     api.listStudents().then(setStudents);
+    api.listTopics().then(setTopics);
   }
 
   useEffect(refresh, []);
 
-  function onNameChange(value: string) {
-    setName(value);
-    if (!usernameEdited) setUsername(suggestUsername(value));
-  }
-
   async function addStudent() {
-    if (!name.trim() || !username.trim()) return;
+    if (!name.trim() || !email.trim()) return;
     setBusy(true);
     setError("");
     try {
-      const created = await api.addStudent(name.trim(), username.trim());
-      setLastPin({ username: created.student.username, pin: created.pin });
+      const created = await api.addStudent(name.trim(), email.trim());
+      setStudents((prev) => [...prev, created]);
       setName("");
-      setUsername("");
-      setUsernameEdited(false);
-      refresh();
+      setEmail("");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -50,9 +33,11 @@ export default function CoachStudents() {
     }
   }
 
-  async function resetPin(student: Student) {
-    const created = await api.resetStudentPin(student.id);
-    setLastPin({ username: created.student.username, pin: created.pin });
+  async function toggleTopic(student: Student, topicId: number) {
+    const has = student.topic_ids.includes(topicId);
+    const nextIds = has ? student.topic_ids.filter((id) => id !== topicId) : [...student.topic_ids, topicId];
+    const updated = await api.setStudentTopics(student.id, nextIds);
+    setStudents((prev) => prev.map((s) => (s.id === student.id ? updated : s)));
   }
 
   return (
@@ -60,20 +45,19 @@ export default function CoachStudents() {
       <div className="page-header">
         <h1>Students</h1>
         <p className="muted">
-          A shared roster any coach can see and manage -- add a student here, then give them their
-          username and PIN to sign in at the login page.
+          A shared roster any coach can see and manage -- add a student by their Google account
+          email, then choose which topics they can see. They sign in with the same "Sign in with
+          Google" button as coaches, using that email.
         </p>
       </div>
 
       <div className="card stack">
-        <input placeholder="Student's name" value={name} onChange={(e) => onNameChange(e.target.value)} />
+        <input placeholder="Student's name" value={name} onChange={(e) => setName(e.target.value)} />
         <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            setUsernameEdited(true);
-          }}
+          type="email"
+          placeholder="Student's Google account email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
         <button className="primary" onClick={addStudent} disabled={busy}>
@@ -81,24 +65,35 @@ export default function CoachStudents() {
         </button>
       </div>
 
-      {lastPin && (
-        <div className="card" style={{ background: "var(--accent-soft)", borderColor: "transparent" }}>
-          <p style={{ margin: 0 }}>
-            <strong>{lastPin.username}</strong>'s PIN: <strong>{lastPin.pin}</strong>
-          </p>
-          <p className="muted" style={{ margin: "4px 0 0" }}>
-            Share this with the student now -- it won't be shown again. Use "Reset PIN" below if it's lost.
-          </p>
-        </div>
-      )}
-
       <div className="stack" style={{ marginTop: 16 }}>
         {students.map((s) => (
-          <div className="card row" style={{ justifyContent: "space-between" }} key={s.id}>
-            <span>
-              <strong>{s.name}</strong> <span className="muted">@{s.username}</span>
-            </span>
-            <button onClick={() => resetPin(s)}>Reset PIN</button>
+          <div className="card stack" key={s.id}>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <span>
+                <strong>{s.name}</strong> <span className="muted">{s.email}</span>
+              </span>
+              <button onClick={() => setOpenTopicsFor(openTopicsFor === s.id ? null : s.id)}>
+                {openTopicsFor === s.id ? "Done" : `Topics (${s.topic_ids.length})`}
+              </button>
+            </div>
+            {openTopicsFor === s.id && (
+              <div className="stack" style={{ paddingLeft: 8 }}>
+                <p className="muted" style={{ margin: 0 }}>
+                  {s.name} can only see the topics checked here.
+                </p>
+                {topics.map((t) => (
+                  <label key={t.id} className="row">
+                    <input
+                      type="checkbox"
+                      checked={s.topic_ids.includes(t.id)}
+                      onChange={() => toggleTopic(s, t.id)}
+                    />
+                    {t.name}
+                  </label>
+                ))}
+                {topics.length === 0 && <p className="muted">No topics exist yet.</p>}
+              </div>
+            )}
           </div>
         ))}
         {students.length === 0 && <p className="muted">No students yet -- add one above.</p>}

@@ -1,33 +1,5 @@
-import { useState } from "react";
-import { api } from "../api/client";
-
-export default function Login({
-  needsBootstrap,
-  onStudentLogin,
-}: {
-  needsBootstrap: boolean;
-  onStudentLogin: () => void;
-}) {
+export default function Login({ needsBootstrap }: { needsBootstrap: boolean }) {
   const notInvited = new URLSearchParams(window.location.search).get("error") === "not_invited";
-
-  const [username, setUsername] = useState("");
-  const [pin, setPin] = useState("");
-  const [studentError, setStudentError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function studentSignIn() {
-    if (!username.trim() || !pin.trim()) return;
-    setBusy(true);
-    setStudentError("");
-    try {
-      await api.studentLogin(username.trim(), pin.trim());
-      onStudentLogin();
-    } catch (err) {
-      setStudentError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="auth-shell">
@@ -37,22 +9,23 @@ export default function Login({
       {notInvited && (
         <div className="card" style={{ background: "var(--danger-soft)", borderColor: "transparent" }}>
           <p style={{ color: "var(--danger)", margin: 0 }}>
-            That Google account hasn't been invited yet -- ask an existing coach to add your email
-            from the home page, then try again.
+            That Google account hasn't been added yet -- ask a coach to add you (as a coach or a
+            student) from the home page, then try again.
           </p>
         </div>
       )}
 
       <div className="card stack" style={{ marginTop: 20, textAlign: "left" }}>
-        <strong>Coaches</strong>
         {needsBootstrap ? (
           <p className="muted" style={{ margin: 0 }}>
-            No coach accounts exist yet -- sign in with Google to create the first one. You'll be
-            logged in immediately, and can invite teammates by email from the home page afterward.
+            No accounts exist yet -- sign in with Google to create the first coach account. You'll
+            be logged in immediately, and can invite coaches or add students from the home page
+            afterward.
           </p>
         ) : (
           <p className="muted" style={{ margin: 0 }}>
-            Sign in with the Google account you were invited with.
+            Sign in with the Google account your coach added -- as a coach if you were invited by
+            email, or as a student if your coach added you to the roster.
           </p>
         )}
         <a href="/api/auth/google/login">
@@ -78,24 +51,6 @@ export default function Login({
             Sign in with Google
           </button>
         </a>
-      </div>
-
-      <div className="card stack" style={{ marginTop: 14, textAlign: "left" }}>
-        <strong>Students</strong>
-        <p className="muted" style={{ margin: 0 }}>
-          Sign in with the username and PIN your coach gave you.
-        </p>
-        <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-        <input
-          placeholder="PIN"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && studentSignIn()}
-        />
-        {studentError && <p style={{ color: "var(--danger)", margin: 0 }}>{studentError}</p>}
-        <button className="primary" onClick={studentSignIn} disabled={busy}>
-          {busy ? "Signing in..." : "Sign in"}
-        </button>
       </div>
     </div>
   );

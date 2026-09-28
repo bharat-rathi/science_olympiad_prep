@@ -46,20 +46,25 @@ class CoachSession(Base):
 
 
 class Student(Base):
-    """A real student account -- username + coach-issued PIN (app/passwords.py),
-    not Google OAuth like Coach, since students may not have a personal Google
-    account. Shared across all coaches (like Topic), not owned by whichever
-    coach added them -- added_by_coach_id is attribution only.
+    """A real student account -- signs in with the same Google OAuth flow as
+    a Coach (routers/auth.py's /google/callback matches the signed-in email
+    against both tables), not a separate username/PIN system. Shared across
+    all coaches (like Topic), not owned by whichever coach added them --
+    added_by_coach_id is attribution only.
     """
 
     __tablename__ = "students"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
-    username: Mapped[str] = mapped_column(String(64), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    # Filled in from the Google profile on first sign-in, same convention as
+    # Coach.google_sub -- NULL means "added by a coach, hasn't signed in yet".
+    google_sub: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
     added_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+
+    assigned_topics: Mapped[list["Topic"]] = relationship(secondary="student_topics")
 
 
 class StudentSession(Base):
@@ -69,6 +74,18 @@ class StudentSession(Base):
     student_id: Mapped[int] = mapped_column(ForeignKey("students.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
     expires_at: Mapped[datetime.datetime] = mapped_column(DateTime)
+
+
+class StudentTopic(Base):
+    """Which topics a student is allowed to see -- a student's view is
+    restricted to exactly these (see app/auth.py's require_topic_visible),
+    set by a coach from the roster page's per-student topic checklist."""
+
+    __tablename__ = "student_topics"
+
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"), primary_key=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
 
 class Topic(Base):
