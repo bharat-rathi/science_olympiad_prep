@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
+import TopicOverview from "../components/TopicOverview";
 
 export default function StudentPractice() {
   const { topicId } = useParams();
@@ -70,6 +71,8 @@ export default function StudentPractice() {
           {ASSESSMENT_TYPE_LABELS[topic.assessment_type]}
         </span>
       </div>
+
+      <TopicOverview topic={topic} />
 
       {assessment && (
         <div className="card row" style={{ justifyContent: "space-between" }}>

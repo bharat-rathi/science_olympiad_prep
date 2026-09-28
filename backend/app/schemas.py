@@ -72,6 +72,11 @@ class TopicOut(BaseModel):
     created_by: str | None = None
     content_published: bool = False
     story_md: str = ""
+    overview_what: str = ""
+    overview_learn: str = ""
+    overview_assessed: str = ""
+    overview_theme_2027: str = ""
+    overview_notes: str = ""
 
     @staticmethod
     def from_model(topic) -> "TopicOut":
