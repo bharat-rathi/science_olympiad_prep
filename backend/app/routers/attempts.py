@@ -4,7 +4,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from app import models, schemas
+from app import auth, models, schemas
 from app.db import get_db
 from app.llm.client import complete_json, complete_text
 from app.llm.prompts import hint_prompt
@@ -57,6 +57,7 @@ def start_attempt(assessment_id: int, request: Request, db: Session = Depends(ge
     assessment = db.get(models.Assessment, assessment_id)
     if not assessment:
         raise HTTPException(404, "Assessment not found")
+    auth.require_topic_visible(db, request, assessment.topic_id)
     attempt = models.Attempt(assessment_id=assessment_id, student_id=student.id, student_name=student.name)
     db.add(attempt)
     db.commit()

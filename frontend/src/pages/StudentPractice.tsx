@@ -14,9 +14,14 @@ export default function StudentPractice() {
   const [view, setView] = useState<"flashcards" | "story">("flashcards");
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [accessError, setAccessError] = useState("");
 
   useEffect(() => {
-    api.getTopic(id).then(setTopic);
+    setAccessError("");
+    api
+      .getTopic(id)
+      .then(setTopic)
+      .catch((err) => setAccessError(err instanceof Error ? err.message : String(err)));
     api.listConcepts(id).then((all) => setConcepts(all.filter((c) => c.approved)));
     // Assessment visibility is independent of the topic's learning-content
     // publish flag -- a coach can publish a test without (or before)
@@ -42,6 +47,16 @@ export default function StudentPractice() {
       else next.add(conceptId);
       return next;
     });
+  }
+
+  if (accessError) {
+    return (
+      <div className="auth-shell">
+        <div className="auth-logo">🔒</div>
+        <h1>No access to this topic</h1>
+        <p className="muted">Ask your coach to assign this topic to you.</p>
+      </div>
+    );
   }
 
   if (!topic) return <p>Loading...</p>;

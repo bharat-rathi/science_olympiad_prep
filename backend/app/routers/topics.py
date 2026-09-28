@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
@@ -8,8 +8,17 @@ router = APIRouter(prefix="/api/topics", tags=["topics"])
 
 
 @router.get("", response_model=list[schemas.TopicOut])
-def list_topics(db: Session = Depends(get_db)):
-    topics = db.query(models.Topic).order_by(models.Topic.id).all()
+def list_topics(request: Request, db: Session = Depends(get_db)):
+    query = db.query(models.Topic)
+    student = request.state.student
+    if student is not None:
+        # A student only ever sees topics a coach has explicitly assigned
+        # them (models.StudentTopic) -- coaches still see everything.
+        assigned_ids = [
+            row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)
+        ]
+        query = query.filter(models.Topic.id.in_(assigned_ids))
+    topics = query.order_by(models.Topic.id).all()
     return [schemas.TopicOut.from_model(t) for t in topics]
 
 
@@ -25,10 +34,8 @@ def create_topic(
 
 
 @router.get("/{topic_id}", response_model=schemas.TopicOut)
-def get_topic(topic_id: int, db: Session = Depends(get_db)):
-    topic = db.get(models.Topic, topic_id)
-    if not topic:
-        raise HTTPException(404, "Topic not found")
+def get_topic(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    topic = auth.require_topic_visible(db, request, topic_id)
     return schemas.TopicOut.from_model(topic)
 
 
@@ -72,17 +79,20 @@ def unpublish_content(topic_id: int, db: Session = Depends(get_db), coach: model
 
 
 @router.get("/{topic_id}/resources", response_model=list[schemas.ResourceOut])
-def list_resources(topic_id: int, db: Session = Depends(get_db)):
+def list_resources(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    auth.require_topic_visible(db, request, topic_id)
     return db.query(models.Resource).filter(models.Resource.topic_id == topic_id).order_by(models.Resource.id).all()
 
 
 @router.get("/{topic_id}/diagrams", response_model=list[schemas.DiagramOut])
-def list_diagrams(topic_id: int, db: Session = Depends(get_db)):
+def list_diagrams(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    auth.require_topic_visible(db, request, topic_id)
     return db.query(models.Diagram).filter(models.Diagram.topic_id == topic_id).order_by(models.Diagram.id).all()
 
 
 @router.get("/{topic_id}/concepts", response_model=list[schemas.ConceptTermOut])
-def list_concepts(topic_id: int, db: Session = Depends(get_db)):
+def list_concepts(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    auth.require_topic_visible(db, request, topic_id)
     return db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic_id).order_by(models.ConceptTerm.id).all()
 
 

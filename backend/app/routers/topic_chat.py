@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from app import models, schemas
+from app import auth, models, schemas
 from app.db import get_db
 from app.llm.prompts import topic_qa_system_prompt
 from app.llm.router import get_llm_handle
@@ -30,6 +30,7 @@ def _identity(request: Request) -> tuple[models.Coach | None, dict]:
 
 @router.get("/{topic_id}/chat", response_model=list[schemas.TopicChatMessageOut])
 def get_topic_chat(topic_id: int, request: Request, db: Session = Depends(get_db)):
+    auth.require_topic_visible(db, request, topic_id)
     _, ident = _identity(request)
     return (
         db.query(models.TopicChatMessage)
@@ -41,10 +42,7 @@ def get_topic_chat(topic_id: int, request: Request, db: Session = Depends(get_db
 
 @router.post("/{topic_id}/chat/turn", response_model=schemas.TopicChatMessageOut)
 def topic_chat_turn(topic_id: int, payload: schemas.TopicChatTurnRequest, request: Request, db: Session = Depends(get_db)):
-    topic = db.get(models.Topic, topic_id)
-    if not topic:
-        raise HTTPException(404, "Topic not found")
-
+    topic = auth.require_topic_visible(db, request, topic_id)
     coach, ident = _identity(request)
 
     db.add(models.TopicChatMessage(topic_id=topic_id, role="user", content=payload.message, **ident))

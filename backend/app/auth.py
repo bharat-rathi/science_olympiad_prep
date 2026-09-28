@@ -25,9 +25,9 @@ oauth.register(
 
 
 def set_session_cookie(response: Response, request: Request, token: str) -> None:
-    """Shared by both login paths (Google OAuth for coaches, username+PIN for
-    students, see routers/auth.py and routers/students.py) -- one cookie
-    regardless of which kind of session it points to."""
+    """Shared by both coach and student sessions (both sign in through the
+    same Google OAuth callback, see routers/auth.py) -- one cookie regardless
+    of which kind of session it points to."""
     response.set_cookie(
         SESSION_COOKIE_NAME,
         token,
@@ -114,3 +114,24 @@ def require_coach(request: Request) -> models.Coach:
     if request.state.coach is None:
         raise HTTPException(401, "Log in as a coach to do this")
     return request.state.coach
+
+
+def require_topic_visible(db: Session, request: Request, topic_id: int) -> models.Topic:
+    """Every topic-scoped, student-reachable endpoint calls this instead of a
+    bare db.get(Topic, ...). A coach can see every topic, unchanged; a
+    student can only see topics a coach has explicitly assigned them
+    (models.StudentTopic, set from the roster page's per-student checklist).
+    """
+    topic = db.get(models.Topic, topic_id)
+    if not topic:
+        raise HTTPException(404, "Topic not found")
+    student = request.state.student
+    if student is not None:
+        assigned = (
+            db.query(models.StudentTopic)
+            .filter_by(student_id=student.id, topic_id=topic_id)
+            .first()
+        )
+        if assigned is None:
+            raise HTTPException(403, "You don't have access to this topic.")
+    return topic

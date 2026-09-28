@@ -13,14 +13,11 @@ export interface Coach {
 export interface Student {
   id: number;
   name: string;
-  username: string;
+  email: string;
   created_at: string;
-}
-
-export interface StudentCreated {
-  student: Student;
-  // Shown once, at creation/reset time -- never retrievable again.
-  pin: string;
+  // Topics this student is allowed to see -- set by a coach from the
+  // roster page's per-student checklist (see CoachStudents.tsx).
+  topic_ids: number[];
 }
 
 export interface MeResponse {
@@ -194,13 +191,11 @@ export const api = {
   updateAiSettings: (payload: { provider: AiSettings["provider"]; api_key: string | null }) =>
     req<AiSettings>("/api/auth/ai-settings", { method: "PUT", body: JSON.stringify(payload) }),
 
-  studentLogin: (username: string, pin: string) =>
-    req<Student>("/api/students/login", { method: "POST", body: JSON.stringify({ username, pin }) }),
   listStudents: () => req<Student[]>("/api/students"),
-  addStudent: (name: string, username: string) =>
-    req<StudentCreated>("/api/students", { method: "POST", body: JSON.stringify({ name, username }) }),
-  resetStudentPin: (studentId: number) =>
-    req<StudentCreated>(`/api/students/${studentId}/reset-pin`, { method: "POST" }),
+  addStudent: (name: string, email: string) =>
+    req<Student>("/api/students", { method: "POST", body: JSON.stringify({ name, email }) }),
+  setStudentTopics: (studentId: number, topicIds: number[]) =>
+    req<Student>(`/api/students/${studentId}/topics`, { method: "PUT", body: JSON.stringify({ topic_ids: topicIds }) }),
 
   getDriveStatus: () => req<DriveStatus>("/api/auth/drive-status"),
   disconnectDrive: () => req<DriveStatus>("/api/auth/drive/disconnect", { method: "POST" }),

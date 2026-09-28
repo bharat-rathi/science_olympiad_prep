@@ -65,7 +65,34 @@ def _migrate_coach_table_to_google_auth() -> None:
             conn.commit()
 
 
+def _migrate_student_table_to_google_auth() -> None:
+    """One-time: the old username+PIN `students` table (username/password_hash
+    NOT NULL, no email/google_sub) can't be patched with ALTER TABLE ADD
+    COLUMN alone -- mirrors _migrate_coach_table_to_google_auth above. Drop
+    and let create_all below recreate it with the new schema. Any student
+    accounts added under the old PIN system need to be re-added (this time
+    by email) after this runs; CASCADE also drops the FK from attempts/
+    topic_chat_messages.student_id, not those tables themselves.
+    """
+    with engine.connect() as conn:
+        if engine.dialect.name == "sqlite":
+            existing = {row[1] for row in conn.execute(text("PRAGMA table_info(students)"))}
+        else:
+            existing = {
+                row[0]
+                for row in conn.execute(
+                    text("SELECT column_name FROM information_schema.columns WHERE table_name = 'students'")
+                )
+            }
+        if existing and "email" not in existing:
+            cascade = "" if engine.dialect.name == "sqlite" else " CASCADE"
+            conn.execute(text(f"DROP TABLE IF EXISTS student_sessions{cascade}"))
+            conn.execute(text(f"DROP TABLE IF EXISTS students{cascade}"))
+            conn.commit()
+
+
 _migrate_coach_table_to_google_auth()
+_migrate_student_table_to_google_auth()
 models.Base.metadata.create_all(bind=engine)
 
 # SQLite's permissive type affinity accepts a bare 0/1 literal for a boolean
