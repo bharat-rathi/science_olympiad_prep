@@ -229,11 +229,6 @@ export const api = {
     req<ScheduleEntry>(`/api/topics/${topicId}/schedule`, { method: "POST", body: JSON.stringify(payload) }),
   deleteScheduleEntry: (topicId: number, entryId: number) =>
     req<void>(`/api/topics/${topicId}/schedule/${entryId}`, { method: "DELETE" }),
-  suggestSequence: (topicId: number, numSessions: number) =>
-    req<SuggestedSession[]>(`/api/topics/${topicId}/suggest-sequence`, {
-      method: "POST",
-      body: JSON.stringify({ num_sessions: numSessions }),
-    }),
   branchConcepts: (topicId: number, conceptIds: number[], newTopicName: string) =>
     req<Topic>(`/api/topics/${topicId}/concepts/branch`, {
       method: "POST",

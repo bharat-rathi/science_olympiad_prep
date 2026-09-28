@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, ConceptTerm, Diagram, Resource, SuggestedSession, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 import TopicOverview from "../components/TopicOverview";
+import { defaultStudyPlanSkeleton } from "../lib/studyPlanSkeleton";
 
 const RESOURCE_ICON: Record<string, string> = {
   pdf: "📄",
@@ -55,9 +56,7 @@ export default function CoachTopicBuilder() {
 
   const [chapters, setChapters] = useState<Topic[]>([]);
   const [showSuggestChapters, setShowSuggestChapters] = useState(false);
-  const [numChapters, setNumChapters] = useState(4);
   const [suggestedChapters, setSuggestedChapters] = useState<SuggestedSession[] | null>(null);
-  const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestError, setSuggestError] = useState("");
   const [acceptChaptersBusy, setAcceptChaptersBusy] = useState(false);
 
@@ -151,17 +150,10 @@ export default function CoachTopicBuilder() {
     }
   }
 
-  async function suggestChapters() {
-    setSuggestBusy(true);
+  function suggestChapters() {
+    if (!topic) return;
     setSuggestError("");
-    try {
-      const sessions = await api.suggestSequence(id, numChapters);
-      setSuggestedChapters(sessions);
-    } catch (err) {
-      setSuggestError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSuggestBusy(false);
-    }
+    setSuggestedChapters(defaultStudyPlanSkeleton(topic.assessment_type));
   }
 
   function updateSuggestedChapter(index: number, field: "title" | "description", value: string) {
@@ -373,10 +365,11 @@ export default function CoachTopicBuilder() {
 
       {activeTab === "build" && (
         <>
-          <h2>Chapters</h2>
+          <h2>Chapters & study plan</h2>
           <p className="muted">
             Teaching this event across multiple sessions? Break it into chapters -- each is its own
-            sub-topic with its own resources, concepts, and assessment.
+            sub-topic with its own resources, concepts, and assessment. Start from a standard study
+            plan skeleton and edit it to fit how you actually want to teach this event.
           </p>
           {chapters.length > 0 && (
             <div className="grid-2" style={{ marginBottom: 12 }}>
@@ -392,8 +385,14 @@ export default function CoachTopicBuilder() {
           )}
           {!showSuggestChapters ? (
             <div className="row">
-              <button className="accent" onClick={() => setShowSuggestChapters(true)}>
-                ✨ Suggest chapters
+              <button
+                className="accent"
+                onClick={() => {
+                  setShowSuggestChapters(true);
+                  suggestChapters();
+                }}
+              >
+                Suggest a study plan
               </button>
               <Link to={`/coach/${id}/schedule`}>
                 <button>Manage schedule & chapters →</button>
@@ -401,26 +400,12 @@ export default function CoachTopicBuilder() {
             </div>
           ) : (
             <div className="card stack">
-              <label className="row">
-                Number of chapters
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={numChapters}
-                  onChange={(e) => setNumChapters(Number(e.target.value) || 1)}
-                  style={{ width: 60 }}
-                />
-              </label>
+              <p className="muted" style={{ margin: 0 }}>
+                A standard skeleton for a {ASSESSMENT_TYPE_LABELS[topic.assessment_type].toLowerCase()} event --
+                edit titles/descriptions, remove stages that don't apply, or add your own chapters later.
+              </p>
               {suggestError && <p style={{ color: "var(--danger)" }}>{suggestError}</p>}
-              {!suggestedChapters ? (
-                <div className="row">
-                  <button className="primary" onClick={suggestChapters} disabled={suggestBusy}>
-                    {suggestBusy ? "Thinking..." : "Suggest chapters"}
-                  </button>
-                  <button onClick={() => setShowSuggestChapters(false)}>Cancel</button>
-                </div>
-              ) : (
+              {suggestedChapters && (
                 <div className="stack">
                   {suggestedChapters.map((s, i) => (
                     <div className="card stack" key={i}>
@@ -439,7 +424,14 @@ export default function CoachTopicBuilder() {
                     <button className="primary" onClick={acceptChapters} disabled={acceptChaptersBusy || suggestedChapters.length === 0}>
                       {acceptChaptersBusy ? "Creating..." : `Create ${suggestedChapters.length} chapter${suggestedChapters.length === 1 ? "" : "s"}`}
                     </button>
-                    <button onClick={() => setSuggestedChapters(null)}>Discard</button>
+                    <button
+                      onClick={() => {
+                        setSuggestedChapters(null);
+                        setShowSuggestChapters(false);
+                      }}
+                    >
+                      Discard
+                    </button>
                   </div>
                 </div>
               )}

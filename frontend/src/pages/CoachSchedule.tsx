@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ScheduleEntry, SuggestedSession, Topic } from "../api/client";
+import { defaultStudyPlanSkeleton } from "../lib/studyPlanSkeleton";
 
 function toLocalInputValue(iso: string): string {
   // <input type="datetime-local"> wants "YYYY-MM-DDTHH:mm" in local time,
@@ -27,9 +28,7 @@ export default function CoachSchedule() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const [numSessions, setNumSessions] = useState(4);
   const [suggested, setSuggested] = useState<(SuggestedSession & { date: string })[] | null>(null);
-  const [suggestBusy, setSuggestBusy] = useState(false);
   const [suggestError, setSuggestError] = useState("");
   const [acceptBusy, setAcceptBusy] = useState(false);
 
@@ -79,17 +78,10 @@ export default function CoachSchedule() {
     setEntries((prev) => prev.filter((e) => e.id !== entryId));
   }
 
-  async function suggestSequence() {
-    setSuggestBusy(true);
+  function suggestSequence() {
+    if (!topic) return;
     setSuggestError("");
-    try {
-      const sessions = await api.suggestSequence(id, numSessions);
-      setSuggested(sessions.map((s) => ({ ...s, date: "" })));
-    } catch (err) {
-      setSuggestError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSuggestBusy(false);
-    }
+    setSuggested(defaultStudyPlanSkeleton(topic.assessment_type).map((s) => ({ ...s, date: "" })));
   }
 
   function updateSuggested(index: number, field: "title" | "description" | "date", value: string) {
@@ -159,28 +151,19 @@ export default function CoachSchedule() {
         {entries.length === 0 && <p className="muted">No sessions scheduled for this topic yet.</p>}
       </div>
 
-      <h2>Suggest a teaching sequence</h2>
+      <h2>Study plan</h2>
       <p className="muted">
-        Let AI propose how to break {topic.name} into a set of session-sized sub-topics, in teaching
-        order -- review and edit before creating any of them.
+        Start from a standard study plan skeleton for {topic.name}, in teaching order -- review and
+        edit it before creating any sub-topics from it.
       </p>
-      <div className="card stack">
-        <label className="row">
-          Number of sessions
-          <input
-            type="number"
-            min={1}
-            max={12}
-            value={numSessions}
-            onChange={(e) => setNumSessions(Number(e.target.value) || 1)}
-            style={{ width: 60 }}
-          />
-        </label>
-        {suggestError && <p style={{ color: "var(--danger)" }}>{suggestError}</p>}
-        <button className="accent" onClick={suggestSequence} disabled={suggestBusy}>
-          {suggestBusy ? "Thinking..." : "✨ Suggest sequence"}
-        </button>
-      </div>
+      {!suggested && (
+        <div className="card stack">
+          {suggestError && <p style={{ color: "var(--danger)" }}>{suggestError}</p>}
+          <button className="accent" onClick={suggestSequence}>
+            Suggest a study plan
+          </button>
+        </div>
+      )}
 
       {suggested && (
         <div className="stack" style={{ marginTop: 12 }}>

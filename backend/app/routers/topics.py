@@ -3,8 +3,6 @@ from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
 from app.db import get_db
-from app.llm.prompts import SEQUENCE_SCHEMA, sequence_prompt
-from app.llm.router import get_llm_handle
 
 router = APIRouter(prefix="/api/topics", tags=["topics"])
 
@@ -160,37 +158,6 @@ def list_sub_topics(topic_id: int, db: Session = Depends(get_db)):
     just Topic rows with parent_topic_id set to this one."""
     subs = db.query(models.Topic).filter(models.Topic.parent_topic_id == topic_id).order_by(models.Topic.id).all()
     return [schemas.TopicOut.from_model(t) for t in subs]
-
-
-@router.post("/{topic_id}/suggest-sequence", response_model=list[schemas.SuggestedSession])
-def suggest_sequence(
-    topic_id: int,
-    payload: schemas.SuggestSequenceRequest,
-    db: Session = Depends(get_db),
-    coach: models.Coach = Depends(auth.require_coach),
-):
-    """Proposes a teaching-session breakdown for this event before any
-    content has been generated yet -- a preview only, nothing is persisted
-    here. The coach reviews/edits the result on the Schedule page and
-    accepts it via the existing create-topic (parent_topic_id) and
-    create-schedule-entry endpoints, one call per accepted session.
-    """
-    topic = db.get(models.Topic, topic_id)
-    if not topic:
-        raise HTTPException(404, "Topic not found")
-
-    num_sessions = max(1, min(payload.num_sessions, 12))
-    overview = {
-        "What it is": topic.overview_what,
-        "What kids learn": topic.overview_learn,
-        "How it's assessed": topic.overview_assessed,
-        "2027 theme": topic.overview_theme_2027,
-    }
-    system, user = sequence_prompt(topic.name, topic.description, topic.assessment_type, overview, num_sessions)
-    result = get_llm_handle(coach).complete_json(
-        system, user, SEQUENCE_SCHEMA, max_tokens=1500, effort="medium", label="suggest_sequence"
-    )
-    return result.get("sessions", [])
 
 
 @router.post("/{topic_id}/concepts/branch", response_model=schemas.TopicOut)
