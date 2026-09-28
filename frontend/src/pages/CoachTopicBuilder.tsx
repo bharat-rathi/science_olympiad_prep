@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, ConceptTerm, Diagram, Resource, SuggestedSession, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 import TopicOverview from "../components/TopicOverview";
 
@@ -53,11 +53,20 @@ export default function CoachTopicBuilder() {
   const [branchBusy, setBranchBusy] = useState(false);
   const [branchError, setBranchError] = useState("");
 
+  const [chapters, setChapters] = useState<Topic[]>([]);
+  const [showSuggestChapters, setShowSuggestChapters] = useState(false);
+  const [numChapters, setNumChapters] = useState(4);
+  const [suggestedChapters, setSuggestedChapters] = useState<SuggestedSession[] | null>(null);
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [suggestError, setSuggestError] = useState("");
+  const [acceptChaptersBusy, setAcceptChaptersBusy] = useState(false);
+
   function refresh() {
     api.getTopic(id).then(setTopic);
     api.listResources(id).then(setResources);
     api.listConcepts(id).then(setConcepts);
     api.listDiagrams(id).then(setDiagrams);
+    api.listSubTopics(id).then(setChapters);
   }
 
   useEffect(refresh, [id]);
@@ -134,10 +143,57 @@ export default function CoachTopicBuilder() {
       setSelectedConceptIds(new Set());
       setBranchName("");
       setShowBranchForm(false);
+      api.listSubTopics(id).then(setChapters);
     } catch (err) {
       setBranchError(err instanceof Error ? err.message : String(err));
     } finally {
       setBranchBusy(false);
+    }
+  }
+
+  async function suggestChapters() {
+    setSuggestBusy(true);
+    setSuggestError("");
+    try {
+      const sessions = await api.suggestSequence(id, numChapters);
+      setSuggestedChapters(sessions);
+    } catch (err) {
+      setSuggestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSuggestBusy(false);
+    }
+  }
+
+  function updateSuggestedChapter(index: number, field: "title" | "description", value: string) {
+    setSuggestedChapters((prev) => (prev ? prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)) : prev));
+  }
+
+  function removeSuggestedChapter(index: number) {
+    setSuggestedChapters((prev) => (prev ? prev.filter((_, i) => i !== index) : prev));
+  }
+
+  async function acceptChapters() {
+    if (!suggestedChapters || !topic) return;
+    setAcceptChaptersBusy(true);
+    setSuggestError("");
+    try {
+      for (const chapter of suggestedChapters) {
+        if (!chapter.title.trim()) continue;
+        await api.createTopic({
+          event_name: topic.event_name,
+          name: chapter.title.trim(),
+          description: chapter.description,
+          assessment_type: topic.assessment_type,
+          parent_topic_id: topic.id,
+        });
+      }
+      setSuggestedChapters(null);
+      setShowSuggestChapters(false);
+      api.listSubTopics(id).then(setChapters);
+    } catch (err) {
+      setSuggestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAcceptChaptersBusy(false);
     }
   }
 
@@ -317,7 +373,80 @@ export default function CoachTopicBuilder() {
 
       {activeTab === "build" && (
         <>
-          <h2>Resources</h2>
+          <h2>Chapters</h2>
+          <p className="muted">
+            Teaching this event across multiple sessions? Break it into chapters -- each is its own
+            sub-topic with its own resources, concepts, and assessment.
+          </p>
+          {chapters.length > 0 && (
+            <div className="grid-2" style={{ marginBottom: 12 }}>
+              {chapters.map((c) => (
+                <Link to={`/coach/${c.id}`} key={c.id}>
+                  <div className="card hoverable">
+                    <span className="card-title">{c.name}</span>
+                    {c.description && <p className="muted" style={{ margin: "4px 0 0" }}>{c.description}</p>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+          {!showSuggestChapters ? (
+            <div className="row">
+              <button className="accent" onClick={() => setShowSuggestChapters(true)}>
+                ✨ Suggest chapters
+              </button>
+              <Link to={`/coach/${id}/schedule`}>
+                <button>Manage schedule & chapters →</button>
+              </Link>
+            </div>
+          ) : (
+            <div className="card stack">
+              <label className="row">
+                Number of chapters
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={numChapters}
+                  onChange={(e) => setNumChapters(Number(e.target.value) || 1)}
+                  style={{ width: 60 }}
+                />
+              </label>
+              {suggestError && <p style={{ color: "var(--danger)" }}>{suggestError}</p>}
+              {!suggestedChapters ? (
+                <div className="row">
+                  <button className="primary" onClick={suggestChapters} disabled={suggestBusy}>
+                    {suggestBusy ? "Thinking..." : "Suggest chapters"}
+                  </button>
+                  <button onClick={() => setShowSuggestChapters(false)}>Cancel</button>
+                </div>
+              ) : (
+                <div className="stack">
+                  {suggestedChapters.map((s, i) => (
+                    <div className="card stack" key={i}>
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <input
+                          value={s.title}
+                          onChange={(e) => updateSuggestedChapter(i, "title", e.target.value)}
+                          style={{ flex: 1, fontWeight: 600 }}
+                        />
+                        <button onClick={() => removeSuggestedChapter(i)}>Remove</button>
+                      </div>
+                      <textarea value={s.description} onChange={(e) => updateSuggestedChapter(i, "description", e.target.value)} />
+                    </div>
+                  ))}
+                  <div className="row">
+                    <button className="primary" onClick={acceptChapters} disabled={acceptChaptersBusy || suggestedChapters.length === 0}>
+                      {acceptChaptersBusy ? "Creating..." : `Create ${suggestedChapters.length} chapter${suggestedChapters.length === 1 ? "" : "s"}`}
+                    </button>
+                    <button onClick={() => setSuggestedChapters(null)}>Discard</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <h2 style={{ marginTop: 24 }}>Resources</h2>
       <p className="muted">
         Upload a document, PDF, video/audio clip (or a zip of several), paste a link, or type a
         topic to research. Video is one possible source among several -- it's only used where the
@@ -494,11 +623,11 @@ export default function CoachTopicBuilder() {
           <span className="muted">
             {selectedConceptIds.size > 0
               ? `${selectedConceptIds.size} concept${selectedConceptIds.size === 1 ? "" : "s"} selected`
-              : "Teaching this in multiple sessions? Select concepts below to branch them into a sub-topic."}
+              : "Already generated everything at once? Select concepts below to move them into their own chapter."}
           </span>
           {selectedConceptIds.size > 0 && (
             <button className="accent" onClick={() => setShowBranchForm(true)}>
-              Branch into sub-topic
+              Move into a chapter
             </button>
           )}
         </div>
@@ -506,7 +635,7 @@ export default function CoachTopicBuilder() {
       {showBranchForm && (
         <div className="card stack" style={{ marginTop: 8 }}>
           <input
-            placeholder={`Sub-topic name (e.g. "${topic.name}: session 1")`}
+            placeholder={`Chapter name (e.g. "${topic.name}: session 1")`}
             value={branchName}
             onChange={(e) => setBranchName(e.target.value)}
           />
