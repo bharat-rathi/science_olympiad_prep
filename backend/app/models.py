@@ -99,6 +99,17 @@ class Topic(Base):
     # this event, shown alongside the description so a coach can tell at a
     # glance what to prepare a student for.
     assessment_type: Mapped[str] = mapped_column(String(20), default="test")
+    # Reference overview shown at the top of a topic's page -- populated by
+    # the official-events catalog seed (main.py's seed_official_topics) for
+    # the 25 pre-seeded Division B events, empty for a coach-created custom
+    # topic or sub-topic. Five short, separately-labeled fields rather than
+    # one blob so the UI can render them as distinct cards without needing a
+    # markdown parser.
+    overview_what: Mapped[str] = mapped_column(Text, default="")
+    overview_learn: Mapped[str] = mapped_column(Text, default="")
+    overview_assessed: Mapped[str] = mapped_column(Text, default="")
+    overview_theme_2027: Mapped[str] = mapped_column(Text, default="")
+    overview_notes: Mapped[str] = mapped_column(Text, default="")
     created_by_coach_id: Mapped[int | None] = mapped_column(ForeignKey("coaches.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
     # Set when this Topic is a sub-topic (a scheduled deep dive) of a main

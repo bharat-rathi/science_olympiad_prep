@@ -48,6 +48,14 @@ export interface Topic {
   created_by: string | null;
   content_published: boolean;
   story_md: string;
+  // Reference overview for the official pre-seeded events -- empty strings
+  // for a coach-created custom topic or sub-topic (see main.py's
+  // seed_official_topics / OVERVIEW_CONTENT).
+  overview_what: string;
+  overview_learn: string;
+  overview_assessed: string;
+  overview_theme_2027: string;
+  overview_notes: string;
 }
 
 export interface ScheduleEntry {

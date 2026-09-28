@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
+import TopicOverview from "../components/TopicOverview";
 
 const RESOURCE_ICON: Record<string, string> = {
   pdf: "📄",
@@ -264,6 +265,8 @@ export default function CoachTopicBuilder() {
           {ASSESSMENT_TYPE_LABELS[topic.assessment_type]}
         </span>
       </div>
+
+      <TopicOverview topic={topic} />
 
       <div className="tabs">
         <button className={`tab ${activeTab === "build" ? "active" : ""}`} onClick={() => setActiveTab("build")}>
