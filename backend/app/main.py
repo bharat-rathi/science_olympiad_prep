@@ -874,6 +874,368 @@ def seed_solar_system_deep_dive() -> None:
         db.close()
 
 
+@app.on_event("startup")
+def seed_thermodynamics_deep_dive() -> None:
+    """One-time content correction + deep-dive setup for Thermodynamics,
+    from the actual scioly.org wiki page (coach-supplied PDF). Same pattern
+    as seed_solar_system_deep_dive -- unconditionally overwrites the topic's
+    description/overview with corrected content, then idempotently seeds a
+    grounding resource plus 4 real deep-dive chapters.
+
+    Important finding this correction is built around: the wiki explicitly
+    flags that the *device* task changed for 2027 -- the classic "insulate
+    a 250mL beaker of hot water" task (used through the 2018/2019 seasons)
+    is described as a past version, and the page doesn't fully detail what
+    replaces it as of this snapshot. The written-test content (the four
+    laws, gas laws, Carnot cycle, conversions, history) is unaffected by
+    that change and is what most of the deep-dive chapters below cover.
+    """
+    db = SessionLocal()
+    try:
+        topic = (
+            db.query(models.Topic)
+            .filter(models.Topic.name == "Thermodynamics", models.Topic.parent_topic_id.is_(None))
+            .first()
+        )
+        if topic is None:
+            return
+
+        topic.description = (
+            "Teams build a device to collect and retain heat -- the classic \"insulate a beaker "
+            "of hot water\" task changed for 2027, so confirm the current device task on soinc.org "
+            "-- and take a written test on thermodynamics concepts."
+        )
+        topic.overview_what = (
+            "A Division B and C build/lab event (impounded device + written test), first run in "
+            "2012 (as \"Keep the Heat\" in Division B), returning in 2018, 2019, and 2027. Teams "
+            "of 2 build a heat-retention device ahead of time and bring it to the tournament, "
+            "testing it while also taking a written exam."
+        )
+        topic.overview_learn = (
+            "The four laws of thermodynamics (zeroth through third) and thermodynamic systems/"
+            "processes (open/closed/isolated/adiabatic; isobaric/isochoric/isothermal/adiabatic/"
+            "isentropic); gas laws (Boyle's, Charles's, Gay-Lussac's, Avogadro's, the combined and "
+            "ideal gas law) and the Carnot cycle (its 4 steps, efficiency, entropy); heat/"
+            "temperature unit conversions and key equations (Joule's Laws, Gibbs' free energy, "
+            "linear/area/volume expansion); the historical figures behind thermodynamics (Joule, "
+            "Carnot, Clausius, Kelvin, Maxwell, Nernst, Celsius, Fahrenheit)."
+        )
+        topic.overview_assessed = (
+            "Teams of 2, about 50 minutes, eye protection required. The written test draws 3 "
+            "questions from each of 5 subject areas (thermodynamic systems/zeroth law/"
+            "temperature; phases of matter/ideal gas law; heat transfer/specific heat; "
+            "thermodynamic laws & the Carnot cycle; history of thermodynamics), plus "
+            "State/National-only material (blackbody radiation, Stefan-Boltzmann law, third law). "
+            "Device testing is impounded and scored alongside the test. Allowed resources: one "
+            "hole-punched 3-ring binder of any size (sheets removable), tools/supplies, writing "
+            "utensils, and two Class III calculators."
+        )
+        topic.overview_theme_2027 = (
+            "Important change for 2027: the device task itself changed from the long-running "
+            "classic version. Previously (through 2019), teams insulated a 250 mL beaker of hot "
+            "water for a fixed time window (25 minutes in Division B, starting at 60-75 C). The "
+            "wiki explicitly flags the 2027 version as \"very different\" but doesn't fully detail "
+            "the new device task as of this snapshot -- confirm the actual 2027 device "
+            "requirements and scoring on soinc.org/thermodynamics-b before building anything. The "
+            "written-test content (the four laws, gas laws, Carnot cycle, conversions) is stable "
+            "and unaffected by this change."
+        )
+        topic.overview_notes = (
+            "Eye protection is required. The device must be easy to disassemble for post-event "
+            "inspection. In the pre-2027 device format, two identical, unaltered glass/plastic "
+            "beakers were required and the device had to fit a size cube (20 cm for Division B) -- "
+            "confirm whether this still applies under the 2027 rules. This event was called \"Hot "
+            "House\" (1988-1991) and \"Keep the Heat\" (Division B, 1992-1995 and 2012-2013) before "
+            "becoming \"Thermodynamics\" -- older study materials under either name likely describe "
+            "the outdated device task, so double-check any inherited notes against the current "
+            "rules."
+        )
+
+        if not db.query(models.Resource).filter(
+            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Thermodynamics (event page)"
+        ).first():
+            db.add(
+                models.Resource(
+                    topic_id=topic.id,
+                    type="text",
+                    title="scioly.org wiki: Thermodynamics (event page)",
+                    source_url="https://scioly.org/wiki/Thermodynamics",
+                    raw_text=(
+                        "EVENT INFO: Division B & C, 2 participants, eye protection required, "
+                        "device impounded, ~50 minutes. Allowed resources: one hole-punched 3-ring "
+                        "binder of any size (sheets removable), tools, supplies, writing utensils, "
+                        "two Class III calculators. First run 2012, returned 2018/2019/2027; topic "
+                        "rotates in the sense that the DEVICE task has changed over the event's "
+                        "history (see below), though the written-test content is stable.\n\n"
+                        "WRITTEN TEST STRUCTURE (2027 rules): 3 questions from each of 5 areas -- "
+                        "(1) thermodynamic systems, zeroth law, definition of temperature, "
+                        "temperature scales/conversions, heat units; (2) phases of matter, phase "
+                        "transitions, phase diagrams, latent and sensible heat, ideal gas law; "
+                        "(3) heat transfer, thermal conductivity, heat capacity, specific heat; "
+                        "(4) thermodynamic laws and processes (Carnot cycle and efficiency, "
+                        "adiabatic, isothermal), the first and second laws; (5) history of "
+                        "thermodynamics -- Kelvin, Joseph Black, Joule, Carnot, Planck, Clausius, "
+                        "Boltzmann, Maxwell. State/National only: radiant exitance, blackbody "
+                        "radiation, Stefan-Boltzmann law, third law. Division C State/National "
+                        "only: entropy and enthalpy.\n\n"
+                        "THE FOUR LAWS OF THERMODYNAMICS: Zeroth Law -- if two systems are each in "
+                        "thermal equilibrium with a third, they're in thermal equilibrium with each "
+                        "other (defines temperature without invoking entropy). First Law -- a "
+                        "closed system's change in internal energy equals heat added minus work "
+                        "done by the system (dU = Q - W); conservation of energy. Second Law -- "
+                        "heat cannot spontaneously flow from colder to hotter; entropy of an "
+                        "isolated system tends to increase. Third Law -- the entropy of a perfect "
+                        "crystal approaches zero as temperature approaches absolute zero, and "
+                        "absolute zero itself can never actually be reached.\n\n"
+                        "GAS LAWS: Gay-Lussac's Law (P/T = constant at fixed volume); Boyle's Law "
+                        "(PV = constant at fixed temperature); Charles's Law (V/T = constant at "
+                        "fixed pressure); Avogadro's Law (relates volume and amount of gas at fixed "
+                        "P and T); the Combined Gas Law (P1V1/T1 = P2V2/T2); the Ideal Gas Law "
+                        "(PV = nRT); van der Waals' equation (a real-gas correction to the ideal "
+                        "gas law accounting for intermolecular attraction and molecular volume). "
+                        "Also: Hess' Law (heat of a chemical process is the same whether it happens "
+                        "in one step or several) and Le Chatelier's Principle (a system reacts to "
+                        "absorb an imposed change).\n\n"
+                        "HEAT THEORIES: the obsolete caloric theory held that heat is a weightless "
+                        "fluid ('caloric') that flows from hot to cold substances (proposed by "
+                        "Antoine Lavoisier, 1770s). The valid kinetic theory holds that matter is "
+                        "made of molecules in constant random motion, with average kinetic energy "
+                        "proportional to temperature; all gas laws are derivable from it. James "
+                        "Clerk Maxwell is considered its father.\n\n"
+                        "CARNOT CYCLE: a theoretical, maximally-efficient (but not physically "
+                        "achievable) heat engine cycle with 4 steps: (1) isothermal expansion "
+                        "against a hot reservoir, (2) reversible adiabatic expansion, (3) isothermal "
+                        "compression against a cold reservoir, (4) adiabatic compression back to "
+                        "the start. Efficiency: eta = 1 - Tc/Th = 1 - Q2/Q1. The cycle's entropy "
+                        "change is zero overall (the two adiabatic steps are isentropic); Carnot's "
+                        "Principle states no engine between two fixed-temperature reservoirs can "
+                        "exceed the efficiency of this reversible cycle.\n\n"
+                        "JOULE'S LAWS: First Law -- heat dissipated by a resistive component is "
+                        "Q = I^2*R*t (links electrical engineering to thermodynamics via P = I^2*R "
+                        "and P = VI). Second Law -- the internal energy of an ideal gas depends "
+                        "only on its temperature, not its volume or pressure.\n\n"
+                        "THERMODYNAMIC SYSTEMS & PROCESSES: Open (matter, heat, and work can cross "
+                        "the boundary); Closed (heat and work can cross, matter can't); Isolated "
+                        "(nothing crosses); Diathermic (only heat crosses); Adiabatic-boundary "
+                        "system (heat can't cross, everything else can). Processes: isobaric "
+                        "(constant pressure), isochoric/isometric (constant volume, no work done), "
+                        "isothermal (constant temperature), adiabatic (no heat added/removed), "
+                        "isentropic (constant entropy).\n\n"
+                        "KEY CONSTANTS & CONVERSIONS: gas constant R = 8.314 J/(mol*K); Boltzmann's "
+                        "constant = 1.38x10^-23 J/K; Avogadro's constant = 6.02x10^23; absolute "
+                        "zero = 0 K = -273.15 C = -459.67 F. Temperature conversions: "
+                        "K = C + 273.15; F = (9/5)C + 32; C = (5/9)(F-32). Energy conversions: "
+                        "1 BTU ~ 1,055 J; 1 small calorie ~ 4.2 J; 1 large Calorie (kcal) ~ 4,200 J "
+                        "= 1,000 small calories.\n\n"
+                        "VOCABULARY: Entropy -- a measure of a system's randomness / energy "
+                        "unavailable to do work. Enthalpy -- total energy content of a system. "
+                        "Gibbs' Free Energy (deltaG = deltaH - T*deltaS) -- the energy available to "
+                        "do useful work; positive deltaG means a non-spontaneous (endergonic) "
+                        "reaction, negative means spontaneous (exergonic). Latent heat -- heat that "
+                        "changes a substance's phase without changing its temperature. Sensible "
+                        "heat -- heat that changes temperature without changing phase. Specific "
+                        "heat / heat capacity -- energy needed to raise 1 kg of a substance by 1 C. "
+                        "Thermal equilibrium -- two objects/systems at the same temperature "
+                        "exchanging no net heat.\n\n"
+                        "HISTORY: James Prescott Joule (1818-1889) linked electrical and thermal "
+                        "energy, leading to the first law. Sadi Carnot (1796-1832), \"Father of "
+                        "Thermodynamics,\" first analyzed heat engines (the Carnot Cycle). Rudolf "
+                        "Clausius (1822-1888) first stated the second law and introduced entropy "
+                        "(1865). Walther Nernst (1864-1941) developed the third law (Nobel Prize "
+                        "1920). James Clerk Maxwell (1831-1879) formulated the kinetic theory and "
+                        "devised the \"Maxwell's Demon\" thought experiment. William Thomson/Lord "
+                        "Kelvin (1824-1907) determined absolute zero and coined the word "
+                        "\"thermodynamics.\" Daniel Fahrenheit (1686-1736) invented the mercury "
+                        "thermometer and his namesake scale. Anders Celsius (1701-1744) proposed "
+                        "the Celsius scale. Galileo (1564-1642) built the first open thermometer.\n\n"
+                        "DEVICE (pre-2027 classic version -- confirm against the current rules): "
+                        "teams built a device to insulate a 250 mL glass/plastic beaker filled with "
+                        "75-125 mL of hot water (60-75 C start), aiming to lose the least heat over "
+                        "a set time (25 min for Division B). The device had to fit a 20 cm cube "
+                        "(Division B) / 15 cm cube (Division C) and allow beaker insertion/removal "
+                        "and a temperature-probe access hole. Scoring combined a plot-completeness "
+                        "score, a heat-retention score (internal vs. external control-beaker "
+                        "temperature ratio), a prediction-accuracy score, and an optional ice-water "
+                        "bonus."
+                    ),
+                )
+            )
+
+        chapters = [
+            (
+                "Thermodynamics: Laws & Systems",
+                "The four laws of thermodynamics, plus the types of thermodynamic systems "
+                "(open/closed/isolated) and processes (isobaric/isothermal/adiabatic/etc).",
+                (
+                    "THE FOUR LAWS: Zeroth -- if two systems are each in thermal equilibrium with "
+                    "a third, they're in equilibrium with each other; defines temperature without "
+                    "invoking entropy. First -- dU = Q - W (a closed system's internal energy "
+                    "change equals heat added minus work done); conservation of energy. Second -- "
+                    "heat cannot spontaneously flow from colder to hotter; entropy of an isolated "
+                    "system tends to increase (illustrated by a steam engine losing usable heat as "
+                    "it approaches its surroundings' temperature). Third -- the entropy of a "
+                    "perfect crystal approaches zero as temperature approaches absolute zero, and "
+                    "absolute zero can never actually be reached (an object always loses heat to a "
+                    "colder one in ever-smaller, asymptotic amounts).\n\n"
+                    "THERMODYNAMIC SYSTEMS: a system is a defined region analyzed via "
+                    "thermodynamics; everything else is its surroundings, separated by a boundary "
+                    "(fixed, movable, imaginary, or real). Open systems let matter, heat, and work "
+                    "all cross the boundary. Closed systems let heat and work cross but not matter "
+                    "(a closed system's boundary can additionally be adiabatic -- blocks heat -- or "
+                    "rigid -- blocks work). Isolated systems let nothing cross, so they trend "
+                    "toward thermodynamic equilibrium. Diathermic systems let only heat cross.\n\n"
+                    "THERMODYNAMIC PROCESSES: isobaric (constant pressure, e.g. a movable piston "
+                    "held at atmospheric pressure); isochoric/isometric (constant volume, so the "
+                    "system does zero work -- e.g. a sealed can heated in a fire); isothermal "
+                    "(constant temperature, e.g. a system in a constant-temperature bath); "
+                    "adiabatic (no heat added or removed -- the boundary is a thermal insulator); "
+                    "isentropic (constant entropy -- identical to adiabatic for a reversible "
+                    "process).\n\n"
+                    "BRANCHES OF THERMODYNAMICS: Classical (macroscopic, measurable properties); "
+                    "Statistical (molecular/atomic scale, explains classical behavior from "
+                    "microscopic interactions); Chemical (thermodynamics of chemical reactions); "
+                    "Equilibrium (how a system's matter/energy change as it approaches "
+                    "equilibrium); Non-Equilibrium (systems not in thermal equilibrium)."
+                ),
+            ),
+            (
+                "Thermodynamics: Gas Laws & Heat Theories",
+                "Boyle's, Charles's, Gay-Lussac's, and the combined/ideal gas laws; the obsolete "
+                "caloric theory vs. the valid kinetic theory of heat; Joule's Laws.",
+                (
+                    "GAS LAWS: Gay-Lussac's Law -- P/T = constant at fixed volume (pressure "
+                    "proportional to Kelvin temperature). Boyle's Law -- PV = constant at fixed "
+                    "temperature (volume inversely proportional to pressure). Charles's Law -- "
+                    "V/T = constant at fixed pressure (volume proportional to Kelvin temperature). "
+                    "Avogadro's Law -- relates volume and amount of gas at fixed pressure and "
+                    "temperature. The Combined Gas Law merges these: P1V1/T1 = P2V2/T2 (useful for "
+                    "two-state problems -- discard any variable not given). The Ideal Gas Law -- "
+                    "PV = nRT -- combines all of them for any gas. Van der Waals' equation corrects "
+                    "the ideal gas law for real gases by accounting for intermolecular attraction "
+                    "(a/V^2 term) and molecular volume (b term).\n\n"
+                    "OTHER LAWS: Hess' Law -- the heat evolved/absorbed in a chemical process is "
+                    "the same whether it happens in one step or several (law of constant heat "
+                    "summation). Le Chatelier's Principle -- a system responds to an imposed change "
+                    "in a way that absorbs/counteracts it.\n\n"
+                    "HEAT THEORIES: The caloric theory (obsolete, proposed by Antoine Lavoisier in "
+                    "the 1770s) held heat is a weightless fluid ('caloric') that flows from hot to "
+                    "cold substances and is conserved -- its only correct assumption was that heat "
+                    "is weightless. The kinetic theory (valid, first modeled by August Kronig in "
+                    "1856, developed further by James Clerk Maxwell) holds that matter is made of "
+                    "molecules in constant random motion, colliding elastically, with average "
+                    "kinetic energy proportional to temperature; all gas laws can be derived from "
+                    "it.\n\n"
+                    "JOULE'S LAWS: First -- heat dissipated by a resistive component is "
+                    "Q = I^2*R*t, linking electrical engineering (P = I^2*R = VI) to "
+                    "thermodynamics. Second -- an ideal gas's internal energy depends only on its "
+                    "temperature, not its volume or pressure."
+                ),
+            ),
+            (
+                "Thermodynamics: The Carnot Cycle & Entropy",
+                "The Carnot Cycle's 4 steps, its key equations for work/heat/temperature/entropy, "
+                "efficiency, and the Maxwell's Demon thought experiment.",
+                (
+                    "THE CARNOT CYCLE is a theoretical, maximally efficient (but not physically "
+                    "achievable) heat engine cycle, foundational to the four laws. It's "
+                    "theoretical because it's reversible (real engines aren't) and involves zero "
+                    "net entropy change (real processes always increase entropy somewhere).\n\n"
+                    "THE 4 STEPS: (1) Isothermal Expansion -- gas in contact with a hot reservoir "
+                    "expands, doing work, at constant temperature. (2) Reversible Adiabatic "
+                    "Expansion -- gas continues expanding with no heat exchange, losing internal "
+                    "energy and cooling. (3) Isothermal Compression -- gas in contact with a cold "
+                    "reservoir is compressed at constant temperature, releasing heat to the cold "
+                    "reservoir. (4) Adiabatic Compression -- gas is compressed with no heat "
+                    "exchange, raising its temperature back to the start.\n\n"
+                    "KEY EQUATIONS: Efficiency eta = 1 - Q2/Q1 = 1 - Tc/Th (Q1 = heat absorbed from "
+                    "the hot reservoir, Q2 = heat released to the cold reservoir). Work "
+                    "W = Q1 - Q2 = Q1*(1 - Tc/Th). Entropy change per isothermal step: "
+                    "deltaS_hot = Q1/Th, deltaS_cold = -Q2/Tc -- and since the cycle is reversible, "
+                    "the total change is zero (deltaS = 0), meaning Q2/Q1 = Tc/Th. The two "
+                    "adiabatic steps are isentropic (zero entropy change each).\n\n"
+                    "CARNOT'S PRINCIPLE (Sadi Carnot): no heat engine operating between two "
+                    "fixed-temperature reservoirs can be more efficient than a reversible engine -- "
+                    "because real heat transfer always loses some energy to the surroundings. This "
+                    "is effectively a restatement/proof of the second law.\n\n"
+                    "MAXWELL'S DEMON is a thought experiment (by James Clerk Maxwell) imagining a "
+                    "tiny creature sorting fast/slow gas molecules through a trapdoor to create a "
+                    "hot side and cold side without doing work -- seemingly violating the second "
+                    "law. The resolution: the demon must expend energy to observe molecules and "
+                    "gains entropy operating the door, so total system entropy still increases; no "
+                    "real violation of the second law has ever been found."
+                ),
+            ),
+            (
+                "Thermodynamics: Conversions, Vocabulary & History",
+                "Temperature/energy unit conversions, key constants and equations, core "
+                "vocabulary, and the historical figures who developed thermodynamics.",
+                (
+                    "TEMPERATURE CONVERSIONS: K = C + 273.15. F = (9/5)*C + 32. C = (5/9)*(F-32). "
+                    "Absolute zero = 0 K = -273.15 C = -459.67 F.\n\n"
+                    "ENERGY UNIT CONVERSIONS: 1 British Thermal Unit (BTU) ~ 1,055 J. 1 small "
+                    "calorie ~ 4.2 J. 1 large Calorie (kcal) ~ 4,200 J = 1,000 small calories. "
+                    "1 Joule = 1 N*m = 1 kg*m^2/s^2 = 1 W*s = 1 V*A*s = 1 V*Coulomb.\n\n"
+                    "KEY CONSTANTS: gas constant R = 8.314 J/(mol*K). Boltzmann's constant = "
+                    "1.38x10^-23 J/K. Avogadro's constant = 6.02x10^23. Electron volt = "
+                    "1.60217646x10^-19 J. 101.325 kPa = 760 torr = 1 atm.\n\n"
+                    "KEY VOCABULARY: Entropy -- heat energy unavailable to do work; a measure of a "
+                    "system's randomness. Enthalpy -- a system's total energy content. Gibbs' Free "
+                    "Energy (deltaG = deltaH - T*deltaS) -- the energy available to do useful "
+                    "work; positive means a non-spontaneous/endergonic reaction, negative means "
+                    "spontaneous/exergonic. Latent heat -- heat that changes phase without "
+                    "changing temperature. Sensible heat -- heat that changes temperature without "
+                    "changing phase or volume. Specific heat/heat capacity -- energy to raise 1 kg "
+                    "of a substance 1 C. Thermal equilibrium -- no net heat exchange between "
+                    "objects at the same temperature. Quasistatic process -- a hypothetical, "
+                    "always-stable process despite ongoing changes. Phlogiston and Caloric -- both "
+                    "obsolete, discredited 'substance' theories of combustion/heat.\n\n"
+                    "HISTORY: James Prescott Joule (1818-1889) linked electrical and thermal "
+                    "energy, leading to the first law; the Joule unit is named for him. Sadi "
+                    "Carnot (1796-1832), \"Father of Thermodynamics,\" first analyzed heat engines "
+                    "in his 1824 work, giving us the Carnot Cycle. Rudolf Clausius (1822-1888) "
+                    "first stated the second law (1850) and introduced entropy (1865). Walther "
+                    "Nernst (1864-1941) developed the third law, winning the 1920 Nobel Prize. "
+                    "James Clerk Maxwell (1831-1879) formulated the kinetic theory of heat and the "
+                    "Maxwell's Demon thought experiment. William Thomson/Lord Kelvin (1824-1907) "
+                    "determined absolute zero, coined \"thermodynamics,\" and has the Kelvin scale "
+                    "named for him. Daniel Fahrenheit (1686-1736) invented the mercury thermometer "
+                    "and his namesake scale. Anders Celsius (1701-1744) proposed the Celsius "
+                    "scale. Galileo Galilei (1564-1642) built the first open thermometer."
+                ),
+            ),
+        ]
+
+        for chapter_name, chapter_description, chapter_text in chapters:
+            existing = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
+                .first()
+            )
+            if existing is None:
+                sub_topic = models.Topic(
+                    event_name=topic.event_name,
+                    name=chapter_name,
+                    description=chapter_description,
+                    assessment_type=topic.assessment_type,
+                    parent_topic_id=topic.id,
+                )
+                db.add(sub_topic)
+                db.flush()
+                db.add(
+                    models.Resource(
+                        topic_id=sub_topic.id,
+                        type="text",
+                        title="scioly.org wiki: Thermodynamics (excerpt for this chapter)",
+                        source_url="https://scioly.org/wiki/Thermodynamics",
+                        raw_text=chapter_text,
+                    )
+                )
+
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
