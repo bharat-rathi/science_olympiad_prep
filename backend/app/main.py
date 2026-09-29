@@ -279,6 +279,24 @@ def _delete_topic_tree(db, topic: models.Topic) -> None:
             logging.exception("Failed to delete vector chunks for resource %s", resource_id)
 
 
+def _rename_elastic_launch_glider() -> None:
+    """One-time correction: the official event name is "Elastic Launched
+    Glider". Renames the existing row in place (resources/concepts/
+    assessments link by topic_id, so they stay attached) instead of letting
+    seed_official_topics add a duplicate under the new name. Skipped if a
+    row with the correct name already exists.
+    """
+    with engine.connect() as conn:
+        conn.execute(
+            text(
+                "UPDATE topics SET name = 'Elastic Launched Glider', event_name = 'Elastic Launched Glider' "
+                "WHERE name = 'Elastic Launch Glider' AND parent_topic_id IS NULL "
+                "AND NOT EXISTS (SELECT 1 FROM topics WHERE name = 'Elastic Launched Glider')"
+            )
+        )
+        conn.commit()
+
+
 def _remove_non_2027_division_b_events() -> None:
     """Remove top-level event topics that aren't on the official 2027
     Division B slate (see _NON_2027_DIVISION_B_EVENTS). No-op once they're
@@ -335,7 +353,7 @@ def seed_official_topics() -> None:
         ("Circuit Lab", "Combines a written test on circuit theory with a hands-on task building and analyzing real circuits.", "test_practical"),
         ("Thermodynamics", "Build a device that insulates a container of hot water for as long as possible, plus a written test on heat and thermodynamics concepts.", "test_practical"),
         ("Boomilever", "Build a lightweight wood structure that cantilevers from a wall and holds as much weight as possible before breaking.", "practical"),
-        ("Elastic Launch Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
+        ("Elastic Launched Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
         ("Roller Coaster", "Build a device that transports a marble/ball through a course using only gravity and track design, applying concepts of energy conservation and forces.", "practical"),
         ("Scrambler", "Build a device that carries an egg across a set distance as fast as possible, stopping just short of a wall without breaking it.", "practical"),
         # Life, Personal & Social Science
@@ -454,7 +472,7 @@ def seed_official_topics() -> None:
             "theme_2027": "Recent rules specified a span around 40-45 cm, wood cross-section capped near 1/4\" x 1/4\", and a target load around 15 kg -- confirm exact 2027 span, wall geometry, and load numbers on soinc.org.",
             "notes": "Glue-joint failure and excess glue weight are the most common pitfalls -- build and destructively load-test several iterations before finalizing a competition structure, with eye protection during testing.",
         },
-        "Elastic Launch Glider": {
+        "Elastic Launched Glider": {
             "what": "A build event: construct a lightweight free-flight model glider launched by an elastic (rubber band) launcher, built and test-flown well ahead of competition.",
             "learn": "Aerodynamics of lift, drag, and stability (wing shape, dihedral, center-of-gravity placement), lightweight airframe construction, and the iterative trimming/tuning process for a stable flight path.",
             "assessed": "Score is based on total or best flight time across a limited number of official flights (commonly up to 3) within a set flight period (commonly around 6 minutes); mass and size are checked at impound. Teams of 2.",
@@ -515,6 +533,7 @@ def seed_official_topics() -> None:
     db = SessionLocal()
     try:
         _remove_non_2027_division_b_events()
+        _rename_elastic_launch_glider()
 
         existing_names = {row[0] for row in db.query(models.Topic.name)}
         for name, description, assessment_type in catalog:
