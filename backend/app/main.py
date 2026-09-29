@@ -1586,6 +1586,383 @@ def seed_meteorology_deep_dive() -> None:
         db.close()
 
 
+@app.on_event("startup")
+def seed_botany_deep_dive() -> None:
+    """One-time content correction + deep-dive setup for Botany (Division B
+    focus, per the coach's standing instruction), from the actual
+    scioly.org wiki page (coach-supplied PDF, same pattern as the prior
+    corrections).
+
+    IMPORTANT: the wiki page explicitly marks a "Division C Concepts"
+    section partway through, covering Nutrient Deficiencies and Plant
+    Diseases -- everything after that marker is Division-C-only material
+    and is deliberately excluded from both the grounding resource and all
+    deep-dive chapters below. Only content before that marker (plant
+    groups/classification, anatomy/reproduction, photosynthesis/ecology,
+    human uses, history) is shared between B and C and included here.
+
+    Also confirms Botany is brand new as an official national event for
+    2027 -- it ran as a trial event since 2020 and replaces Entomology on
+    the national roster, so (unlike some other events) there's no yearly
+    rotating focus topic to track.
+    """
+    db = SessionLocal()
+    try:
+        topic = (
+            db.query(models.Topic)
+            .filter(models.Topic.name == "Botany", models.Topic.parent_topic_id.is_(None))
+            .first()
+        )
+        if topic is None:
+            return
+
+        topic.description = (
+            "Written exam on plant life and general botany principles -- newly promoted to an "
+            "official national event for 2027 (a trial event since 2020), replacing Entomology. "
+            "Division B is tested only on the shared baseline content, not Division C's extra "
+            "material."
+        )
+        topic.overview_what = (
+            "A Division B and Division C exam-only event, run nationally for the first time in "
+            "2027 after four seasons as a trial event (starting 2020 at New Jersey regionals). "
+            "Teams of 2 take a written test on plant biology and horticulture; Division C's "
+            "version adds extra material (plant diseases, nutrient deficiencies) that Division B "
+            "is not tested on."
+        )
+        topic.overview_learn = (
+            "Major plant groupings (algae vs. multicellular plants, monocots vs. dicots, "
+            "embryophytes vs. cryptogams, woody vs. herbaceous plants); vascular plant anatomy "
+            "(shoot vs. root systems, xylem/phloem) and reproduction (alternation of generations, "
+            "spore types, the life cycles of mosses, ferns, gymnosperms, and angiosperms); "
+            "photosynthesis (chloroplast structure, light-dependent reactions, the Calvin cycle) "
+            "and plants' role in energy flow and the carbon/nitrogen/water/phosphorus cycles; how "
+            "humans and animals use plants (fibers, wood, food-storage structures, medicines); "
+            "plant competition (for light, water, and nutrients, including allelopathy); and key "
+            "historical figures in botany."
+        )
+        topic.overview_assessed = (
+            "Teams of 2, about 50 minutes, a written exam only -- no lab or build component in "
+            "Division B. Each participant may bring one 8.5x11 note sheet (information on both "
+            "sides). Note: the wiki's own summary box lists two Class II (non-programmable, "
+            "non-graphing) calculators, but its body text mentions only one stand-alone "
+            "calculator -- a genuine inconsistency on the source page itself, so double-check the "
+            "current official rules on this specific point."
+        )
+        topic.overview_theme_2027 = (
+            "No rotating focus topic. This is Botany's first season as an official national event "
+            "(2027) after running as a trial event since 2020 -- it replaces Entomology on the "
+            "national roster. Content reads as stable/comprehensive baseline material rather than "
+            "a yearly-changing focus."
+        )
+        topic.overview_notes = (
+            "Botany is similar in spirit to the Wisconsin regional event Horticulture. Division C "
+            "shares this event's baseline content but is additionally tested on plant diseases and "
+            "nutrient deficiencies -- Division B is not, so if a coach finds outside \"Botany\" "
+            "study material, check whether it's actually Division-C-specific content before using "
+            "it for Division B prep. (This app's own content below excludes that Division C-only "
+            "material entirely.)"
+        )
+
+        if not db.query(models.Resource).filter(
+            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Botany (event page, Division B scope)"
+        ).first():
+            db.add(
+                models.Resource(
+                    topic_id=topic.id,
+                    type="text",
+                    title="scioly.org wiki: Botany (event page, Division B scope)",
+                    source_url="https://scioly.org/wiki/Botany",
+                    raw_text=(
+                        "EVENT INFO: Division B & C, 2 participants, ~50 minutes, written exam "
+                        "only. Allowed resources: one 8.5x11 note sheet (both sides), a calculator "
+                        "(the page's summary box says two Class II calculators; its body text says "
+                        "one -- verify current rules), writing utensils. Trial event since 2020 "
+                        "(first run at New Jersey regionals); becomes an official national event "
+                        "for the first time in 2027, replacing Entomology. NOTE: this excerpt "
+                        "excludes everything the wiki marks as \"Division C Concepts\" (nutrient "
+                        "deficiencies and plant diseases) -- Division B is not tested on that "
+                        "material.\n\n"
+                        "ALGAE VS. MULTICELLULAR PLANTS: algae can be unicellular or multicellular "
+                        "and typically live underwater; plants are multicellular and thrive on "
+                        "land. Algae are nonvascular and lack connective tissues, leaves, stems, "
+                        "and roots, unlike plants.\n\n"
+                        "MONOCOTS VS. DICOTS: seed-bearing plants are classified by cotyledon "
+                        "count -- monocots have one, dicots have two. Leaf venation: monocots have "
+                        "parallel veins, dicots have branching veins. Stem structure: monocots' "
+                        "vascular bundles are scattered around the stem; dicots' form a ring near "
+                        "the edge. Root systems: monocots typically have a fibrous root system "
+                        "(many small branching roots); dicots typically have a taproot (one thick "
+                        "central root with smaller branches). Floral patterns: monocot flower parts "
+                        "usually come in multiples of 3; dicot flower parts usually come in "
+                        "multiples of 4 or 5.\n\n"
+                        "EMBRYOPHYTES VS. CRYPTOGAMS: Embryophytes are land plants that nurture "
+                        "the young sporophyte inside the gametophyte's tissue -- nonvascular plants "
+                        "(mosses, liverworts, hornworts), seedless vascular plants (ferns, "
+                        "lycophytes), gymnosperms (conifers, cycads), and angiosperms (flowering "
+                        "plants). Cryptogams reproduce via spores rather than seeds/flowers -- "
+                        "thallophytes (fungi, bacteria, algae), bryophytes (nonvascular plants), "
+                        "and pteridophytes (seedless vascular plants).\n\n"
+                        "WOODY VS. HERBACEOUS PLANTS: woody plants are generally long-lived "
+                        "perennials with secondary growth and a lignin-reinforced woody stem; they "
+                        "go dormant (growth slows/stops) in winter rather than dying back, and "
+                        "practice self-pruning of unneeded branches/leaves. Herbaceous plants "
+                        "(herbs) lack a permanent woody stem, grow mostly via primary (lengthwise) "
+                        "growth, and are annuals (1-year life cycle), biennials (2-year), or "
+                        "perennials (2+ years, dying back to a small underground portion each "
+                        "year); fast-growing annual herbs are often pioneer species in ecological "
+                        "succession.\n\n"
+                        "VASCULAR PLANT ANATOMY: two key systems -- the shoot system (stem and "
+                        "leaves, above ground) and the root system (below ground) -- are "
+                        "interdependent (shoot needs roots for water/minerals, roots need the "
+                        "shoot for food/energy). Four main organ systems: stem (connects leaves to "
+                        "roots via the xylem and phloem), roots (anchor the plant, absorb water/"
+                        "nutrients), leaves (photosynthesize), and reproductive organs (enable "
+                        "sexual or asexual reproduction).\n\n"
+                        "REPRODUCTION -- ALTERNATION OF GENERATIONS: plants alternate between a "
+                        "diploid sporophyte stage and a haploid gametophyte stage, which can look "
+                        "identical (isomorphic, e.g. some algae) or different (heteromorphic, e.g. "
+                        "angiosperms). In most nonvascular plants the gametophyte dominates; in "
+                        "seed plants the sporophyte dominates and the gametophyte is reduced (in "
+                        "most angiosperms, to just a few cells). Sporophytes produce sporangia, "
+                        "which produce haploid spores that develop into gametophytes; gametophytes "
+                        "produce gametangia (archegonia = female gametes, antheridia = male "
+                        "gametes -- not present in all plants, e.g. angiosperms have neither). Two "
+                        "gametes fuse into a zygote, which develops into a new sporophyte. "
+                        "Homosporous plants produce one spore type (hermaphroditic gametophytes); "
+                        "heterosporous plants (e.g. pines) produce two types -- larger female "
+                        "megaspores and smaller male microspores.\n\n"
+                        "LIFE CYCLES: Moss (bryophyte) -- spores disperse to favorable spots and "
+                        "germinate into protonemata (branched filaments anchored by rhizoids, not "
+                        "roots), which bud into male and female gametophytes; flagellated sperm "
+                        "swim through water to fertilize eggs, forming a zygote that grows into a "
+                        "sporophyte (seta + capsule) still attached to and dependent on the female "
+                        "gametophyte; meiosis inside the capsule produces new spores, released when "
+                        "the capsule matures. Fern (pterophyte) -- similar dispersal/protonemata "
+                        "steps, but most ferns are homosporous with a single bisexual gametophyte "
+                        "producing antheridia and archegonia at different times; the resulting "
+                        "sporophyte grows true leaves, with sori (spore clusters) on their "
+                        "undersides. Gymnosperms (non-flowering seed plants, e.g. conifers) -- "
+                        "microspores and megaspores form on cone structures called strobili; wind "
+                        "carries pollen to the megasporangiate strobili, and roughly a year after "
+                        "pollination fertilization occurs, followed by wind-dispersed seed release. "
+                        "Angiosperms (flowering plants) -- microsporogenesis (anther) and "
+                        "megasporogenesis (ovule) produce spores; pollination (via wind, insects, "
+                        "etc.) leads to double fertilization unique to angiosperms, where one sperm "
+                        "fertilizes the egg and the other fuses with polar nuclei to form the "
+                        "triploid endosperm; the ovary wall then develops into fruit (exocarp/"
+                        "mesocarp/endocarp).\n\n"
+                        "PHOTOSYNTHESIS: occurs in chloroplasts (outer/inner membranes, thylakoids, "
+                        "stroma). Light-dependent reactions happen in the thylakoid membranes, "
+                        "converting sunlight and water into ATP, NADPH, and oxygen. Light-"
+                        "independent reactions (the Calvin cycle) happen in the stroma, converting "
+                        "CO2, ATP, and NADPH into G3P (using the enzyme RuBisCO).\n\n"
+                        "ENERGY & NUTRIENT CYCLES: plants are primary producers -- Gross Primary "
+                        "Productivity (GPP) is the total energy they generate; Net Primary "
+                        "Productivity (NPP) is what's left after their own respiration, available "
+                        "to herbivores/decomposers. The 10% Rule (Lindeman's Efficiency): on "
+                        "average only ~10% of stored energy passes to the next trophic level, the "
+                        "rest lost as heat/movement/waste. Carbon cycle: plants fix atmospheric CO2 "
+                        "via RuBisCO in the Calvin Cycle, release some back via respiration, and "
+                        "buried undecayed matter can become peat/coal over geologic time. Nitrogen "
+                        "cycle: bacteria fix N2 into usable ammonium/nitrate for plant roots to "
+                        "assimilate; decomposers recycle it, and denitrifying bacteria return excess "
+                        "back to atmospheric N2. Water cycle: transpiration moves water up through "
+                        "the xylem and out through leaf stomata. Phosphorus cycle: plants absorb "
+                        "soil phosphate directly, or via mycorrhizal fungal symbiosis (fungi trade "
+                        "phosphate for photosynthetic carbohydrates).\n\n"
+                        "HUMAN & ANIMAL USES OF PLANTS: fibers (cotton seed hairs, phloem stem "
+                        "fibers, monocot leaf fibers) and wood (from the vascular cambium) for "
+                        "textiles/construction/paper. Endosperm (triploid, nutrient-rich tissue in "
+                        "seeds) is the main starch source in cereal grains. Bulbs (short stem + "
+                        "fleshy modified leaves) and corms (solid swollen stem tissue, e.g. taro) "
+                        "and storage roots (e.g. sweet potatoes, carrots, cassava, sugar beets) "
+                        "store nutrients and feed both animals and humans. Medicines: aspirin "
+                        "(from willow bark), quinine (from cinchona tree bark, treats malaria), and "
+                        "digitalis (from foxglove, treats heart failure) are all plant-derived.\n\n"
+                        "PLANT COMPETITION: plants compete for light (canopy height, leaf area/"
+                        "orientation), water (deep taproots vs. wide fibrous roots), and nutrients "
+                        "(root absorption speed, mycorrhizal associations). Exploitation competition "
+                        "(indirect) is consuming a resource before neighbors can access it; "
+                        "interference competition (direct) is physically or chemically inhibiting a "
+                        "neighbor's growth -- allelopathy (releasing toxic allelochemicals to "
+                        "suppress nearby germination/growth) is a specific form of interference "
+                        "competition.\n\n"
+                        "HISTORY: Theophrastus (371-286 BCE, student of Aristotle, \"father of "
+                        "botany,\" wrote Historia Plantarum). Pedanius Dioscorides (40-90 CE, wrote "
+                        "De Materia Medica, foundational to pharmacology). Pliny the Elder (23-79 "
+                        "CE, wrote Naturalis Historia, died in the Vesuvius eruption). Al-Dinawari "
+                        "(828-896 CE, founder of Arab botany). Leonhart Fuchs (1501-1556, the genus "
+                        "Fuchsia is named for him). Jan Ingenhousz (1730-1799, proved plants need "
+                        "sunlight to produce oxygen). Carl Linnaeus (1707-1778, \"father of "
+                        "taxonomy,\" established binomial nomenclature). Gregor Mendel (1822-1884, "
+                        "pea plant genetics, dominant/recessive genes). George Washington Carver "
+                        "(1864-1943, promoted crop rotation, found many uses for peanuts/sweet "
+                        "potatoes). Melvin Calvin (1911-1997, mapped the Calvin Cycle using "
+                        "carbon-14 tracing). Katherine Esau (1898-1997, pioneering plant anatomist, "
+                        "definitive textbooks on plant structure)."
+                    ),
+                )
+            )
+
+        chapters = [
+            (
+                "Botany: Plant Groups & Classification",
+                "Algae vs. multicellular plants, monocots vs. dicots, embryophytes vs. "
+                "cryptogams, and woody vs. herbaceous plants -- shared Division B/C content.",
+                (
+                    "ALGAE VS. MULTICELLULAR PLANTS: algae can be unicellular or multicellular and "
+                    "typically live underwater; plants are multicellular and thrive on land. Algae "
+                    "are nonvascular and lack connective tissues, leaves, stems, and roots, unlike "
+                    "plants.\n\n"
+                    "MONOCOTS VS. DICOTS: classified by cotyledon count in the seed -- monocots "
+                    "have one, dicots have two. Leaf venation: monocots have parallel veins, "
+                    "dicots have branching veins. Stem structure: monocots' vascular bundles are "
+                    "scattered around the stem; dicots' form a ring near the edge. Root systems: "
+                    "monocots typically have a fibrous root system; dicots typically have a "
+                    "taproot. Floral patterns: monocot flower parts usually come in multiples of "
+                    "3; dicot flower parts usually come in multiples of 4 or 5.\n\n"
+                    "EMBRYOPHYTES VS. CRYPTOGAMS: Embryophytes are land plants that nurture the "
+                    "young sporophyte inside the gametophyte's tissue -- nonvascular plants "
+                    "(mosses, liverworts, hornworts), seedless vascular plants (ferns, "
+                    "lycophytes), gymnosperms, and angiosperms. Cryptogams reproduce via spores "
+                    "rather than seeds/flowers -- thallophytes (fungi, bacteria, algae), "
+                    "bryophytes, and pteridophytes.\n\n"
+                    "WOODY VS. HERBACEOUS PLANTS: woody plants are long-lived perennials with "
+                    "secondary growth and a lignin-reinforced stem, going dormant in winter rather "
+                    "than dying back, and practicing self-pruning. Herbaceous plants (herbs) lack "
+                    "a permanent woody stem, grow mainly via primary growth, and are annuals, "
+                    "biennials, or perennials that die back to a small underground portion each "
+                    "year; fast-growing annual herbs are often pioneer species in succession."
+                ),
+            ),
+            (
+                "Botany: Anatomy, Morphology & Reproduction",
+                "Vascular plant anatomy (shoot/root systems, xylem/phloem) and reproduction "
+                "(alternation of generations, the life cycles of mosses, ferns, gymnosperms, and "
+                "angiosperms) -- shared Division B/C content.",
+                (
+                    "VASCULAR PLANT ANATOMY: two interdependent systems -- the shoot system (stem "
+                    "and leaves, above ground) and the root system (below ground); the shoot needs "
+                    "roots for water/minerals, roots need the shoot for food/energy. Four main "
+                    "organ systems: stem (connects leaves to roots via xylem and phloem), roots "
+                    "(anchor the plant, absorb water/nutrients), leaves (photosynthesize), and "
+                    "reproductive organs.\n\n"
+                    "ALTERNATION OF GENERATIONS: plants alternate between a diploid sporophyte "
+                    "stage and a haploid gametophyte stage (isomorphic/identical in some algae, "
+                    "heteromorphic/different in angiosperms). Nonvascular plants have a dominant "
+                    "gametophyte; seed plants have a dominant sporophyte with a reduced "
+                    "gametophyte. Sporophytes produce sporangia -> haploid spores -> gametophytes; "
+                    "gametophytes produce gametangia (archegonia = female, antheridia = male, not "
+                    "present in all plants) whose gametes fuse into a zygote -> new sporophyte. "
+                    "Homosporous plants produce one spore type; heterosporous plants (e.g. pines) "
+                    "produce distinct female megaspores and male microspores.\n\n"
+                    "LIFE CYCLES: Moss (bryophyte) -- spores germinate into protonemata (anchored "
+                    "by rhizoids, not roots), which bud into male/female gametophytes; "
+                    "flagellated sperm swim through water to fertilize eggs, forming a sporophyte "
+                    "(seta + capsule) still dependent on the female gametophyte; meiosis inside the "
+                    "capsule produces the next generation of spores. Fern (pterophyte) -- similar, "
+                    "but most are homosporous with a single bisexual gametophyte producing "
+                    "antheridia/archegonia at different times; sporophytes grow true leaves with "
+                    "sori (spore clusters) underneath. Gymnosperms -- microspores/megaspores form "
+                    "on cone-like strobili; wind carries pollen, and fertilization follows roughly "
+                    "a year after pollination, ending in wind-dispersed seeds. Angiosperms -- "
+                    "microsporogenesis (anther) and megasporogenesis (ovule) lead to pollination "
+                    "and double fertilization (unique to angiosperms): one sperm fertilizes the "
+                    "egg, the other fuses with polar nuclei to form the triploid endosperm; the "
+                    "ovary wall becomes the fruit."
+                ),
+            ),
+            (
+                "Botany: Photosynthesis & Plant Ecology",
+                "Chloroplast structure and the light/Calvin cycle reactions, plants' role in "
+                "energy and nutrient cycles, and plant competition -- shared Division B/C content.",
+                (
+                    "PHOTOSYNTHESIS: occurs in chloroplasts (outer/inner membranes, thylakoids, "
+                    "stroma). Light-dependent reactions happen in the thylakoid membranes, turning "
+                    "sunlight and water into ATP, NADPH, and oxygen. Light-independent reactions "
+                    "(the Calvin cycle) happen in the stroma, turning CO2, ATP, and NADPH into G3P "
+                    "(via the enzyme RuBisCO).\n\n"
+                    "ENERGY FLOW: plants are primary producers. Gross Primary Productivity (GPP) "
+                    "is their total energy generated; Net Primary Productivity (NPP) is what's "
+                    "left after their own respiration, available to herbivores/decomposers. The "
+                    "10% Rule (Lindeman's Efficiency): on average only ~10% of stored energy "
+                    "passes to the next trophic level.\n\n"
+                    "NUTRIENT CYCLES: Carbon -- plants fix atmospheric CO2 via RuBisCO in the "
+                    "Calvin Cycle, release some back via respiration; buried undecayed matter can "
+                    "become peat/coal over geologic time. Nitrogen -- bacteria fix N2 into usable "
+                    "ammonium/nitrate for roots to assimilate; decomposers recycle it, denitrifying "
+                    "bacteria return excess to atmospheric N2. Water -- transpiration moves water "
+                    "up through the xylem and out through leaf stomata. Phosphorus -- plants "
+                    "absorb soil phosphate directly or via mycorrhizal fungal symbiosis.\n\n"
+                    "PLANT COMPETITION: plants compete for light (canopy height, leaf area/"
+                    "orientation), water (deep taproots vs. wide fibrous roots), and nutrients "
+                    "(root absorption speed, mycorrhizal associations). Exploitation competition "
+                    "(indirect) consumes a resource before neighbors can access it; interference "
+                    "competition (direct) physically/chemically inhibits a neighbor -- allelopathy "
+                    "(releasing toxic allelochemicals to suppress nearby germination/growth) is a "
+                    "specific form of interference competition."
+                ),
+            ),
+            (
+                "Botany: Uses of Plants & History",
+                "How humans and animals use plants (fibers, food, medicine) and the key "
+                "historical figures in botany -- shared Division B/C content.",
+                (
+                    "USES OF PLANTS: Fibers -- surface fibers (e.g. cotton seed hairs) for "
+                    "textiles, stem fibers (from phloem sclerenchyma, high tensile strength), leaf "
+                    "fibers (from monocot leaf vascular bundles), and wood (from the vascular "
+                    "cambium) for timber/construction/paper. Food storage structures -- endosperm "
+                    "(triploid, nutrient-rich seed tissue) is the main starch source in cereal "
+                    "grains; bulbs (short stem + fleshy modified leaves) and corms (solid swollen "
+                    "stem tissue, e.g. taro); storage roots (e.g. sweet potatoes, carrots, cassava, "
+                    "sugar beets) that both humans and wild animals rely on. Medicines -- aspirin "
+                    "(from willow bark), quinine (from cinchona tree bark, treats malaria), and "
+                    "digitalis (from foxglove, treats heart failure) are all plant-derived.\n\n"
+                    "IMPORTANT PEOPLE IN BOTANY: Theophrastus (371-286 BCE, \"father of botany,\" "
+                    "wrote Historia Plantarum). Pedanius Dioscorides (40-90 CE, De Materia Medica, "
+                    "foundational to pharmacology). Pliny the Elder (23-79 CE, Naturalis Historia). "
+                    "Al-Dinawari (828-896 CE, founder of Arab botany). Leonhart Fuchs (1501-1556, "
+                    "genus Fuchsia named for him). Jan Ingenhousz (1730-1799, proved plants need "
+                    "sunlight to produce oxygen). Carl Linnaeus (1707-1778, \"father of "
+                    "taxonomy,\" binomial nomenclature). Gregor Mendel (1822-1884, pea plant "
+                    "genetics). George Washington Carver (1864-1943, crop rotation, peanut/sweet "
+                    "potato uses). Melvin Calvin (1911-1997, mapped the Calvin Cycle). Katherine "
+                    "Esau (1898-1997, pioneering plant anatomist)."
+                ),
+            ),
+        ]
+
+        for chapter_name, chapter_description, chapter_text in chapters:
+            existing = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
+                .first()
+            )
+            if existing is None:
+                sub_topic = models.Topic(
+                    event_name=topic.event_name,
+                    name=chapter_name,
+                    description=chapter_description,
+                    assessment_type=topic.assessment_type,
+                    parent_topic_id=topic.id,
+                )
+                db.add(sub_topic)
+                db.flush()
+                db.add(
+                    models.Resource(
+                        topic_id=sub_topic.id,
+                        type="text",
+                        title="scioly.org wiki: Botany (excerpt for this chapter, Division B scope)",
+                        source_url="https://scioly.org/wiki/Botany",
+                        raw_text=chapter_text,
+                    )
+                )
+
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
