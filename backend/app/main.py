@@ -538,6 +538,342 @@ def seed_official_topics() -> None:
         db.close()
 
 
+@app.on_event("startup")
+def seed_solar_system_deep_dive() -> None:
+    """One-time content correction + deep-dive setup for Solar System, from
+    the actual scioly.org wiki page (fetched by the coach as a PDF -- direct
+    fetches to scioly.org are blocked from this environment). Unlike
+    seed_official_topics's overview backfill (which only fills empty
+    fields), this unconditionally overwrites Solar System's description and
+    overview_* with the corrected content, since this is an explicit,
+    sourced correction, not a first-time fill. Idempotent for the resource/
+    sub-topic creation via name checks, so re-running on every startup is
+    safe and doesn't duplicate them.
+    """
+    db = SessionLocal()
+    try:
+        topic = (
+            db.query(models.Topic)
+            .filter(models.Topic.name == "Solar System", models.Topic.parent_topic_id.is_(None))
+            .first()
+        )
+        if topic is None:
+            return
+
+        topic.description = (
+            "Written knowledge test on the Sun, planets, moons, and other bodies in our solar "
+            "system; the 2027 rotation focuses on habitability within and beyond the Solar System."
+        )
+        topic.overview_what = (
+            "A sit-down knowledge event (no hands-on task), run in Division B since 2006. Teams "
+            "of 2 take a written test on solar system science; the specific focus rotates most seasons."
+        )
+        topic.overview_learn = (
+            "Star and planet formation/evolution as background for habitability; what makes a "
+            "world potentially habitable, plus related exoplanet types (Hot Jupiters, Hot "
+            "Neptunes, Cold Jupiters) and concepts like tidal locking; Kepler's laws of planetary "
+            "motion, escape velocity, and other orbital mechanics; core facts about the Sun, the "
+            "8 planets, moons, dwarf planets/Plutoids, asteroids, comets, the Kuiper Belt, and the "
+            "Oort Cloud; solar and lunar eclipses; key astronomers (Copernicus, Galileo, Kepler, "
+            "Tycho Brahe, Halley, Tombaugh) and major missions (Voyager, Cassini, New Horizons, "
+            "JWST, and others)."
+        )
+        topic.overview_assessed = (
+            "Teams of 2, about 50 minutes, entirely a written/sit-down test -- no hands-on "
+            "component. Two note sheets plus writing utensils are allowed (no calculator listed "
+            "on the official resource list). The event often includes questions not explicitly on "
+            "the official rules sheet, so broad general knowledge pays off, not just the listed topics."
+        )
+        topic.overview_theme_2027 = (
+            "Habitability within and beyond the Solar System -- confirmed on the official wiki's "
+            "year-by-year topics table for the 2027 season (2026 was Planet Formation and "
+            "Structure; 2023 was also Habitability). Note: as of the wiki snapshot this was "
+            "sourced from, its background-content sections still mostly cover planet/star/asteroid "
+            "formation and evolution -- likely carried over from last year's topic -- so supplement "
+            "with dedicated habitability research (habitable zones, biosignatures, exoplanet "
+            "detection methods) rather than relying on that section alone."
+        )
+        topic.overview_notes = (
+            "This event often asks about things not on the official rules sheet -- a good "
+            "reference book and a well-organized note sheet (the community wiki suggests OneNote, "
+            "Google Slides, or Canva to fit lots of text and diagrams on one page) reportedly helps "
+            "get a top-ten finish. Useful outside links: NASA's Solar System site "
+            "(solarsystem.nasa.gov) and the ALMA Observatory site."
+        )
+
+        if not db.query(models.Resource).filter(
+            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Solar System (event page)"
+        ).first():
+            db.add(
+                models.Resource(
+                    topic_id=topic.id,
+                    type="text",
+                    title="scioly.org wiki: Solar System (event page)",
+                    source_url="https://scioly.org/wiki/Solar_System",
+                    raw_text=(
+                        "EVENT INFO: Division B, 2 participants, ~50 minutes, written/sit-down test. "
+                        "Allowed resources: two note sheets, writing utensils (no calculator). "
+                        "First appearance 2006; topic rotates most years.\n\n"
+                        "TOPIC BY YEAR: 2027 Habitability | 2026 Planet Formation and Structure | "
+                        "2023 Habitability | 2022/2019/2018 Terrestrial Bodies | 2015/2014 "
+                        "Extraterrestrial Water | 2011/2010/2007/2006 No particular topic.\n\n"
+                        "ORIGINS OF THE SOLAR SYSTEM: formed ~4.57 billion years ago from a nebula "
+                        "collapsing around a protosun. Heavier rocky material gravitated inward, "
+                        "lighter gas moved outward, giving 4 inner rocky terrestrial planets "
+                        "(Mercury, Venus, Earth, Mars) and 4 outer Jovian gas/ice giants (Jupiter, "
+                        "Saturn, Uranus, Neptune). Leftover material between Mars and Jupiter formed "
+                        "the asteroid belt; leftovers at the far edges formed the Oort Cloud and "
+                        "Kuiper Belt, source of many comets and dwarf planets (Pluto, Ceres, Eris, "
+                        "Haumea, Makemake, and candidate Sedna).\n\n"
+                        "THE SUN: diameter 1,392,000 km, mass 1.989x10^30 kg, luminosity "
+                        "3.846x10^33 erg/s, composition ~74% hydrogen/25% helium. Holds 99.8% of "
+                        "the solar system's mass. Layers (outside in, with temperature): Corona "
+                        "(1,000,000 C), Transition Region, Chromosphere, Photosphere (6,000 C), "
+                        "Convection Zone (1,000,000 C), Radiative Zone (2,000,000 C), Core "
+                        "(15,000,000 C). Produces heat via hydrogen fusion.\n\n"
+                        "PLANETS TABLE (orbit period / rotation period / distance from Sun): "
+                        "Mercury 87.97 days / 58.6 days / 0.39 AU. Venus 224.7 days / 243 days / "
+                        "0.72 AU. Earth 365.25 days / 1 day / 1 AU. Mars 686.98 days / 1.03 days / "
+                        "1.52 AU. Jupiter 11.86 years / 0.41 days / 5.2 AU. Saturn 29.46 years / "
+                        "0.41667 days / 9.54 AU. Uranus 84.01 years / 0.71833 days / 19.18 AU "
+                        "(discovered 1781). Neptune 164.9 years / 0.67125 days / 30.06 AU "
+                        "(discovered 1846).\n\n"
+                        "DWARF PLANETS & PLUTOIDS: a dwarf planet has enough gravity to be round "
+                        "but hasn't cleared its orbital neighborhood, and isn't a moon. A Plutoid "
+                        "is a dwarf planet orbiting beyond Neptune -- the four official Plutoids are "
+                        "Pluto, Haumea, Makemake, and Eris. Sedna is a plutoid candidate (not yet "
+                        "official) with an ~11,518-year, highly eccentric orbit.\n\n"
+                        "SMALL BODIES: Asteroids are small, rocky, airless bodies mostly in the main "
+                        "belt between Mars and Jupiter; types include C (dark, carbon-rich), S "
+                        "(silicate), M (metal-rich), and several rarer classes. Comets are icy "
+                        "bodies (nucleus, coma, tail) from the colder outer solar system; periodic "
+                        "comets return in under ~200 years, non-periodic (long-period) comets can "
+                        "take thousands to millions of years. The Kuiper Belt (30-50 AU from the "
+                        "Sun) holds leftover debris from solar system formation. The Oort Cloud is "
+                        "a vast, distant cloud (mass ~40 Earths) believed to be the source of many "
+                        "comets and asteroids.\n\n"
+                        "MOONS: Earth has 1 moon. Mars has 2 (Phobos, Deimos). Jupiter's four "
+                        "Galilean moons are Io, Europa, Ganymede, and Callisto (discovered by "
+                        "Galileo, 1610) -- Jupiter has 79+ moons total. Saturn has 60+ moons "
+                        "(Titan is the largest, discovered by Huygens in 1655). Uranus's major "
+                        "moons include Miranda, Ariel, Umbriel, Titania, and Oberon. Neptune's "
+                        "largest moon is Triton (retrograde orbit). Pluto's largest moon is Charon.\n\n"
+                        "HOT JUPITERS, HOT NEPTUNES & COLD JUPITERS (2027 habitability-relevant "
+                        "exoplanet types): Hot Jupiters are gas giant exoplanets in extremely close, "
+                        "hot orbits (often just days), 0.36-13.6 Jupiter masses, easiest to detect "
+                        "via radial velocity/Doppler wobble, sometimes tidally locked. Hot Neptunes "
+                        "are smaller, less gas-rich, denser-cored, ice-giant-type exoplanets, often "
+                        "closer than 1 AU to their star. Cold Jupiters are gas giants like Hot "
+                        "Jupiters but orbiting beyond the frost/snow line, cold enough to freeze "
+                        "water/ammonia/methane into ice.\n\n"
+                        "KEPLER'S LAWS OF PLANETARY MOTION: (1) every planet's orbit is an ellipse "
+                        "with the Sun at one focus; (2) a line from the Sun to a planet sweeps equal "
+                        "areas in equal time (planets move faster near the Sun); (3) the square of "
+                        "the orbital period is proportional to the cube of the semi-major axis "
+                        "(p^2 = a^3). Newton's law of gravitation: F = G*m1*m2/r^2. Escape velocity: "
+                        "Ev = sqrt(2GM/R), where G = 6.67x10^-11 N*m^2/kg^2.\n\n"
+                        "TIDAL LOCKING, SHEPHERDING, RESONANCE & TROJANS: tidal locking is when one "
+                        "side of a body always faces another (e.g. the Moon and Earth). Shepherd "
+                        "moons keep a planetary ring's particles confined via gravity (e.g. Saturn's "
+                        "Pan and Prometheus). Orbital resonance is when two bodies' periods relate "
+                        "by a simple integer ratio (e.g. Neptune:Pluto is 2:3; Jupiter's moons Io, "
+                        "Europa, Ganymede are in a 1:2:4 Laplace resonance). Trojans share an orbit "
+                        "with a larger body without colliding, sitting 60 degrees ahead or behind it.\n\n"
+                        "ECLIPSES: a lunar eclipse occurs when Earth passes between the Sun and "
+                        "Moon (always at full moon) -- types are penumbral, total penumbral, "
+                        "partial, and total (up to ~107 minutes of totality). A solar eclipse occurs "
+                        "when the Moon passes between Earth and the Sun (always at new moon) -- "
+                        "types are total, annular (Moon appears smaller than the Sun), hybrid, and "
+                        "partial.\n\n"
+                        "FAMOUS ASTRONOMERS: Aristarchus (first proposed a heliocentric system); "
+                        "Nicholas Copernicus (1473-1543, developed the heliocentric model); Tycho "
+                        "Brahe (1546-1601, precise planetary/stellar measurements, discovered a "
+                        "1572 supernova); Galileo Galilei (1564-1642, discovered Jupiter's four "
+                        "largest moons, observed Venus's phases, improved the telescope); Johannes "
+                        "Kepler (1571-1630, developed the laws of planetary motion, was Tycho "
+                        "Brahe's assistant); Edmond Halley (1656-1742, first to calculate a comet's "
+                        "orbit -- Halley's Comet); Clyde Tombaugh (1906-1997, discovered Pluto in "
+                        "1930).\n\n"
+                        "NOTABLE MISSIONS: Voyager 1 & 2 (1977-, flybys of the outer planets); "
+                        "Galileo (1989-2003, Jupiter system); Cassini (1997-2017, Saturn system); "
+                        "New Horizons (2006-, first Pluto flyby in 2015, later the Kuiper Belt); "
+                        "Dawn (2007-2018, Vesta and Ceres); Lunar Reconnaissance Orbiter (2009-, "
+                        "the Moon); Juno (2011-, Jupiter); BepiColombo (2018-, Mercury); Hubble "
+                        "(1990-) and JWST (2021-) space telescopes."
+                    ),
+                )
+            )
+
+        chapters = [
+            (
+                "Solar System: Star & Planet Formation",
+                "How stars and planets form and evolve, from protoplanetary disk to terrestrial "
+                "and Jovian planets, plus asteroid and Kuiper Belt/Oort Cloud origins -- background "
+                "for this year's habitability focus.",
+                (
+                    "PLANETARY EVOLUTION: planets form, change, and develop under gravity, heat, "
+                    "impacts, and interactions with their star, starting in a protoplanetary disk "
+                    "of gas and dust. Dust grains collide and stick (accretion) into planetesimals, "
+                    "then protoplanets. Hot inner regions only allow rock/metal to survive (rocky "
+                    "planets); cold outer regions retain ices and gas, allowing gas/ice giants to "
+                    "form. After forming, planets evolve internally (volcanism, tectonics, magnetic "
+                    "fields driven by leftover formation heat, radioactive decay, and tidal forces) "
+                    "and their atmospheres evolve based on gravity, temperature, volcanic "
+                    "outgassing, and stellar radiation/wind.\n\n"
+                    "STAR FORMATION: begins in a cold, dense nebula region that collapses under its "
+                    "own gravity into a protostar, which heats up via gravitational contraction. "
+                    "Once the core is hot/dense enough, sustained hydrogen fusion begins (main "
+                    "sequence). Low-to-moderate mass stars (like the Sun) later expand into red "
+                    "giants, shed their outer layers, and leave a white dwarf core. High-mass stars "
+                    "become red supergiants and end in a supernova, leaving a neutron star or black "
+                    "hole.\n\n"
+                    "PLANET FORMATION: from leftover material in the protoplanetary disk. The "
+                    "temperature gradient determines composition -- hot inner disk gives rocky "
+                    "terrestrial planets (Mercury, Venus, Earth, Mars); cooler outer disk lets ices "
+                    "condense too, letting massive cores attract gas into Jovian gas giants "
+                    "(Jupiter, Saturn, Uranus, Neptune). Planetary orbits may have migrated over "
+                    "time (e.g. the 'Nice Model').\n\n"
+                    "ASTEROID FORMATION: asteroids are leftover planetesimals that never accreted "
+                    "into a full planet, mostly in the main belt between Mars and Jupiter, where "
+                    "Jupiter's gravity disrupted further accretion. Ongoing collisions have shaped "
+                    "their size distribution; composition varies by original formation temperature "
+                    "(C-type carbon-rich, S-type silicate, M-type metal-rich, and others)."
+                ),
+            ),
+            (
+                "Solar System: Bodies, Moons & Small Bodies",
+                "Core facts about the Sun, the 8 planets, dwarf planets/Plutoids, asteroid and "
+                "comet types, and the major moon systems.",
+                (
+                    "THE SUN: diameter 1,392,000 km, mass 1.989x10^30 kg (99.8% of the solar "
+                    "system's mass), ~74% hydrogen/25% helium, produces energy via hydrogen fusion "
+                    "in its core (15,000,000 C), radiating out through the radiative zone, "
+                    "convective zone, photosphere (6,000 C), and corona (1,000,000 C).\n\n"
+                    "PLANETS: 4 inner rocky terrestrial planets (Mercury, Venus, Earth, Mars) "
+                    "between the Sun and the asteroid belt; 4 outer Jovian gas/ice giants (Jupiter, "
+                    "Saturn, Uranus, Neptune) beyond it. Orbit periods range from Mercury's 88 days "
+                    "to Neptune's 165 years; rotation periods range from Jupiter's 10-hour day to "
+                    "Venus's 243-day day (longer than its year).\n\n"
+                    "DWARF PLANETS & PLUTOIDS: a dwarf planet is round from its own gravity but "
+                    "hasn't cleared its orbital neighborhood. A Plutoid is a dwarf planet beyond "
+                    "Neptune -- the four official Plutoids are Pluto, Haumea, Makemake, and Eris. "
+                    "Sedna is a plutoid candidate, not yet official, with an extremely long, "
+                    "eccentric orbit.\n\n"
+                    "SMALL BODIES: asteroids (rocky, airless, mostly in the main belt) come in "
+                    "types like C (dark, carbon-rich), S (silicate, brighter), and M (metal-rich). "
+                    "Comets (icy nucleus/coma/tail) are periodic (under ~200-year orbits) or "
+                    "non-periodic/long-period (thousands to millions of years). The Kuiper Belt "
+                    "(30-50 AU out) and the far more distant Oort Cloud are leftover-debris "
+                    "reservoirs and the source of many comets.\n\n"
+                    "MOONS: Earth has 1 (the Moon); Mars has 2 (Phobos, Deimos, discovered 1877). "
+                    "Jupiter's Galilean moons -- Io, Europa, Ganymede, Callisto -- were discovered "
+                    "by Galileo in 1610; Jupiter has 79+ moons total. Saturn's largest moon Titan "
+                    "was discovered by Huygens in 1655; Saturn has 60+ moons. Uranus's major moons "
+                    "include Miranda, Ariel, Umbriel, Titania, and Oberon. Neptune's largest moon "
+                    "Triton orbits retrograde. Pluto's largest moon is Charon."
+                ),
+            ),
+            (
+                "Solar System: Habitability & Exoplanet Types",
+                "What makes a world potentially habitable, and related exoplanet categories -- "
+                "Hot Jupiters, Hot Neptunes, Cold Jupiters, and tidal locking. This year's (2027) "
+                "event theme.",
+                (
+                    "2027 THEME: Solar System's focus this season is habitability within and beyond "
+                    "the Solar System. As of the source wiki snapshot, dedicated habitability "
+                    "content (habitable zones, biosignatures, exoplanet detection methods) wasn't "
+                    "fully written up yet -- supplement this with outside research; the exoplanet "
+                    "categories below are the clearest habitability-adjacent content available on "
+                    "the page.\n\n"
+                    "HOT JUPITERS: gas giant exoplanets in extremely close, hot orbits around their "
+                    "star (often just days), temperatures over 1000K, sometimes tidally locked. "
+                    "Mass range 0.36-13.6 Jupiter masses (a commonly tested fact). Easiest exoplanet "
+                    "type to detect, via the radial velocity/Doppler wobble method, due to their "
+                    "large mass and tight orbit.\n\n"
+                    "HOT NEPTUNES: similar to Hot Jupiters but smaller, with less atmosphere and "
+                    "denser cores (stripped by radiation) -- more ice-giant-like (containing water, "
+                    "ammonia, methane) than the mostly hydrogen/helium Hot Jupiters. Can orbit as "
+                    "close as ~1 AU from their star.\n\n"
+                    "COLD JUPITERS: gas giants like Hot Jupiters but orbiting beyond the frost/snow "
+                    "line -- the distance from a young star at which volatile compounds "
+                    "(water, ammonia, methane) freeze into ice grains.\n\n"
+                    "TIDAL LOCKING: when one side of a body always faces another body it orbits "
+                    "(e.g. the Moon always shows Earth the same face). Relevant to habitability "
+                    "since a tidally locked planet has permanent day and night sides, which affects "
+                    "climate and where liquid water could persist."
+                ),
+            ),
+            (
+                "Solar System: Orbital Mechanics, Eclipses & History",
+                "Kepler's laws, escape velocity, resonance and Trojans, solar/lunar eclipse types, "
+                "and the astronomers and missions that shaped our understanding of the solar system.",
+                (
+                    "NEWTON'S LAWS & GRAVITATION: (1) an object at rest/in motion stays that way "
+                    "unless acted on by an outside force; (2) F = m*a; (3) every action has an "
+                    "equal and opposite reaction. Law of gravitation: F = G*m1*m2/r^2.\n\n"
+                    "KEPLER'S LAWS OF PLANETARY MOTION: (1) every planet's orbit is an ellipse with "
+                    "the Sun at one focus; (2) a line from the Sun to a planet sweeps equal areas in "
+                    "equal time, so planets move fastest near the Sun; (3) the square of the "
+                    "orbital period is proportional to the cube of the semi-major axis (p^2 = a^3).\n\n"
+                    "ESCAPE VELOCITY: Ev = sqrt(2GM/R), where G is the gravitational constant "
+                    "(6.67x10^-11 N*m^2/kg^2), M is the planet's mass in kg, and R is its radius in "
+                    "meters (watch unit conversions -- radius is usually given in km).\n\n"
+                    "TIDAL LOCKING, SHEPHERDING, RESONANCE & TROJANS: tidal locking is one side of "
+                    "a body always facing another (Moon-Earth; Pluto-Charon are mutually locked). "
+                    "Shepherd moons (e.g. Saturn's Pan, Prometheus) use gravity to keep a ring's "
+                    "particles confined. Orbital resonance is a simple integer ratio between two "
+                    "bodies' periods (Neptune:Pluto 2:3; Jupiter's Io:Europa:Ganymede 1:2:4, a "
+                    "Laplace resonance). Trojans share an orbit with a larger body 60 degrees ahead "
+                    "or behind it without colliding.\n\n"
+                    "ECLIPSES: lunar eclipses (Earth between Sun and Moon, always full moon) are "
+                    "penumbral, total penumbral, partial, or total (up to ~107 minutes of "
+                    "totality). Solar eclipses (Moon between Earth and Sun, always new moon) are "
+                    "total, annular (Moon looks smaller than the Sun), hybrid, or partial.\n\n"
+                    "ASTRONOMERS: Aristarchus (first proposed heliocentrism); Copernicus "
+                    "(1473-1543, developed the heliocentric model); Tycho Brahe (1546-1601, precise "
+                    "measurements, discovered a 1572 supernova); Galileo (1564-1642, discovered "
+                    "Jupiter's 4 largest moons, observed Venus's phases); Kepler (1571-1630, laws "
+                    "of planetary motion, was Tycho's assistant); Halley (1656-1742, first to "
+                    "calculate a comet's orbit); Tombaugh (1906-1997, discovered Pluto in 1930).\n\n"
+                    "MISSIONS: Voyager 1 & 2 (1977-, outer planet flybys); Galileo (1989-2003, "
+                    "Jupiter); Cassini (1997-2017, Saturn); New Horizons (2006-, first Pluto flyby "
+                    "2015); Dawn (2007-2018, Vesta and Ceres); Juno (2011-, Jupiter); BepiColombo "
+                    "(2018-, Mercury); Hubble (1990-) and JWST (2021-) telescopes."
+                ),
+            ),
+        ]
+
+        for chapter_name, chapter_description, chapter_text in chapters:
+            existing = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
+                .first()
+            )
+            if existing is None:
+                sub_topic = models.Topic(
+                    event_name=topic.event_name,
+                    name=chapter_name,
+                    description=chapter_description,
+                    assessment_type=topic.assessment_type,
+                    parent_topic_id=topic.id,
+                )
+                db.add(sub_topic)
+                db.flush()
+                db.add(
+                    models.Resource(
+                        topic_id=sub_topic.id,
+                        type="text",
+                        title="scioly.org wiki: Solar System (excerpt for this chapter)",
+                        source_url="https://scioly.org/wiki/Solar_System",
+                        raw_text=chapter_text,
+                    )
+                )
+
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
