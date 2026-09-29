@@ -12,7 +12,7 @@ export default function CoachStudents() {
 
   function refresh() {
     api.listStudents().then(setStudents);
-    api.listTopics().then(setTopics);
+    api.listTopics(true).then(setTopics);
   }
 
   useEffect(refresh, []);

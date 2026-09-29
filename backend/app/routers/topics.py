@@ -8,16 +8,27 @@ router = APIRouter(prefix="/api/topics", tags=["topics"])
 
 
 @router.get("", response_model=list[schemas.TopicOut])
-def list_topics(request: Request, db: Session = Depends(get_db)):
+def list_topics(request: Request, db: Session = Depends(get_db), include_sub_topics: bool = False):
     query = db.query(models.Topic)
     student = request.state.student
     if student is not None:
         # A student only ever sees topics a coach has explicitly assigned
-        # them (models.StudentTopic) -- coaches still see everything.
+        # them (models.StudentTopic) -- coaches still see everything,
+        # subject to include_sub_topics below. A student can be assigned a
+        # specific chapter directly, so this branch is never further
+        # restricted to top-level topics.
         assigned_ids = [
             row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)
         ]
         query = query.filter(models.Topic.id.in_(assigned_ids))
+    elif not include_sub_topics:
+        # Default coach view (e.g. the Home page grid) shows events only --
+        # each event's chapters are reached by drilling into its own
+        # "Chapters" section (CoachTopicBuilder.tsx), not as separate flat
+        # entries here. Pass include_sub_topics=true (e.g. the student
+        # roster's per-topic assignment checklist) to get the full flat
+        # list, chapters included, when that's genuinely useful.
+        query = query.filter(models.Topic.parent_topic_id.is_(None))
     topics = query.order_by(models.Topic.id).all()
     return [schemas.TopicOut.from_model(t) for t in topics]
 
