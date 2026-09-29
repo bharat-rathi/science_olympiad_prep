@@ -213,7 +213,12 @@ export const api = {
   getDriveStatus: () => req<DriveStatus>("/api/auth/drive-status"),
   disconnectDrive: () => req<DriveStatus>("/api/auth/drive/disconnect", { method: "POST" }),
 
-  listTopics: () => req<Topic[]>("/api/topics"),
+  // includeSubTopics=true also returns chapters (sub-topics) as flat
+  // entries -- used by the student roster's per-topic assignment
+  // checklist, where assigning a specific chapter is genuinely useful.
+  // The default (false) is event-level only, e.g. for the Home page grid.
+  listTopics: (includeSubTopics = false) =>
+    req<Topic[]>(`/api/topics${includeSubTopics ? "?include_sub_topics=true" : ""}`),
   getTopic: (id: number) => req<Topic>(`/api/topics/${id}`),
   createTopic: (payload: {
     event_name: string;
