@@ -1236,6 +1236,117 @@ def seed_thermodynamics_deep_dive() -> None:
         db.close()
 
 
+@app.on_event("startup")
+def seed_hovercraft_content() -> None:
+    """One-time content correction for Hovercraft (Division B), from the
+    actual scioly.org wiki page (coach-supplied PDF, same source as the
+    Solar System / Thermodynamics corrections).
+
+    Deliberately does NOT seed deep-dive chapters like those two did: this
+    wiki page is largely unfilled for the 2027 season -- its construction/
+    competition-parameters, design-tips, and scoring sections are still
+    literal community placeholders ("Add current construction parameters
+    here!"), not real numbers. Inventing specific build dimensions or
+    scoring formulas not actually on the page would violate the same
+    "deterministic, sourced content only" instruction this whole feature is
+    built around. What IS confirmed and worth correcting: the written-exam
+    portion no longer exists (pure build/run event now), participants,
+    eye protection, impound, allowed resources, and time. A coach with the
+    actual 2027 rules PDF (soinc.org/hovercraft-b) can prompt a follow-up
+    to add real deep-dive chapters once those specifics exist.
+    """
+    db = SessionLocal()
+    try:
+        topic = (
+            db.query(models.Topic)
+            .filter(models.Topic.name == "Hovercraft", models.Topic.parent_topic_id.is_(None))
+            .first()
+        )
+        if topic is None:
+            return
+
+        topic.description = (
+            "Build event: design, construct, and calibrate a self-propelled, air-levitated "
+            "hovercraft that travels down a track -- no written test (removed from the current "
+            "rules), pure build/run scoring."
+        )
+        topic.overview_what = (
+            "A Division B and C build event, first appearing in 2017. Teams of 2 design, build, "
+            "and calibrate ahead of time a self-propelled, air-levitated vehicle, then run it down "
+            "a track at competition. It must actually levitate on its air cushion -- if it doesn't, "
+            "it's judged a wheeled/sliding vehicle instead of a hovercraft, and event supervisors "
+            "may check this if they suspect it isn't truly levitating."
+        )
+        topic.overview_learn = (
+            "Aerodynamic lift via an air cushion, propulsion system design (motor, propeller/"
+            "impeller, battery, switch), weight distribution and stability, and iterative "
+            "calibration -- testing and adjusting the device using real run data before "
+            "competition day. Specific construction dimensions, materials, and scoring formulas "
+            "for the 2027 season weren't available on the wiki source this was built from (see "
+            "note below) -- pull those from the official rules."
+        )
+        topic.overview_assessed = (
+            "Teams of 2, about 8 minutes, eye protection required (Category B), device and notes "
+            "both impounded before running. No written test component in the current rules (this "
+            "event used to be a dual lab with a test portion; that's been removed). Allowed at "
+            "competition: the vehicle itself, papers/notes (also impounded), tools/supplies, spare "
+            "parts, and two Class III calculators."
+        )
+        topic.overview_theme_2027 = (
+            "Confirmed current for 2027 (Division B and C both). Note: the scioly.org wiki page "
+            "this was sourced from is largely unfilled for this season -- its construction-"
+            "parameters, competition-parameters, design-tips, and scoring sections are still "
+            "literal placeholder text (\"Add current construction parameters here!\"), not real "
+            "numbers. Get exact dimensions, weight/power limits, the track layout, and the scoring "
+            "formula from the official 2027 rules PDF at soinc.org/hovercraft-b before building "
+            "anything -- this app hasn't been given those specifics yet."
+        )
+        topic.overview_notes = (
+            "The core eligibility check -- it must genuinely levitate on an air cushion, not just "
+            "roll or slide -- is worth emphasizing early, since a non-levitating device can be "
+            "disqualified even if it otherwise performs well. Both the vehicle and any notes "
+            "brought to competition are impounded, so plan for a supervised, hands-off wait before "
+            "the run."
+        )
+
+        if not db.query(models.Resource).filter(
+            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Hovercraft (event page)"
+        ).first():
+            db.add(
+                models.Resource(
+                    topic_id=topic.id,
+                    type="text",
+                    title="scioly.org wiki: Hovercraft (event page)",
+                    source_url="https://scioly.org/wiki/Hovercraft",
+                    raw_text=(
+                        "EVENT INFO: Division B & C, Physics/Build category, 2 participants, eye "
+                        "protection Category B, device and notes both impounded, ~8 minutes. "
+                        "Allowed at competition: one vehicle (impounded), papers/notes (impounded), "
+                        "tools/supplies, spare parts, two Class III calculators. First appearance "
+                        "2017, returned for 2027; the wiki lists this event as rotating.\n\n"
+                        "FORMAT: Hovercraft is a build event for the 2026-2027 season -- design, "
+                        "build, and calibrate a self-propelled, air-levitated vehicle ahead of the "
+                        "tournament, then run it down a track without it stopping along the way. "
+                        "The device MUST actually levitate; if it doesn't, it's considered a "
+                        "regular (non-hovering) vehicle instead, and this may be checked by event "
+                        "supervisors if there's any suspicion. Formerly (prior seasons) this event "
+                        "was a dual lab with both a written-test portion and a build portion -- for "
+                        "the current rules, the written exam does not exist anymore; it's build/run "
+                        "only.\n\n"
+                        "NOT YET DOCUMENTED ON THIS WIKI SNAPSHOT (community placeholders as of "
+                        "this page's last edit): specific construction parameters (size/weight/"
+                        "power limits, allowed materials), competition parameters (track "
+                        "dimensions/layout), design tips & strategy, and the scoring formula. Get "
+                        "these from the official Division B rules at soinc.org/hovercraft-b."
+                    ),
+                )
+            )
+
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
