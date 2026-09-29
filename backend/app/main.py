@@ -1347,6 +1347,245 @@ def seed_hovercraft_content() -> None:
         db.close()
 
 
+@app.on_event("startup")
+def seed_meteorology_deep_dive() -> None:
+    """One-time content correction + deep-dive setup for Meteorology
+    (Division B only -- no Division C equivalent exists), from the actual
+    scioly.org wiki page (coach-supplied PDF, same pattern as the Solar
+    System / Thermodynamics corrections).
+
+    Confirms the 2027 focus topic is Severe Storms (the wiki's topic-
+    rotation table shows 2026 Everyday Weather / 2027 Severe Storms /
+    Climate next) -- matching the event description's own wording. The main
+    wiki page only covers foundational atmosphere/pressure/wind/water-vapor
+    content in depth and *links out* to separate sub-pages for each
+    rotating topic's specifics (e.g. Severe Storms' Thunderstorms,
+    Hurricanes, Winter Storms, Mid-Latitude Cyclones, Atmospheric Rivers)
+    without their content inline -- those sub-pages weren't fetched, so the
+    Severe Storms chapter below is a sourced checklist of what to study,
+    not fabricated storm-specific facts, consistent with keeping every
+    chapter's content traceable to what was actually on the page.
+    """
+    db = SessionLocal()
+    try:
+        topic = (
+            db.query(models.Topic)
+            .filter(models.Topic.name == "Meteorology", models.Topic.parent_topic_id.is_(None))
+            .first()
+        )
+        if topic is None:
+            return
+
+        topic.description = (
+            "Written test (occasionally stations) on interpreting meteorological data, graphs, "
+            "charts, tables, and images; the 2027 focus topic is Severe Storms. Division B only -- "
+            "no Division C equivalent."
+        )
+        topic.overview_what = (
+            "A Division B-only Earth Science event (first run 2003) testing meteorological "
+            "principles and data interpretation. Its focus topic rotates yearly among Everyday "
+            "Weather, Severe Storms, and Climate -- each gets one year before the rotation moves "
+            "on -- though some foundational meteorology knowledge (atmosphere, pressure, wind, "
+            "water vapor) applies regardless of the year's topic. Usually a written test or "
+            "slide-based test; occasionally run as rotating stations."
+        )
+        topic.overview_learn = (
+            "Foundational atmospheric science that applies every year: atmosphere composition and "
+            "layers (troposphere through exosphere), pressure systems (cyclones/anticyclones, "
+            "pressure gradient force), the Coriolis effect, and the water vapor/cloud/precipitation "
+            "cycle (saturation, dew point, condensation, deposition). For 2027 specifically: Severe "
+            "Storms -- the wiki names Thunderstorms, Hurricanes, Winter Storms, Mid-Latitude "
+            "Cyclones, and Atmospheric Rivers as its sub-topics, though their detailed content "
+            "lives on separate wiki pages not included in this source."
+        )
+        topic.overview_assessed = (
+            "Teams of 2, about 50 minutes. Question formats include multiple choice, true/false, "
+            "matching, diagram labeling, short answer, and free response -- generally no penalty "
+            "for wrong answers, so answering everything (even a guess) is usually worth it. As of "
+            "the 2023-24 season, teams may bring one binder of any size with information in any "
+            "form (written or typed) plus two stand-alone Class II calculators of any type -- a "
+            "notably permissive resource policy compared to most other events."
+        )
+        topic.overview_theme_2027 = (
+            "Severe Storms -- confirmed both by the event description's own wording and by the "
+            "wiki's topic-rotation table (2026 Everyday Weather, 2027 Severe Storms, Climate next "
+            "in the cycle). The wiki names Thunderstorms, Hurricanes, Winter Storms, Mid-Latitude "
+            "Cyclones, and Atmospheric Rivers as this topic's sub-pages, but their content lives on "
+            "separate wiki pages this source didn't include -- treat that as a study checklist, and "
+            "get the actual storm-science content from those pages, a meteorology textbook, or "
+            "soinc.org/meteorology-b directly."
+        )
+        topic.overview_notes = (
+            "Since teams can split the binder-lookup work between partners, prepping a "
+            "well-organized, tabbed/labeled binder matters as much as raw knowledge -- the wiki "
+            "specifically recommends including diagrams (Coriolis effect, atmosphere layers, cloud "
+            "types, classification systems). A general meteorology textbook covering all three "
+            "rotation topics is worth having even after the focus topic changes, since foundational "
+            "questions can still appear. Free resources: soinc.org/meteorology-b and NOAA's "
+            "Science Olympiad education page."
+        )
+
+        if not db.query(models.Resource).filter(
+            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Meteorology (event page)"
+        ).first():
+            db.add(
+                models.Resource(
+                    topic_id=topic.id,
+                    type="text",
+                    title="scioly.org wiki: Meteorology (event page)",
+                    source_url="https://scioly.org/wiki/Meteorology",
+                    raw_text=(
+                        "EVENT INFO: Division B only (no Division C equivalent), 2 participants, "
+                        "~50 minutes. Allowed resources (2023-24 rules onward): one binder of any "
+                        "size with information in any form, two stand-alone Class II calculators, "
+                        "writing utensils. First run 2003; the EVENT doesn't rotate in/out, but its "
+                        "focus TOPIC rotates yearly among Everyday Weather, Severe Storms, and "
+                        "Climate.\n\n"
+                        "TOPIC ROTATION (from the wiki's table): 2010 Everyday Weather / 2011 "
+                        "Severe Storms / 2012 Climate. 2013/2014/2015 same pattern. 2016/2017/2018 "
+                        "same pattern. 2019/2020-21/2022 same pattern. 2023/2024/2025 same "
+                        "pattern. 2026 Everyday Weather / 2027 Severe Storms / (Climate next).\n\n"
+                        "TEST FORMAT: usually a written test or a slideshow-based test; "
+                        "occasionally rotating stations. Question types: multiple choice, true/"
+                        "false, matching, diagram labeling, short answer, free response. Tip from "
+                        "the wiki: split the binder-lookup work between partners to save time; "
+                        "there's typically no penalty for wrong answers, so attempt every "
+                        "question.\n\n"
+                        "BASIC METEOROLOGICAL INFORMATION (applies across all 3 rotating topics):\n"
+                        "- Atmosphere: mostly nitrogen and oxygen gas; key variables are "
+                        "temperature, pressure, and humidity. Layers bottom to top: Troposphere "
+                        "(where most weather occurs), Stratosphere, Mesosphere, Thermosphere, "
+                        "Exosphere.\n"
+                        "- Pressure: the weight of the atmosphere over an area; greatest at the "
+                        "surface, decreases exponentially with altitude. Low-pressure areas are "
+                        "cyclones; high-pressure areas are anticyclones.\n"
+                        "- Wind: driven by pressure differences (pressure gradient force), flowing "
+                        "from high to low pressure. The Coriolis effect (from Earth's rotation) "
+                        "deflects wind right in the Northern Hemisphere, left in the Southern "
+                        "Hemisphere. Surface friction can reduce wind speed.\n"
+                        "- Water vapor & clouds: water vapor enters the atmosphere via evaporation, "
+                        "then condenses (to liquid droplets) or deposits (to ice crystals) to form "
+                        "clouds; large enough droplets/crystals fall as precipitation. Air is "
+                        "'saturated' when it holds the maximum water vapor possible at its "
+                        "temperature (warmer air holds more). Rising air expands and cools; the "
+                        "temperature at which it becomes saturated is the dew point.\n"
+                        "- Instruments: historically thermometers, barometers (pressure), and rain "
+                        "gauges; modern methods include satellites, radar, and weather balloons/"
+                        "radiosondes, with data plotted on maps and specialized charts.\n\n"
+                        "2027 TOPIC (SEVERE STORMS) SUB-PAGES NAMED BY THE WIKI (content not "
+                        "included in this source -- study checklist only): Thunderstorms, "
+                        "Hurricanes, Winter Storms, Mid-Latitude Cyclones, Atmospheric Rivers."
+                    ),
+                )
+            )
+
+        chapters = [
+            (
+                "Meteorology: Atmosphere Basics",
+                "Atmosphere composition and layers -- foundational content that applies no matter "
+                "which topic is in rotation.",
+                (
+                    "ATMOSPHERE COMPOSITION: almost all atmospheric gas is nitrogen and oxygen. "
+                    "Key variables to track are temperature, pressure, and humidity (water vapor "
+                    "content).\n\n"
+                    "LAYERS OF THE ATMOSPHERE (bottom to top): Troposphere -- where most weather "
+                    "patterns occur. Stratosphere. Mesosphere. Thermosphere. Exosphere -- the "
+                    "outermost layer."
+                ),
+            ),
+            (
+                "Meteorology: Pressure & Wind",
+                "Cyclones and anticyclones, pressure gradient force, and the Coriolis effect -- "
+                "foundational content that applies no matter which topic is in rotation.",
+                (
+                    "PRESSURE: think of atmospheric pressure as the weight of the atmosphere over "
+                    "an area. It's greatest at the surface and decreases exponentially with "
+                    "altitude; it also varies horizontally over time. Low-pressure areas are called "
+                    "cyclones; high-pressure areas are called anticyclones.\n\n"
+                    "WIND: driven by horizontal pressure differences, which create a pressure "
+                    "gradient force that pushes wind from high pressure toward low pressure. Wind "
+                    "in motion is deflected -- to the right in the Northern Hemisphere, to the left "
+                    "in the Southern Hemisphere -- due to Earth's rotation; this is the Coriolis "
+                    "effect. Friction, especially near the surface, can also reduce wind speed."
+                ),
+            ),
+            (
+                "Meteorology: Water Vapor, Clouds & Instruments",
+                "The evaporation-condensation-precipitation cycle, saturation and dew point, and "
+                "the instruments used to measure weather -- foundational content that applies no "
+                "matter which topic is in rotation.",
+                (
+                    "WATER VAPOR & CLOUDS: water vapor (the gaseous state of water) typically "
+                    "enters the atmosphere through evaporation of surface liquid water. In the "
+                    "atmosphere it can condense into liquid cloud droplets or deposit directly into "
+                    "solid ice crystals; these can grow (including by joining with other droplets/"
+                    "crystals) and eventually fall as precipitation once large enough. Water vapor "
+                    "makes up roughly 0% to 4-5% of air and is a 'variable gas' -- warmer air can "
+                    "hold more of it. Air is 'saturated' when it holds the maximum water vapor "
+                    "possible at its temperature; any more forms liquid droplets or ice crystals.\n\n"
+                    "DEW POINT: rising air expands (matching the surrounding air's decreasing "
+                    "pressure) and cools as a result. The temperature at which the air's actual "
+                    "water vapor content equals the maximum it can hold is the dew point -- further "
+                    "rising/cooling past that point forms cloud droplets or ice crystals.\n\n"
+                    "INSTRUMENTS: historically, thermometers, barometers (measure atmospheric "
+                    "pressure), and rain gauges. Modern methods include satellites, radar, and "
+                    "weather balloons/radiosondes, with the resulting data plotted on maps and "
+                    "specialized charts."
+                ),
+            ),
+            (
+                "Meteorology: 2027 Topic -- Severe Storms",
+                "This year's rotating focus topic. The wiki names these sub-topics but their "
+                "detailed content lives on separate pages not included in this source -- treat "
+                "this as a study checklist, not a complete reference.",
+                (
+                    "CONFIRMED 2027 FOCUS: Severe Storms (per both the event's own description and "
+                    "the wiki's topic-rotation table: 2026 Everyday Weather, 2027 Severe Storms, "
+                    "Climate next in the 3-year cycle).\n\n"
+                    "NAMED SUB-TOPICS (per the wiki's own Severe Storms page list -- study these "
+                    "specifically, using a meteorology textbook, the linked scioly.org sub-pages, "
+                    "or soinc.org/meteorology-b for the actual content, since it wasn't included in "
+                    "this source): Thunderstorms. Hurricanes. Winter Storms. Mid-Latitude Cyclones. "
+                    "Atmospheric Rivers.\n\n"
+                    "All of this builds on the foundational atmosphere/pressure/wind/water-vapor "
+                    "material in the other three chapters -- severe storms are, at their core, "
+                    "extreme expressions of those same underlying processes (pressure gradients, "
+                    "moisture, instability)."
+                ),
+            ),
+        ]
+
+        for chapter_name, chapter_description, chapter_text in chapters:
+            existing = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
+                .first()
+            )
+            if existing is None:
+                sub_topic = models.Topic(
+                    event_name=topic.event_name,
+                    name=chapter_name,
+                    description=chapter_description,
+                    assessment_type=topic.assessment_type,
+                    parent_topic_id=topic.id,
+                )
+                db.add(sub_topic)
+                db.flush()
+                db.add(
+                    models.Resource(
+                        topic_id=sub_topic.id,
+                        type="text",
+                        title="scioly.org wiki: Meteorology (excerpt for this chapter)",
+                        source_url="https://scioly.org/wiki/Meteorology",
+                        raw_text=chapter_text,
+                    )
+                )
+
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
