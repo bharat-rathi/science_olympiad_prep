@@ -101,7 +101,7 @@ class Topic(Base):
     assessment_type: Mapped[str] = mapped_column(String(20), default="test")
     # Reference overview shown at the top of a topic's page -- populated by
     # the official-events catalog seed (main.py's seed_official_topics) for
-    # the 25 pre-seeded Division B events, empty for a coach-created custom
+    # the 22 pre-seeded Division B events, empty for a coach-created custom
     # topic or sub-topic. Five short, separately-labeled fields rather than
     # one blob so the UI can render them as distinct cards without needing a
     # markdown parser.
