@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import auth, models
 from app.config import settings
 from app.db import SessionLocal, engine
+from app.rag.vectorstore import delete_resource as delete_resource_chunks
 from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, students, topic_chat, topics, tutor
 
 # INFO so llm/client.py's per-call logging (label, effort, char counts) shows
@@ -242,23 +243,60 @@ app.include_router(topic_chat.router)
 app.include_router(students.router)
 
 
-def _rename_protein_modeling_to_protein_builders() -> None:
-    """One-time correction: "Protein Modeling" is actually the Division C
-    (high school) event name -- Division B's analog is a differently-named
-    trial event, "Protein Builders". Renames any existing row rather than
-    leaving a stale duplicate; a coach's resources/concepts/assessments stay
-    attached since those link by topic_id, not name. No-op once already
-    renamed, and never touches a row a coach separately created named
-    "Protein Modeling" on purpose (rare, but checked via the join).
+# Events an earlier version of the catalog below seeded that are NOT on the
+# official 2027 Division B slate ("Protein Modeling" was Protein Builders'
+# name before an earlier rename).
+_NON_2027_DIVISION_B_EVENTS = ("Experimental Design", "Protein Builders", "Protein Modeling", "Code Craze")
+
+
+def _delete_topic_tree(db, topic: models.Topic) -> None:
+    """Delete a topic along with its sub-topics and everything that points
+    at it. The ORM cascades on Topic only cover resources/concepts/
+    assessments -- schedule entries, student assignments, chat history,
+    diagrams, student attempts, and vector-store chunks have to be cleared
+    explicitly or the FK constraints (Postgres) block the delete.
     """
-    with engine.connect() as conn:
-        conn.execute(
-            text(
-                "UPDATE topics SET name = 'Protein Builders', event_name = 'Protein Builders' "
-                "WHERE name = 'Protein Modeling' AND parent_topic_id IS NULL"
-            )
+    for child in db.query(models.Topic).filter(models.Topic.parent_topic_id == topic.id).all():
+        _delete_topic_tree(db, child)
+
+    assessment_ids = [a.id for a in topic.assessments]
+    if assessment_ids:
+        for attempt in db.query(models.Attempt).filter(models.Attempt.assessment_id.in_(assessment_ids)).all():
+            db.delete(attempt)
+    resource_ids = [r.id for r in topic.resources]
+    db.query(models.Diagram).filter(models.Diagram.topic_id == topic.id).delete(synchronize_session=False)
+    db.query(models.ScheduleEntry).filter(models.ScheduleEntry.topic_id == topic.id).delete(synchronize_session=False)
+    db.query(models.StudentTopic).filter(models.StudentTopic.topic_id == topic.id).delete(synchronize_session=False)
+    db.query(models.TopicChatMessage).filter(models.TopicChatMessage.topic_id == topic.id).delete(synchronize_session=False)
+    db.flush()
+    db.delete(topic)
+    db.flush()
+
+    for resource_id in resource_ids:
+        try:
+            delete_resource_chunks(resource_id)
+        except Exception:
+            logging.exception("Failed to delete vector chunks for resource %s", resource_id)
+
+
+def _remove_non_2027_division_b_events() -> None:
+    """Remove top-level event topics that aren't on the official 2027
+    Division B slate (see _NON_2027_DIVISION_B_EVENTS). No-op once they're
+    gone, so safe to run on every startup.
+    """
+    db = SessionLocal()
+    try:
+        stale = (
+            db.query(models.Topic)
+            .filter(models.Topic.name.in_(_NON_2027_DIVISION_B_EVENTS), models.Topic.parent_topic_id.is_(None))
+            .all()
         )
-        conn.commit()
+        for topic in stale:
+            _delete_topic_tree(db, topic)
+        if stale:
+            db.commit()
+    finally:
+        db.close()
 
 
 @app.on_event("startup")
@@ -274,10 +312,9 @@ def seed_official_topics() -> None:
     soinc.org/scioly.org is blocked in this environment, so this was built
     from search-result snippets, not a direct read of the rules PDFs) -- a
     coach should still sanity-check names/groupings against the official
-    page. Protein Builders and Code Craze are both trial events as of this
-    writing (see their overview notes below) and may not run at every
-    tournament -- everything else here was corroborated as a current,
-    confirmed Division B event.
+    page. The list is exactly the 22 official 2027 Division B events (no
+    trial events); anything seeded by an earlier version of this list that
+    isn't on it is removed by _remove_non_2027_division_b_events.
 
     Matched by `name`, so this is a no-op for any event a coach has already
     got (e.g. by editing one of these, or by name colliding with a manually
@@ -311,11 +348,8 @@ def seed_official_topics() -> None:
         ("Crime Busters", "Hands-on forensic lab event (chemical tests, fingerprint analysis, and more) combined with a written test, applied to solving a mock crime scenario.", "test_practical"),
         ("Food Science", "Hands-on food science lab tasks combined with a written test on food chemistry, nutrition, and food safety.", "test_practical"),
         ("Codebusters", "Written test: decode cryptograms and ciphers (Aristocrats, Patristocrats, and other classical ciphers) under time pressure.", "test"),
-        ("Experimental Design", "Hands-on event: design, carry out, and write up a controlled experiment using materials provided on the spot.", "practical"),
         ("Ping Pong Parachute", "Build event: launch rockets that release a ping-pong ball on a parachute, scored on airborne (hang) time.", "practical"),
         ("Write It Do It", "Practical communication event: one partner writes instructions describing a structure, and the other builds it from the instructions alone.", "practical"),
-        ("Protein Builders", "Trial event: build a physical model of a protein on-site from provided backbone and amino-acid pieces, judged on structural accuracy. Trial status -- confirm it's running at your tournament.", "practical"),
-        ("Code Craze", "Trial event: on-computer quiz and coding activities (programming basics, AI/ML, cryptography) run through the CodeHS platform. Trial status -- confirm it's running at your tournament, and that students can bring a Chrome-capable laptop.", "test_practical"),
     ]
 
     # (see docstring on the 5 overview_* fields on Topic in models.py) --
@@ -462,13 +496,6 @@ def seed_official_topics() -> None:
             "theme_2027": "The confirmed 2027 change is the addition of the Homophonic Cipher to Division B's cipher list.",
             "notes": "The Hill (matrix) cipher is Division C-only, so Division B doesn't need matrix math for it. Scoring rewards speed and accuracy, so timed drilling with online cipher-practice tools is high-value prep.",
         },
-        "Experimental Design": {
-            "what": "A lab-based event: teams get a prompt and materials on-site and must design, carry out, and write up an original experiment entirely during the event period.",
-            "learn": "Full scientific-method skills: writing a testable question and hypothesis, identifying/controlling variables, building data tables, graphing results, basic statistics, and claim-evidence-reasoning and error analysis.",
-            "assessed": "Teams of 2, roughly 50 minutes, scored against an official checklist covering research question, hypothesis, variables, materials, data, graphs, statistics, analysis, conclusion, and future-experimentation recommendations.",
-            "theme_2027": "No rotating yearly theme -- the prompt and materials are freshly assigned on-site each competition. Get the current checklist PDF in case point weightings changed.",
-            "notes": "Since the exact prompt is unknown in advance, the best prep is repeated timed practice designing and running quick experiments while filling out the official checklist format.",
-        },
         "Ping Pong Parachute": {
             "what": "A build event: design and build up to two small rockets ahead of time, bring them to the tournament, and launch a ping-pong ball on a parachute to keep it airborne as long as possible without hitting the ceiling.",
             "learn": "Aerodynamics and parachute design basics (drag, descent rate, stability), simple rocket propulsion fundamentals, and iterative build-test-refine practice.",
@@ -483,25 +510,11 @@ def seed_official_topics() -> None:
             "theme_2027": "Objects are typically built from inexpensive materials (straws, foam balls, paper cups, popsicle sticks) or construction sets (K'Nex, LEGO, Lincoln Logs, Tinkertoys) -- no 2027-specific format change found.",
             "notes": "Drill students on using only allowed vocabulary (precise spatial/directional terms, no symbols or diagrams) and describing steps in a strict, unambiguous order.",
         },
-        "Protein Builders": {
-            "what": "A trial event where a team builds a physical model of a short polypeptide chain on-site from provided backbone and amino-acid sidechain materials.",
-            "learn": "How amino acid side-chain chemistry (polarity, charge, size) determines protein folding and secondary/tertiary structure, and how structure relates to function.",
-            "assessed": "Teams build a physical model at the tournament and are evaluated on structural accuracy and understanding of how amino acid properties drive structure and function; exact scoring rubric and time limit weren't confirmed in available sources.",
-            "theme_2027": "Trial event for the 2026-27 season, not yet a confirmed full Division B event -- it may not be offered at every tournament.",
-            "notes": "Confirm directly with your regional/state tournament whether this is running this season before investing prep time -- trial events run at organizer discretion. (This app previously listed this event as \"Protein Modeling\", which is actually the Division C name -- corrected here.)",
-        },
-        "Code Craze": {
-            "what": "A trial event: an on-computer quiz-and-coding assessment run through the CodeHS platform, rather than a paper test or build event.",
-            "learn": "Introductory computer science across roughly four modules: programming/coding concepts, AI and machine learning basics, cryptography, and Python coding fundamentals.",
-            "assessed": "Participants complete quiz and coding activities on CodeHS using Chrome on a laptop they must bring themselves, assessed across the four modules. Only CodeHS-provided resources may be used -- outside resources or copied code can mean disqualification.",
-            "theme_2027": "Confirmed present on the 2027 Division B trial-event slate, continuing pilot status -- per Science Olympiad's trial-event process it needs broader piloting before becoming an official current event.",
-            "notes": "As a trial event it's only offered where a tournament chooses to run it -- confirm availability with your tournament director. Notably requires a Chrome-capable laptop per student, unlike any other event on this list.",
-        },
     }
 
     db = SessionLocal()
     try:
-        _rename_protein_modeling_to_protein_builders()
+        _remove_non_2027_division_b_events()
 
         existing_names = {row[0] for row in db.query(models.Topic.name)}
         for name, description, assessment_type in catalog:
