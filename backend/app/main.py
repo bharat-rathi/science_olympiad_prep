@@ -262,6 +262,48 @@ def _rename_protein_modeling_to_protein_builders() -> None:
 
 
 @app.on_event("startup")
+def _remove_unconfirmed_trial_events() -> None:
+    """One-time cleanup: "Protein Builders" and "Code Craze" were seeded by
+    an earlier version of this app despite being unconfirmed Division B
+    trial events (not on soinc.org's confirmed 2027 roster). They're no
+    longer in seed_official_topics's catalog, so this removes any row
+    already seeded for either name -- but only if a coach hasn't actually
+    put anything on it (a resource, concept, assessment, schedule entry,
+    chapter, chat message, student assignment, or published/edited story).
+    If there's real content, the row is left alone; deleting a coach's work
+    isn't a "fix". No-op once already removed.
+    """
+    db = SessionLocal()
+    try:
+        for name in ("Protein Builders", "Code Craze"):
+            topic = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == name, models.Topic.parent_topic_id.is_(None))
+                .first()
+            )
+            if topic is None:
+                continue
+            has_content = (
+                db.query(models.Resource).filter(models.Resource.topic_id == topic.id).first() is not None
+                or db.query(models.Diagram).filter(models.Diagram.topic_id == topic.id).first() is not None
+                or db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic.id).first() is not None
+                or db.query(models.ScheduleEntry).filter(models.ScheduleEntry.topic_id == topic.id).first() is not None
+                or db.query(models.Assessment).filter(models.Assessment.topic_id == topic.id).first() is not None
+                or db.query(models.TopicChatMessage).filter(models.TopicChatMessage.topic_id == topic.id).first() is not None
+                or db.query(models.StudentTopic).filter(models.StudentTopic.topic_id == topic.id).first() is not None
+                or db.query(models.Topic).filter(models.Topic.parent_topic_id == topic.id).first() is not None
+                or topic.content_published
+                or bool(topic.story_md.strip())
+            )
+            if has_content:
+                continue
+            db.delete(topic)
+        db.commit()
+    finally:
+        db.close()
+
+
+@app.on_event("startup")
 def seed_official_topics() -> None:
     """Pre-populate every official 2027 Division B event as a topic, so a
     coach starts with the real competition slate instead of having to type
@@ -274,10 +316,12 @@ def seed_official_topics() -> None:
     soinc.org/scioly.org is blocked in this environment, so this was built
     from search-result snippets, not a direct read of the rules PDFs) -- a
     coach should still sanity-check names/groupings against the official
-    page. Protein Builders and Code Craze are both trial events as of this
-    writing (see their overview notes below) and may not run at every
-    tournament -- everything else here was corroborated as a current,
-    confirmed Division B event.
+    page. "Protein Builders" and "Code Craze" are deliberately left off this
+    slate -- they're still unconfirmed trial events, not on soinc.org's
+    confirmed 2027 Division B roster (see `_remove_unconfirmed_trial_events`
+    below, which also cleans up any row seeded for them by an earlier
+    version of this app). Everything else here was corroborated as a
+    current, confirmed Division B event.
 
     Matched by `name`, so this is a no-op for any event a coach has already
     got (e.g. by editing one of these, or by name colliding with a manually
@@ -314,8 +358,6 @@ def seed_official_topics() -> None:
         ("Experimental Design", "Hands-on event: design, carry out, and write up a controlled experiment using materials provided on the spot.", "practical"),
         ("Ping Pong Parachute", "Build event: launch rockets that release a ping-pong ball on a parachute, scored on airborne (hang) time.", "practical"),
         ("Write It Do It", "Practical communication event: one partner writes instructions describing a structure, and the other builds it from the instructions alone.", "practical"),
-        ("Protein Builders", "Trial event: build a physical model of a protein on-site from provided backbone and amino-acid pieces, judged on structural accuracy. Trial status -- confirm it's running at your tournament.", "practical"),
-        ("Code Craze", "Trial event: on-computer quiz and coding activities (programming basics, AI/ML, cryptography) run through the CodeHS platform. Trial status -- confirm it's running at your tournament, and that students can bring a Chrome-capable laptop.", "test_practical"),
     ]
 
     # (see docstring on the 5 overview_* fields on Topic in models.py) --
@@ -482,20 +524,6 @@ def seed_official_topics() -> None:
             "assessed": "The writer gets about 25 minutes to write the description; a builder from another team gets about 20 minutes to reconstruct the object from it alone. Teams of 2; scoring compares the rebuild to the original piece-by-piece, plus instruction clarity.",
             "theme_2027": "Objects are typically built from inexpensive materials (straws, foam balls, paper cups, popsicle sticks) or construction sets (K'Nex, LEGO, Lincoln Logs, Tinkertoys) -- no 2027-specific format change found.",
             "notes": "Drill students on using only allowed vocabulary (precise spatial/directional terms, no symbols or diagrams) and describing steps in a strict, unambiguous order.",
-        },
-        "Protein Builders": {
-            "what": "A trial event where a team builds a physical model of a short polypeptide chain on-site from provided backbone and amino-acid sidechain materials.",
-            "learn": "How amino acid side-chain chemistry (polarity, charge, size) determines protein folding and secondary/tertiary structure, and how structure relates to function.",
-            "assessed": "Teams build a physical model at the tournament and are evaluated on structural accuracy and understanding of how amino acid properties drive structure and function; exact scoring rubric and time limit weren't confirmed in available sources.",
-            "theme_2027": "Trial event for the 2026-27 season, not yet a confirmed full Division B event -- it may not be offered at every tournament.",
-            "notes": "Confirm directly with your regional/state tournament whether this is running this season before investing prep time -- trial events run at organizer discretion. (This app previously listed this event as \"Protein Modeling\", which is actually the Division C name -- corrected here.)",
-        },
-        "Code Craze": {
-            "what": "A trial event: an on-computer quiz-and-coding assessment run through the CodeHS platform, rather than a paper test or build event.",
-            "learn": "Introductory computer science across roughly four modules: programming/coding concepts, AI and machine learning basics, cryptography, and Python coding fundamentals.",
-            "assessed": "Participants complete quiz and coding activities on CodeHS using Chrome on a laptop they must bring themselves, assessed across the four modules. Only CodeHS-provided resources may be used -- outside resources or copied code can mean disqualification.",
-            "theme_2027": "Confirmed present on the 2027 Division B trial-event slate, continuing pilot status -- per Science Olympiad's trial-event process it needs broader piloting before becoming an official current event.",
-            "notes": "As a trial event it's only offered where a tournament chooses to run it -- confirm availability with your tournament director. Notably requires a Chrome-capable laptop per student, unlike any other event on this list.",
         },
     }
 
