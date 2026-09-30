@@ -261,6 +261,31 @@ def _rename_protein_modeling_to_protein_builders() -> None:
         conn.commit()
 
 
+def _apply_official_event_name_corrections() -> None:
+    """One-time correction: two catalog entries didn't exactly match
+    soinc.org's official 2027 Division B event names -- "Elastic Launch
+    Glider" is actually "Elastic Launched Glider", and "Anatomy &
+    Physiology" is actually "Anatomy and Physiology". Renames any existing
+    row rather than leaving a stale duplicate; a coach's resources/
+    concepts/assessments stay attached since those link by topic_id, not
+    name. No-op once already renamed.
+    """
+    corrections = [
+        ("Elastic Launch Glider", "Elastic Launched Glider"),
+        ("Anatomy & Physiology", "Anatomy and Physiology"),
+    ]
+    with engine.connect() as conn:
+        for old_name, new_name in corrections:
+            conn.execute(
+                text(
+                    "UPDATE topics SET name = :new_name, event_name = :new_name "
+                    "WHERE name = :old_name AND parent_topic_id IS NULL"
+                ),
+                {"old_name": old_name, "new_name": new_name},
+            )
+        conn.commit()
+
+
 @app.on_event("startup")
 def _remove_unconfirmed_trial_events() -> None:
     """One-time cleanup: "Protein Builders" and "Code Craze" were seeded by
@@ -342,11 +367,11 @@ def seed_official_topics() -> None:
         ("Circuit Lab", "Combines a written test on circuit theory with a hands-on task building and analyzing real circuits.", "test_practical"),
         ("Thermodynamics", "Build a device that insulates a container of hot water for as long as possible, plus a written test on heat and thermodynamics concepts.", "test_practical"),
         ("Boomilever", "Build a lightweight wood structure that cantilevers from a wall and holds as much weight as possible before breaking.", "practical"),
-        ("Elastic Launch Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
+        ("Elastic Launched Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
         ("Roller Coaster", "Build a device that transports a marble/ball through a course using only gravity and track design, applying concepts of energy conservation and forces.", "practical"),
         ("Scrambler", "Build a device that carries an egg across a set distance as fast as possible, stopping just short of a wall without breaking it.", "practical"),
         # Life, Personal & Social Science
-        ("Anatomy & Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
+        ("Anatomy and Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
         ("Disease Detectives", "Written test on epidemiology -- how diseases spread through a population and how outbreaks are investigated and controlled.", "test"),
         ("Heredity", "Written test on genetics -- inheritance patterns, Punnett squares, pedigrees, and molecular genetics.", "test"),
         ("Botany", "Written test on plant biology -- structure, physiology, classification, and ecology.", "test"),
@@ -399,7 +424,7 @@ def seed_official_topics() -> None:
             "theme_2027": "Habitability within and beyond the Solar System -- Year 2 of the current 2-year rotation (Year 1 covered planet formation and structure). Confirm the exact wording/scope on soinc.org, since rotation years can shift.",
             "notes": "More math/physics-calculation-heavy than the other Earth/space events -- a good fit for students who like applying formulas over pure memorization.",
         },
-        "Anatomy & Physiology": {
+        "Anatomy and Physiology": {
             "what": "A written test and/or lab-practical station event on human body systems, following a 4-year rotation through different organ systems (2-3 systems per year).",
             "learn": "For 2027: the respiratory, digestive, and immune systems -- structures and functions, how the systems interrelate, and common disorders/diseases affecting each.",
             "assessed": "Teams of 2, roughly 50 minutes. Can run as a sit-down written test or as lab-practical stations with models, diagrams, specimens, or data-collection tasks.",
@@ -462,7 +487,7 @@ def seed_official_topics() -> None:
             "theme_2027": "Recent rules specified a span around 40-45 cm, wood cross-section capped near 1/4\" x 1/4\", and a target load around 15 kg -- confirm exact 2027 span, wall geometry, and load numbers on soinc.org.",
             "notes": "Glue-joint failure and excess glue weight are the most common pitfalls -- build and destructively load-test several iterations before finalizing a competition structure, with eye protection during testing.",
         },
-        "Elastic Launch Glider": {
+        "Elastic Launched Glider": {
             "what": "A build event: construct a lightweight free-flight model glider launched by an elastic (rubber band) launcher, built and test-flown well ahead of competition.",
             "learn": "Aerodynamics of lift, drag, and stability (wing shape, dihedral, center-of-gravity placement), lightweight airframe construction, and the iterative trimming/tuning process for a stable flight path.",
             "assessed": "Score is based on total or best flight time across a limited number of official flights (commonly up to 3) within a set flight period (commonly around 6 minutes); mass and size are checked at impound. Teams of 2.",
@@ -530,6 +555,7 @@ def seed_official_topics() -> None:
     db = SessionLocal()
     try:
         _rename_protein_modeling_to_protein_builders()
+        _apply_official_event_name_corrections()
 
         existing_names = {row[0] for row in db.query(models.Topic.name)}
         for name, description, assessment_type in catalog:
