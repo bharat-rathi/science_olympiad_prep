@@ -261,6 +261,73 @@ def _rename_protein_modeling_to_protein_builders() -> None:
         conn.commit()
 
 
+def _apply_official_event_name_corrections() -> None:
+    """One-time correction: two catalog entries didn't exactly match
+    soinc.org's official 2027 Division B event names -- "Elastic Launch
+    Glider" is actually "Elastic Launched Glider", and "Anatomy &
+    Physiology" is actually "Anatomy and Physiology". Renames any existing
+    row rather than leaving a stale duplicate; a coach's resources/
+    concepts/assessments stay attached since those link by topic_id, not
+    name. No-op once already renamed.
+    """
+    corrections = [
+        ("Elastic Launch Glider", "Elastic Launched Glider"),
+        ("Anatomy & Physiology", "Anatomy and Physiology"),
+    ]
+    with engine.connect() as conn:
+        for old_name, new_name in corrections:
+            conn.execute(
+                text(
+                    "UPDATE topics SET name = :new_name, event_name = :new_name "
+                    "WHERE name = :old_name AND parent_topic_id IS NULL"
+                ),
+                {"old_name": old_name, "new_name": new_name},
+            )
+        conn.commit()
+
+
+@app.on_event("startup")
+def _remove_unconfirmed_trial_events() -> None:
+    """One-time cleanup: "Protein Builders" and "Code Craze" were seeded by
+    an earlier version of this app despite being unconfirmed Division B
+    trial events (not on soinc.org's confirmed 2027 roster). They're no
+    longer in seed_official_topics's catalog, so this removes any row
+    already seeded for either name -- but only if a coach hasn't actually
+    put anything on it (a resource, concept, assessment, schedule entry,
+    chapter, chat message, student assignment, or published/edited story).
+    If there's real content, the row is left alone; deleting a coach's work
+    isn't a "fix". No-op once already removed.
+    """
+    db = SessionLocal()
+    try:
+        for name in ("Protein Builders", "Code Craze"):
+            topic = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == name, models.Topic.parent_topic_id.is_(None))
+                .first()
+            )
+            if topic is None:
+                continue
+            has_content = (
+                db.query(models.Resource).filter(models.Resource.topic_id == topic.id).first() is not None
+                or db.query(models.Diagram).filter(models.Diagram.topic_id == topic.id).first() is not None
+                or db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic.id).first() is not None
+                or db.query(models.ScheduleEntry).filter(models.ScheduleEntry.topic_id == topic.id).first() is not None
+                or db.query(models.Assessment).filter(models.Assessment.topic_id == topic.id).first() is not None
+                or db.query(models.TopicChatMessage).filter(models.TopicChatMessage.topic_id == topic.id).first() is not None
+                or db.query(models.StudentTopic).filter(models.StudentTopic.topic_id == topic.id).first() is not None
+                or db.query(models.Topic).filter(models.Topic.parent_topic_id == topic.id).first() is not None
+                or topic.content_published
+                or bool(topic.story_md.strip())
+            )
+            if has_content:
+                continue
+            db.delete(topic)
+        db.commit()
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def seed_official_topics() -> None:
     """Pre-populate every official 2027 Division B event as a topic, so a
@@ -274,10 +341,12 @@ def seed_official_topics() -> None:
     soinc.org/scioly.org is blocked in this environment, so this was built
     from search-result snippets, not a direct read of the rules PDFs) -- a
     coach should still sanity-check names/groupings against the official
-    page. Protein Builders and Code Craze are both trial events as of this
-    writing (see their overview notes below) and may not run at every
-    tournament -- everything else here was corroborated as a current,
-    confirmed Division B event.
+    page. "Protein Builders" and "Code Craze" are deliberately left off this
+    slate -- they're still unconfirmed trial events, not on soinc.org's
+    confirmed 2027 Division B roster (see `_remove_unconfirmed_trial_events`
+    below, which also cleans up any row seeded for them by an earlier
+    version of this app). Everything else here was corroborated as a
+    current, confirmed Division B event.
 
     Matched by `name`, so this is a no-op for any event a coach has already
     got (e.g. by editing one of these, or by name colliding with a manually
@@ -298,11 +367,11 @@ def seed_official_topics() -> None:
         ("Circuit Lab", "Combines a written test on circuit theory with a hands-on task building and analyzing real circuits.", "test_practical"),
         ("Thermodynamics", "Build a device that insulates a container of hot water for as long as possible, plus a written test on heat and thermodynamics concepts.", "test_practical"),
         ("Boomilever", "Build a lightweight wood structure that cantilevers from a wall and holds as much weight as possible before breaking.", "practical"),
-        ("Elastic Launch Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
+        ("Elastic Launched Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
         ("Roller Coaster", "Build a device that transports a marble/ball through a course using only gravity and track design, applying concepts of energy conservation and forces.", "practical"),
         ("Scrambler", "Build a device that carries an egg across a set distance as fast as possible, stopping just short of a wall without breaking it.", "practical"),
         # Life, Personal & Social Science
-        ("Anatomy & Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
+        ("Anatomy and Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
         ("Disease Detectives", "Written test on epidemiology -- how diseases spread through a population and how outbreaks are investigated and controlled.", "test"),
         ("Heredity", "Written test on genetics -- inheritance patterns, Punnett squares, pedigrees, and molecular genetics.", "test"),
         ("Botany", "Written test on plant biology -- structure, physiology, classification, and ecology.", "test"),
@@ -314,8 +383,6 @@ def seed_official_topics() -> None:
         ("Experimental Design", "Hands-on event: design, carry out, and write up a controlled experiment using materials provided on the spot.", "practical"),
         ("Ping Pong Parachute", "Build event: launch rockets that release a ping-pong ball on a parachute, scored on airborne (hang) time.", "practical"),
         ("Write It Do It", "Practical communication event: one partner writes instructions describing a structure, and the other builds it from the instructions alone.", "practical"),
-        ("Protein Builders", "Trial event: build a physical model of a protein on-site from provided backbone and amino-acid pieces, judged on structural accuracy. Trial status -- confirm it's running at your tournament.", "practical"),
-        ("Code Craze", "Trial event: on-computer quiz and coding activities (programming basics, AI/ML, cryptography) run through the CodeHS platform. Trial status -- confirm it's running at your tournament, and that students can bring a Chrome-capable laptop.", "test_practical"),
     ]
 
     # (see docstring on the 5 overview_* fields on Topic in models.py) --
@@ -357,7 +424,7 @@ def seed_official_topics() -> None:
             "theme_2027": "Habitability within and beyond the Solar System -- Year 2 of the current 2-year rotation (Year 1 covered planet formation and structure). Confirm the exact wording/scope on soinc.org, since rotation years can shift.",
             "notes": "More math/physics-calculation-heavy than the other Earth/space events -- a good fit for students who like applying formulas over pure memorization.",
         },
-        "Anatomy & Physiology": {
+        "Anatomy and Physiology": {
             "what": "A written test and/or lab-practical station event on human body systems, following a 4-year rotation through different organ systems (2-3 systems per year).",
             "learn": "For 2027: the respiratory, digestive, and immune systems -- structures and functions, how the systems interrelate, and common disorders/diseases affecting each.",
             "assessed": "Teams of 2, roughly 50 minutes. Can run as a sit-down written test or as lab-practical stations with models, diagrams, specimens, or data-collection tasks.",
@@ -420,7 +487,7 @@ def seed_official_topics() -> None:
             "theme_2027": "Recent rules specified a span around 40-45 cm, wood cross-section capped near 1/4\" x 1/4\", and a target load around 15 kg -- confirm exact 2027 span, wall geometry, and load numbers on soinc.org.",
             "notes": "Glue-joint failure and excess glue weight are the most common pitfalls -- build and destructively load-test several iterations before finalizing a competition structure, with eye protection during testing.",
         },
-        "Elastic Launch Glider": {
+        "Elastic Launched Glider": {
             "what": "A build event: construct a lightweight free-flight model glider launched by an elastic (rubber band) launcher, built and test-flown well ahead of competition.",
             "learn": "Aerodynamics of lift, drag, and stability (wing shape, dihedral, center-of-gravity placement), lightweight airframe construction, and the iterative trimming/tuning process for a stable flight path.",
             "assessed": "Score is based on total or best flight time across a limited number of official flights (commonly up to 3) within a set flight period (commonly around 6 minutes); mass and size are checked at impound. Teams of 2.",
@@ -483,25 +550,12 @@ def seed_official_topics() -> None:
             "theme_2027": "Objects are typically built from inexpensive materials (straws, foam balls, paper cups, popsicle sticks) or construction sets (K'Nex, LEGO, Lincoln Logs, Tinkertoys) -- no 2027-specific format change found.",
             "notes": "Drill students on using only allowed vocabulary (precise spatial/directional terms, no symbols or diagrams) and describing steps in a strict, unambiguous order.",
         },
-        "Protein Builders": {
-            "what": "A trial event where a team builds a physical model of a short polypeptide chain on-site from provided backbone and amino-acid sidechain materials.",
-            "learn": "How amino acid side-chain chemistry (polarity, charge, size) determines protein folding and secondary/tertiary structure, and how structure relates to function.",
-            "assessed": "Teams build a physical model at the tournament and are evaluated on structural accuracy and understanding of how amino acid properties drive structure and function; exact scoring rubric and time limit weren't confirmed in available sources.",
-            "theme_2027": "Trial event for the 2026-27 season, not yet a confirmed full Division B event -- it may not be offered at every tournament.",
-            "notes": "Confirm directly with your regional/state tournament whether this is running this season before investing prep time -- trial events run at organizer discretion. (This app previously listed this event as \"Protein Modeling\", which is actually the Division C name -- corrected here.)",
-        },
-        "Code Craze": {
-            "what": "A trial event: an on-computer quiz-and-coding assessment run through the CodeHS platform, rather than a paper test or build event.",
-            "learn": "Introductory computer science across roughly four modules: programming/coding concepts, AI and machine learning basics, cryptography, and Python coding fundamentals.",
-            "assessed": "Participants complete quiz and coding activities on CodeHS using Chrome on a laptop they must bring themselves, assessed across the four modules. Only CodeHS-provided resources may be used -- outside resources or copied code can mean disqualification.",
-            "theme_2027": "Confirmed present on the 2027 Division B trial-event slate, continuing pilot status -- per Science Olympiad's trial-event process it needs broader piloting before becoming an official current event.",
-            "notes": "As a trial event it's only offered where a tournament chooses to run it -- confirm availability with your tournament director. Notably requires a Chrome-capable laptop per student, unlike any other event on this list.",
-        },
     }
 
     db = SessionLocal()
     try:
         _rename_protein_modeling_to_protein_builders()
+        _apply_official_event_name_corrections()
 
         existing_names = {row[0] for row in db.query(models.Topic.name)}
         for name, description, assessment_type in catalog:
