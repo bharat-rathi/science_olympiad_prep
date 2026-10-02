@@ -94,7 +94,7 @@ function AuthedApp({
         {coach && <NavLink to="/settings">AI Settings</NavLink>}
         <span style={{ marginLeft: "auto" }} className="nav-user">
           <span className="avatar">{(identityName || "?").slice(0, 1).toUpperCase()}</span>
-          <span className="muted">{identityName}</span>
+          <span className="muted nav-user-name">{identityName}</span>
           <button onClick={logout}>Logout</button>
         </span>
       </nav>

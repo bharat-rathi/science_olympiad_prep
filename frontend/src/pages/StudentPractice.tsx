@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
 import TopicChat from "../components/TopicChat";
 import TopicOverview from "../components/TopicOverview";
+
+function sourceTag(c: ConceptTerm): string {
+  if (c.origin === "sourced") return "from the source reader";
+  if (c.video_relevant) return "from team video";
+  return c.source_resource_ids.length ? "from team resource" : "general knowledge";
+}
 
 export default function StudentPractice() {
   const { topicId } = useParams();
@@ -12,9 +18,10 @@ export default function StudentPractice() {
   const [concepts, setConcepts] = useState<ConceptTerm[]>([]);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [diagrams, setDiagrams] = useState<Diagram[]>([]);
-  const [view, setView] = useState<"flashcards" | "story">("flashcards");
-  const [flipped, setFlipped] = useState<Set<number>>(new Set());
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  // Deterministic source material (seeded wiki excerpts / source-reader fact
+  // sheets) -- published to students as-is, no coach step.
+  const [sourceNotes, setSourceNotes] = useState<Resource[]>([]);
+  const [view, setView] = useState<"flashcards" | "story" | "notes">("flashcards");
   const [accessError, setAccessError] = useState("");
   // Diagram tiles are small; infographics need a full-size view to be readable.
   const [zoomed, setZoomed] = useState<Diagram | null>(null);
@@ -25,6 +32,7 @@ export default function StudentPractice() {
 
   useEffect(() => {
     setAccessError("");
+    setView("flashcards");
     api
       .getTopic(id)
       .then(setTopic)
@@ -36,6 +44,10 @@ export default function StudentPractice() {
     api.getLatestAssessment(id).then((a) => setAssessment(a && a.status === "published" ? a : null));
     api.listDiagrams(id).then(setDiagrams);
     api.listSubTopics(id).then(setChapters).catch(() => setChapters([]));
+    api
+      .listResources(id)
+      .then((all) => setSourceNotes(all.filter((r) => r.deterministic && r.raw_text.trim())))
+      .catch(() => setSourceNotes([]));
   }, [id]);
 
   useEffect(() => {
@@ -54,25 +66,6 @@ export default function StudentPractice() {
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomed]);
 
-  function toggleFlip(conceptId: number) {
-    setFlipped((prev) => {
-      const next = new Set(prev);
-      if (next.has(conceptId)) next.delete(conceptId);
-      else next.add(conceptId);
-      return next;
-    });
-  }
-
-  function toggleExpand(e: React.MouseEvent, conceptId: number) {
-    e.stopPropagation();
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(conceptId)) next.delete(conceptId);
-      else next.add(conceptId);
-      return next;
-    });
-  }
-
   if (accessError) {
     return (
       <div className="auth-shell">
@@ -84,6 +77,16 @@ export default function StudentPractice() {
   }
 
   if (!topic) return <p>Loading...</p>;
+
+  const learningLive = topic.content_published && (concepts.length > 0 || !!topic.story_md);
+  const views: { key: "flashcards" | "story" | "notes"; label: string; show: boolean }[] = [
+    { key: "flashcards", label: `Flashcards (${concepts.length})`, show: learningLive && concepts.length > 0 },
+    { key: "story", label: "Story", show: learningLive && !!topic.story_md },
+    { key: "notes", label: "Source notes", show: sourceNotes.length > 0 },
+  ];
+  const available = views.filter((v) => v.show);
+  const activeView = available.some((v) => v.key === view) ? view : available[0]?.key;
+  const nothingYet = available.length === 0 && chapters.length === 0;
 
   return (
     <div>
@@ -130,94 +133,82 @@ export default function StudentPractice() {
         </>
       )}
 
-      {!topic.content_published && chapters.length > 0 ? null : !topic.content_published ? (
+      {nothingYet && (
         <div className="card">
           <p className="muted" style={{ margin: 0 }}>
-            Your coach hasn't published the learning material for this topic yet -- check back soon.
+            The event rules above are all there is for this topic so far -- your coach will add study material soon.
           </p>
         </div>
-      ) : (
+      )}
+
+      {available.length > 0 && (
         <>
-          <div className="row" style={{ marginTop: assessment ? 24 : 0, marginBottom: 4 }}>
-            <button className={view === "flashcards" ? "primary" : ""} onClick={() => setView("flashcards")}>
-              Flashcards
-            </button>
-            {topic.story_md && (
-              <button className={view === "story" ? "primary" : ""} onClick={() => setView("story")}>
-                Story
+          <div className="row" style={{ marginTop: assessment ? 24 : 0, marginBottom: 12 }}>
+            {available.map((v) => (
+              <button key={v.key} className={activeView === v.key ? "primary" : ""} onClick={() => setView(v.key)}>
+                {v.label}
               </button>
-            )}
-            {concepts.length > 0 && (
+            ))}
+            {learningLive && concepts.length > 0 && (
               <Link to={`/student/${id}/present`}>
                 <button>Watch presentation</button>
               </Link>
             )}
           </div>
 
-          {view === "flashcards" ? (
-            <>
-              <p className="muted">Tap a card to flip it.</p>
-              <div className="grid-2">
-                {concepts.map((c, i) => {
-                  const isFlipped = flipped.has(c.id);
-                  const isExpanded = expanded.has(c.id);
-                  return (
-                    <div
-                      className={`flashcard ${isFlipped ? "flipped" : ""}`}
-                      key={c.id}
-                      onClick={() => toggleFlip(c.id)}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className="flashcard-inner">
-                        <div className="flashcard-face flashcard-front">
-                          <span className="flashcard-count">
-                            {i + 1} / {concepts.length}
-                          </span>
-                          {c.image_data_url ? (
-                            <img src={c.image_data_url} alt={c.term} className="flashcard-image" />
-                          ) : (
-                            <span className="flashcard-monogram">{c.term.slice(0, 1).toUpperCase()}</span>
-                          )}
-                          <strong>{c.term}</strong>
-                          <span className="muted" style={{ marginTop: 8 }}>
-                            Tap to reveal
-                          </span>
-                        </div>
-                        <div className="flashcard-face flashcard-back">
-                          {c.image_data_url && <img src={c.image_data_url} alt={c.term} className="flashcard-diagram" />}
-                          {c.analogy ? (
-                            <>
-                              <p className="flashcard-analogy">{c.analogy}</p>
-                              <button className="flashcard-expand-toggle" onClick={(e) => toggleExpand(e, c.id)}>
-                                {isExpanded ? "Hide full explanation" : "Show full explanation"}
-                              </button>
-                              {isExpanded && <p className="muted flashcard-explanation">{c.explanation_md}</p>}
-                            </>
-                          ) : (
-                            <p className="flashcard-explanation" style={{ margin: 0 }}>
-                              {c.explanation_md}
-                            </p>
-                          )}
-                          {c.why_it_matters && (
-                            <p className="flashcard-why-it-matters">
-                              <strong>Why it matters:</strong> {c.why_it_matters}
-                            </p>
-                          )}
-                          <span className={`tag ${c.video_relevant ? "video" : "general"}`} style={{ marginTop: "auto" }}>
-                            {c.video_relevant ? "from team video" : c.source_resource_ids.length ? "from team resource" : "general knowledge"}
-                          </span>
-                        </div>
-                      </div>
+          {activeView === "flashcards" && (
+            <div className="study-cards">
+              {concepts.map((c, i) => (
+                <article className="study-card" key={c.id}>
+                  <div className="study-card-head">
+                    {c.image_data_url ? (
+                      <img src={c.image_data_url} alt="" className="study-card-badge" />
+                    ) : (
+                      <span className="flashcard-monogram">{c.term.slice(0, 1).toUpperCase()}</span>
+                    )}
+                    <div>
+                      <span className="study-card-count">
+                        {i + 1} / {concepts.length}
+                      </span>
+                      <h3 className="study-card-term">{c.term}</h3>
                     </div>
-                  );
-                })}
-                {concepts.length === 0 && <p className="muted">Your coach hasn't approved any concepts for this topic yet.</p>}
-              </div>
-            </>
-          ) : (
+                  </div>
+                  {c.analogy && <p className="study-card-analogy">{c.analogy}</p>}
+                  <p className="study-card-explanation">{c.explanation_md}</p>
+                  {c.why_it_matters && (
+                    <p className="study-card-why">
+                      <strong>Why it matters:</strong> {c.why_it_matters}
+                    </p>
+                  )}
+                  <span className={`tag ${c.video_relevant ? "video" : "general"}`} style={{ alignSelf: "flex-start" }}>
+                    {sourceTag(c)}
+                  </span>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {activeView === "story" && (
             <div className="card">
-              <p className="story-content" style={{ whiteSpace: "pre-wrap", margin: 0 }}>{topic.story_md}</p>
+              <p className="story-content" style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+                {topic.story_md}
+              </p>
+            </div>
+          )}
+
+          {activeView === "notes" && (
+            <div className="stack">
+              {sourceNotes.map((r) => (
+                <div className="card stack" key={r.id}>
+                  <strong>{r.title}</strong>
+                  {r.source_url && (
+                    <a href={r.source_url} target="_blank" rel="noreferrer" className="muted">
+                      {r.source_url}
+                    </a>
+                  )}
+                  <p className="source-notes">{r.raw_text}</p>
+                </div>
+              ))}
             </div>
           )}
         </>

@@ -42,6 +42,9 @@ sciolympiad-coach/
 │   │   ├── routers/         auth, topics, ingestion, explain, assessment, attempts, tutor
 │   │   ├── rag/               chunking, embeddings, vectorstore (Chroma), transcription,
 │   │   │                      link_fetch, pdf_extract, youtube_fetch, retrieval
+│   │   ├── content/deterministic.py  Publishes all deterministic (sourced) content as-is to
+│   │   │                      every student: official events' rules + source notes and
+│   │   │                      sourced chapters; AI generation is an optional coach layer
 │   │   ├── content/solar_system/  Deterministic Solar System learning chapters (no LLM):
 │   │   │                      14 published sub-topics with approved flashcards, stories
 │   │   │                      and SVG infographics, seeded on startup from the 2027

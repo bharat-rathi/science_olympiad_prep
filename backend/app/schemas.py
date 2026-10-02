@@ -71,7 +71,9 @@ class TopicOut(BaseModel):
     created_at: datetime.datetime
     created_by: str | None = None
     content_published: bool = False
+    open_to_all_students: bool = False
     story_md: str = ""
+    story_origin: str = ""
     overview_what: str = ""
     overview_learn: str = ""
     overview_assessed: str = ""
@@ -130,6 +132,7 @@ class ResourceOut(BaseModel):
     raw_text: str = ""
     transcript: str = ""
     error_message: str = ""
+    deterministic: bool = False
 
 
 class ResourceCreateText(BaseModel):
@@ -166,6 +169,7 @@ class ConceptTermOut(BaseModel):
     video_relevant: bool
     approved: bool
     image_data_url: str = ""
+    origin: str = "ai"
 
 
 class ConceptTermUpdate(BaseModel):

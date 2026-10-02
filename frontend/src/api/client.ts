@@ -47,7 +47,12 @@ export interface Topic {
   created_at: string;
   created_by: string | null;
   content_published: boolean;
+  // Deterministic content visible to every student (see backend
+  // app/content/deterministic.py).
+  open_to_all_students: boolean;
   story_md: string;
+  // "sourced" (deterministic) | "ai" | "coach" | ""
+  story_origin: string;
   // Reference overview for the official pre-seeded events -- empty strings
   // for a coach-created custom topic or sub-topic (see main.py's
   // seed_official_topics / OVERVIEW_CONTENT).
@@ -95,6 +100,8 @@ export interface Resource {
   raw_text: string;
   transcript: string;
   error_message: string;
+  // App-shipped sourced material, published to students as-is.
+  deterministic: boolean;
 }
 
 export interface Diagram {
@@ -116,6 +123,8 @@ export interface ConceptTerm {
   video_relevant: boolean;
   approved: boolean;
   image_data_url: string;
+  // "sourced" = deterministic flashcard shipped with the app; "ai" = AI draft.
+  origin: string;
 }
 
 export interface Question {

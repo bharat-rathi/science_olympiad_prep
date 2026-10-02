@@ -13,16 +13,25 @@ def list_topics(request: Request, db: Session = Depends(get_db), include_sub_top
     student = request.state.student
     if student is not None:
         # A student sees topics a coach has explicitly assigned them
-        # (models.StudentTopic), plus any event holding published open-to-all
-        # chapters (app-shipped deterministic content, e.g. Solar System) --
-        # those chapters themselves are listed inside their event's student
-        # view (list_sub_topics), not as separate Home cards. Coaches still
-        # see everything, subject to include_sub_topics below. A student can
-        # be assigned a specific chapter directly, so this branch is never
-        # further restricted to top-level topics.
-        visible_ids = {
-            row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)
-        } | auth.open_chapter_parent_ids(db)
+        # (models.StudentTopic), plus every event with deterministic content
+        # (open_to_all_students -- official events' rules/source notes, and
+        # any event holding published open-to-all chapters). Those chapters
+        # are listed inside their event's student view (list_sub_topics),
+        # not as separate Home cards. Coaches still see everything, subject
+        # to include_sub_topics below. A student can be assigned a specific
+        # chapter directly, so this branch is never further restricted to
+        # top-level topics.
+        open_event_ids = {
+            row[0]
+            for row in db.query(models.Topic.id).filter(
+                models.Topic.parent_topic_id.is_(None), models.Topic.open_to_all_students.is_(True)
+            )
+        }
+        visible_ids = (
+            {row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)}
+            | open_event_ids
+            | auth.open_chapter_parent_ids(db)
+        )
         query = query.filter(models.Topic.id.in_(visible_ids))
     elif not include_sub_topics:
         # Default coach view (e.g. the Home page grid) shows events only --
@@ -65,6 +74,7 @@ def update_story(
     if not topic:
         raise HTTPException(404, "Topic not found")
     topic.story_md = payload.story_md
+    topic.story_origin = "coach"
     db.commit()
     db.refresh(topic)
     return schemas.TopicOut.from_model(topic)

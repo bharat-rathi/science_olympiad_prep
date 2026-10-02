@@ -16,8 +16,31 @@ from app.llm.prompts import (
     story_prompt,
 )
 from app.rag.retrieval import retrieve_relevant_chunks
+from app.routers.ingestion import _index_resource
 
 router = APIRouter(prefix="/api/topics", tags=["explain"])
+
+
+def ensure_deterministic_sources_indexed(db: Session, topic_id: int) -> None:
+    """Optional generative layer on top of deterministic content: seeded
+    source material isn't embedded at startup (booting needs no API key), so
+    index it the first time a coach runs AI generation on this topic --
+    retrieval then grounds the drafts in the same sources students already
+    see as-is."""
+    pending = (
+        db.query(models.Resource)
+        .filter(
+            models.Resource.topic_id == topic_id,
+            models.Resource.deterministic.is_(True),
+            models.Resource.chunks_indexed.is_(False),
+        )
+        .all()
+    )
+    for resource in pending:
+        _index_resource(db, resource, resource.raw_text)
+        resource.chunks_indexed = True
+    if pending:
+        db.commit()
 
 
 @router.post("/{topic_id}/generate-explanations", response_model=list[schemas.ConceptTermOut])
@@ -29,6 +52,7 @@ def generate_explanations(
         raise HTTPException(404, "Topic not found")
 
     llm = get_llm_handle(coach)
+    ensure_deterministic_sources_indexed(db, topic_id)
     relevant_chunks = retrieve_relevant_chunks(topic.name, topic.description, topic_id, coach)
 
     labeled_snippets = [{"source_type": c["metadata"]["source_type"], "text": c["text"]} for c in relevant_chunks]
@@ -52,8 +76,12 @@ def generate_explanations(
     # inserting the fresh batch, so re-clicking replaces the draft glossary
     # instead of piling up duplicates -- concepts the coach already approved
     # are left untouched.
+    # Sourced (deterministic) flashcards are never deleted here, even if a
+    # coach un-approved one -- AI only ever adds drafts alongside them.
     db.query(models.ConceptTerm).filter(
-        models.ConceptTerm.topic_id == topic_id, models.ConceptTerm.approved.is_(False)
+        models.ConceptTerm.topic_id == topic_id,
+        models.ConceptTerm.approved.is_(False),
+        models.ConceptTerm.origin != "sourced",
     ).delete()
 
     created = []
@@ -163,6 +191,7 @@ def generate_story(topic_id: int, db: Session = Depends(get_db), coach: models.C
     result = get_llm_handle(coach).complete_json(system, user, STORY_SCHEMA, max_tokens=4000, effort="high", label="generate_story")
 
     topic.story_md = result["story_md"]
+    topic.story_origin = "ai"
     db.commit()
     db.refresh(topic)
     return schemas.TopicOut.from_model(topic)

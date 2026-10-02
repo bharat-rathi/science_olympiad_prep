@@ -8,7 +8,10 @@ import { ConceptTerm } from "../../api/client";
 // how many steps that concept takes, instead of showing an empty beat.
 export type ConceptBeat = { kind: "term" } | { kind: "analogy" } | { kind: "explanation"; text: string } | { kind: "why" };
 
-const MAX_EXPLANATION_BEATS = 3;
+// Explanation chunks replace each other on screen (see ConceptChapter), so
+// keep each one short -- about two sentences -- rather than capping the beat
+// count low and cramming long paragraphs onto one slide.
+const MAX_EXPLANATION_BEATS = 6;
 
 function splitIntoBeats(text: string): string[] {
   const sentences = text
