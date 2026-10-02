@@ -116,17 +116,25 @@ def require_coach(request: Request) -> models.Coach:
     return request.state.coach
 
 
+def is_open_to_all_students(topic: models.Topic) -> bool:
+    """App-shipped deterministic content (Topic.open_to_all_students) is
+    visible to every student without a roster assignment, as long as it's
+    still published."""
+    return bool(topic.open_to_all_students and topic.content_published)
+
+
 def require_topic_visible(db: Session, request: Request, topic_id: int) -> models.Topic:
     """Every topic-scoped, student-reachable endpoint calls this instead of a
     bare db.get(Topic, ...). A coach can see every topic, unchanged; a
-    student can only see topics a coach has explicitly assigned them
-    (models.StudentTopic, set from the roster page's per-student checklist).
+    student can see topics a coach has explicitly assigned them
+    (models.StudentTopic, set from the roster page's per-student checklist)
+    plus any published open-to-all topic (see is_open_to_all_students).
     """
     topic = db.get(models.Topic, topic_id)
     if not topic:
         raise HTTPException(404, "Topic not found")
     student = request.state.student
-    if student is not None:
+    if student is not None and not is_open_to_all_students(topic):
         assigned = (
             db.query(models.StudentTopic)
             .filter_by(student_id=student.id, topic_id=topic_id)

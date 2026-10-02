@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
@@ -12,15 +13,21 @@ def list_topics(request: Request, db: Session = Depends(get_db), include_sub_top
     query = db.query(models.Topic)
     student = request.state.student
     if student is not None:
-        # A student only ever sees topics a coach has explicitly assigned
-        # them (models.StudentTopic) -- coaches still see everything,
-        # subject to include_sub_topics below. A student can be assigned a
-        # specific chapter directly, so this branch is never further
-        # restricted to top-level topics.
+        # A student sees topics a coach has explicitly assigned them
+        # (models.StudentTopic) plus published open-to-all topics (app-shipped
+        # deterministic chapters, see auth.is_open_to_all_students) --
+        # coaches still see everything, subject to include_sub_topics below.
+        # A student can be assigned a specific chapter directly, so this
+        # branch is never further restricted to top-level topics.
         assigned_ids = [
             row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)
         ]
-        query = query.filter(models.Topic.id.in_(assigned_ids))
+        query = query.filter(
+            or_(
+                models.Topic.id.in_(assigned_ids),
+                and_(models.Topic.open_to_all_students.is_(True), models.Topic.content_published.is_(True)),
+            )
+        )
     elif not include_sub_topics:
         # Default coach view (e.g. the Home page grid) shows events only --
         # each event's chapters are reached by drilling into its own

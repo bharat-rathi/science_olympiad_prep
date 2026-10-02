@@ -4,8 +4,9 @@ Turns the hand-written chapters (chapters_a.py / chapters_b.py) and the SVG
 infographics into ordinary rows -- a sub-topic per chapter under the
 "Solar System" event, a fact-sheet Resource, approved ConceptTerm
 flashcards with badge images, the long-form story, and infographic
-Diagrams -- and publishes them, so students get real learning material with
-no LLM call and no coach clicks.
+Diagrams -- publishes them, and marks them open_to_all_students, so every
+student gets real learning material with no LLM call, no coach clicks and
+no roster assignment.
 
 Idempotent and non-destructive, like the other startup seeds in main.py:
 every row is matched by name/title/term/caption and only created when
@@ -51,9 +52,15 @@ def seed_solar_system_learning_content() -> None:
                     parent_topic_id=parent.id,
                     story_md=chapter["story"],
                     content_published=True,
+                    open_to_all_students=True,
                 )
                 db.add(chapter_topic)
                 db.flush()
+            elif not chapter_topic.open_to_all_students:
+                # Backfill for chapters created before this flag existed.
+                # Not coach-editable, so setting it never clobbers an edit;
+                # a coach can still hide a chapter by unpublishing it.
+                chapter_topic.open_to_all_students = True
 
             resource = (
                 db.query(models.Resource)
