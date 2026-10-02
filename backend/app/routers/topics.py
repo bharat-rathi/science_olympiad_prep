@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
@@ -14,20 +13,17 @@ def list_topics(request: Request, db: Session = Depends(get_db), include_sub_top
     student = request.state.student
     if student is not None:
         # A student sees topics a coach has explicitly assigned them
-        # (models.StudentTopic) plus published open-to-all topics (app-shipped
-        # deterministic chapters, see auth.is_open_to_all_students) --
-        # coaches still see everything, subject to include_sub_topics below.
-        # A student can be assigned a specific chapter directly, so this
-        # branch is never further restricted to top-level topics.
-        assigned_ids = [
+        # (models.StudentTopic), plus any event holding published open-to-all
+        # chapters (app-shipped deterministic content, e.g. Solar System) --
+        # those chapters themselves are listed inside their event's student
+        # view (list_sub_topics), not as separate Home cards. Coaches still
+        # see everything, subject to include_sub_topics below. A student can
+        # be assigned a specific chapter directly, so this branch is never
+        # further restricted to top-level topics.
+        visible_ids = {
             row.topic_id for row in db.query(models.StudentTopic).filter(models.StudentTopic.student_id == student.id)
-        ]
-        query = query.filter(
-            or_(
-                models.Topic.id.in_(assigned_ids),
-                and_(models.Topic.open_to_all_students.is_(True), models.Topic.content_published.is_(True)),
-            )
-        )
+        } | auth.open_chapter_parent_ids(db)
+        query = query.filter(models.Topic.id.in_(visible_ids))
     elif not include_sub_topics:
         # Default coach view (e.g. the Home page grid) shows events only --
         # each event's chapters are reached by drilling into its own
@@ -171,10 +167,17 @@ def delete_schedule_entry(
 
 
 @router.get("/{topic_id}/sub-topics", response_model=list[schemas.TopicOut])
-def list_sub_topics(topic_id: int, db: Session = Depends(get_db)):
+def list_sub_topics(topic_id: int, request: Request, db: Session = Depends(get_db)):
     """Sub-topics created for a scheduled deep dive (see ScheduleEntry) --
-    just Topic rows with parent_topic_id set to this one."""
+    just Topic rows with parent_topic_id set to this one. Coaches get every
+    chapter; a student gets only the chapters they can open (open-to-all
+    published chapters, or ones assigned to them), for the Chapters list in
+    the event's student view."""
+    auth.require_topic_visible(db, request, topic_id)
     subs = db.query(models.Topic).filter(models.Topic.parent_topic_id == topic_id).order_by(models.Topic.id).all()
+    student = request.state.student
+    if student is not None:
+        subs = [t for t in subs if auth.student_can_see(db, student, t)]
     return [schemas.TopicOut.from_model(t) for t in subs]
 
 
