@@ -46,7 +46,7 @@ sciolympiad-coach/
 │   │   │                      every student: official events' rules + source notes and
 │   │   │                      sourced chapters; AI generation is an optional coach layer
 │   │   ├── content/solar_system/  Deterministic Solar System learning chapters (no LLM):
-│   │   │                      14 published sub-topics with approved flashcards, stories
+│   │   │                      16 de-duplicated sub-topics with approved flashcards, stories
 │   │   │                      and SVG infographics, seeded on startup from the 2027
 │   │   │                      source reader (OpenStax Astronomy 2e excerpts); every
 │   │   │                      student sees them inside the Solar System topic, no

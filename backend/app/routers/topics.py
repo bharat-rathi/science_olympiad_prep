@@ -131,7 +131,15 @@ def update_concept(
     concept = db.get(models.ConceptTerm, concept_id)
     if not concept or concept.topic_id != topic_id:
         raise HTTPException(404, "Concept not found")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    changes = payload.model_dump(exclude_unset=True)
+    content_fields = {"term", "explanation_md", "analogy", "why_it_matters", "image_data_url"}
+    if concept.origin == "sourced" and any(
+        field in content_fields and getattr(concept, field) != value for field, value in changes.items()
+    ):
+        # A coach edit makes the card the coach's: the Solar System seed
+        # stops syncing it (app/content/solar_system/seed.py).
+        concept.origin = "coach"
+    for field, value in changes.items():
         setattr(concept, field, value)
     db.commit()
     db.refresh(concept)

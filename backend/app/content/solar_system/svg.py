@@ -19,7 +19,7 @@ BG = "#0b1530"
 PANEL = "#16244a"
 PANEL_EDGE = "#2c3f74"
 TEXT = "#eef2ff"
-MUTED = "#a9b8e0"
+MUTED = "#c5d1f2"  # brighter than before so secondary text stays crisp when scaled down
 GOLD = "#f5c542"
 SUN = "#ffb347"
 ROCK = "#c98a5a"
@@ -64,6 +64,9 @@ def wrap(text: str, width: int) -> list[str]:
 
 
 def text(x: float, y: float, value: str, size: int = 16, fill: str = TEXT, weight: str = "normal", anchor: str = "start", italic: bool = False) -> str:
+    # Floor tiny labels at 13px: the images are shown scaled to the page
+    # width, and anything smaller turns to mush on a phone.
+    size = max(size, 13)
     style = ' font-style="italic"' if italic else ""
     return (
         f'<text x="{x}" y="{y}" font-family="{FONT}" font-size="{size}" fill="{fill}" '
@@ -116,11 +119,12 @@ def card(x: float, y: float, w: float, h: float, heading: str, body: str, accent
 
 def canvas(width: int, height: int, title: str, subtitle: str, body: str, source: str = "Source: OpenStax Astronomy 2e (CC BY 4.0) -- Solar System source reader") -> str:
     stars = "".join(
-        circle((i * 137) % width, (i * 89) % height, 0.9 + (i % 3) * 0.4, "#ffffff", opacity=0.18 + (i % 4) * 0.08)
+        circle((i * 137) % width, (i * 89) % height, 0.9 + (i % 3) * 0.4, "#ffffff", opacity=0.08 + (i % 4) * 0.05)
         for i in range(1, 70)
     )
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
+        'shape-rendering="geometricPrecision" text-rendering="geometricPrecision">'
         '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
         f'<path d="M 0 0 L 10 5 L 0 10 z" fill="{MUTED}"/></marker>'
         f'<radialGradient id="sunglow"><stop offset="0%" stop-color="#fff3b0"/><stop offset="55%" stop-color="{SUN}"/><stop offset="100%" stop-color="#ff7b2e"/></radialGradient>'
