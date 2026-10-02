@@ -45,7 +45,9 @@ sciolympiad-coach/
 │   │   ├── content/solar_system/  Deterministic Solar System learning chapters (no LLM):
 │   │   │                      14 published sub-topics with approved flashcards, stories
 │   │   │                      and SVG infographics, seeded on startup from the 2027
-│   │   │                      source reader (OpenStax Astronomy 2e excerpts)
+│   │   │                      source reader (OpenStax Astronomy 2e excerpts); every
+│   │   │                      student sees them inside the Solar System topic, no
+│   │   │                      roster assignment needed
 │   │   └── llm/                Gemini client wrapper (with per-call logging) + prompt templates
 │   └── data/                  Chroma persistence (gitignored) -- local SQLite db too, in dev
 ├── frontend/                  React + TypeScript (Vite)

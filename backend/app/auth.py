@@ -116,22 +116,49 @@ def require_coach(request: Request) -> models.Coach:
     return request.state.coach
 
 
+def is_open_to_all_students(topic: models.Topic) -> bool:
+    """App-shipped deterministic chapters (Topic.open_to_all_students) are
+    visible to every student without a roster assignment, as long as they're
+    still published."""
+    return bool(topic.open_to_all_students and topic.content_published)
+
+
+def open_chapter_parent_ids(db: Session) -> set[int]:
+    """Events that hold at least one published open-to-all chapter. Students
+    reach those chapters THROUGH their event (e.g. Solar System), so the
+    event itself is visible to every student too."""
+    rows = (
+        db.query(models.Topic.parent_topic_id)
+        .filter(
+            models.Topic.parent_topic_id.isnot(None),
+            models.Topic.open_to_all_students.is_(True),
+            models.Topic.content_published.is_(True),
+        )
+        .distinct()
+    )
+    return {row[0] for row in rows}
+
+
+def student_can_see(db: Session, student: models.Student, topic: models.Topic) -> bool:
+    if is_open_to_all_students(topic) or topic.id in open_chapter_parent_ids(db):
+        return True
+    return (
+        db.query(models.StudentTopic).filter_by(student_id=student.id, topic_id=topic.id).first() is not None
+    )
+
+
 def require_topic_visible(db: Session, request: Request, topic_id: int) -> models.Topic:
     """Every topic-scoped, student-reachable endpoint calls this instead of a
     bare db.get(Topic, ...). A coach can see every topic, unchanged; a
-    student can only see topics a coach has explicitly assigned them
-    (models.StudentTopic, set from the roster page's per-student checklist).
+    student can see topics a coach has explicitly assigned them
+    (models.StudentTopic, set from the roster page's per-student checklist),
+    plus published open-to-all chapters and the events that hold them (see
+    student_can_see).
     """
     topic = db.get(models.Topic, topic_id)
     if not topic:
         raise HTTPException(404, "Topic not found")
     student = request.state.student
-    if student is not None:
-        assigned = (
-            db.query(models.StudentTopic)
-            .filter_by(student_id=student.id, topic_id=topic_id)
-            .first()
-        )
-        if assigned is None:
-            raise HTTPException(403, "You don't have access to this topic.")
+    if student is not None and not student_can_see(db, student, topic):
+        raise HTTPException(403, "You don't have access to this topic.")
     return topic

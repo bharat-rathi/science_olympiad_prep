@@ -97,9 +97,14 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
                   {t.created_by ? ` · added by ${t.created_by}` : ""}
                 </div>
               </div>
-              <span className={`tag ${t.content_published ? "success" : "general"}`}>
-                {t.content_published ? "Live" : "Draft"}
-              </span>
+              {/* Live/Draft is a coach concept -- a student only ever sees
+                  topics they can open (incl. events holding open-to-all
+                  chapters whose own page is unpublished). */}
+              {coach && (
+                <span className={`tag ${t.content_published ? "success" : "general"}`}>
+                  {t.content_published ? "Live" : "Draft"}
+                </span>
+              )}
             </div>
             {t.description && <p className="muted" style={{ margin: 0 }}>{t.description}</p>}
             <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[t.assessment_type]}`} style={{ alignSelf: "flex-start" }}>

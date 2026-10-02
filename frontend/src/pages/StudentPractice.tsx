@@ -18,6 +18,10 @@ export default function StudentPractice() {
   const [accessError, setAccessError] = useState("");
   // Diagram tiles are small; infographics need a full-size view to be readable.
   const [zoomed, setZoomed] = useState<Diagram | null>(null);
+  // Chapters (sub-topics) this student can open, listed inside the event --
+  // e.g. the Solar System learning chapters live here, not on Home.
+  const [chapters, setChapters] = useState<Topic[]>([]);
+  const [parent, setParent] = useState<Topic | null>(null);
 
   useEffect(() => {
     setAccessError("");
@@ -31,7 +35,15 @@ export default function StudentPractice() {
     // publishing the concepts/story, and vice versa.
     api.getLatestAssessment(id).then((a) => setAssessment(a && a.status === "published" ? a : null));
     api.listDiagrams(id).then(setDiagrams);
+    api.listSubTopics(id).then(setChapters).catch(() => setChapters([]));
   }, [id]);
+
+  useEffect(() => {
+    setParent(null);
+    if (topic?.parent_topic_id) {
+      api.getTopic(topic.parent_topic_id).then(setParent).catch(() => setParent(null));
+    }
+  }, [topic?.parent_topic_id]);
 
   useEffect(() => {
     if (!zoomed) return;
@@ -76,6 +88,11 @@ export default function StudentPractice() {
   return (
     <div>
       <div className="page-header">
+        {parent && (
+          <Link to={`/student/${parent.id}`} className="muted">
+            &larr; Back to {parent.name}
+          </Link>
+        )}
         <h1>{topic.name}</h1>
         <p className="muted">{topic.description}</p>
         <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[topic.assessment_type]}`}>
@@ -94,7 +111,26 @@ export default function StudentPractice() {
         </div>
       )}
 
-      {!topic.content_published ? (
+      {chapters.length > 0 && (
+        <>
+          <h2>Chapters</h2>
+          <div className="grid-2" style={{ marginBottom: 24 }}>
+            {chapters.map((c, i) => (
+              <Link to={`/student/${c.id}`} key={c.id} style={{ textDecoration: "none", color: "inherit" }}>
+                <div className="card hoverable">
+                  <span className="muted">Chapter {i + 1}</span>
+                  <span className="card-title" style={{ display: "block" }}>
+                    {c.name.startsWith(`${topic.name}: `) ? c.name.slice(topic.name.length + 2) : c.name}
+                  </span>
+                  {c.description && <p className="muted" style={{ margin: "4px 0 0" }}>{c.description}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      {!topic.content_published && chapters.length > 0 ? null : !topic.content_published ? (
         <div className="card">
           <p className="muted" style={{ margin: 0 }}>
             Your coach hasn't published the learning material for this topic yet -- check back soon.

@@ -122,6 +122,11 @@ class Topic(Base):
     # concept's own `approved` flag -- lets a coach approve concepts
     # incrementally while iterating, then flip this once ready.
     content_published: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Deterministic, app-shipped learning content (e.g. the Solar System
+    # chapters in app/content/) that every student can see without being
+    # assigned it on the roster. Still gated by content_published, so a coach
+    # can hide it by unpublishing. See auth.student_can_see.
+    open_to_all_students: Mapped[bool] = mapped_column(Boolean, default=False)
     # One narrative per topic (not per concept) weaving approved concepts
     # together -- generated only when a coach explicitly asks for it.
     story_md: Mapped[str] = mapped_column(Text, default="")
