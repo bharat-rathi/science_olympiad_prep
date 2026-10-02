@@ -42,6 +42,10 @@ sciolympiad-coach/
 │   │   ├── routers/         auth, topics, ingestion, explain, assessment, attempts, tutor
 │   │   ├── rag/               chunking, embeddings, vectorstore (Chroma), transcription,
 │   │   │                      link_fetch, pdf_extract, youtube_fetch, retrieval
+│   │   ├── content/solar_system/  Deterministic Solar System learning chapters (no LLM):
+│   │   │                      14 published sub-topics with approved flashcards, stories
+│   │   │                      and SVG infographics, seeded on startup from the 2027
+│   │   │                      source reader (OpenStax Astronomy 2e excerpts)
 │   │   └── llm/                Gemini client wrapper (with per-call logging) + prompt templates
 │   └── data/                  Chroma persistence (gitignored) -- local SQLite db too, in dev
 ├── frontend/                  React + TypeScript (Vite)
