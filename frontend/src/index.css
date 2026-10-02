@@ -975,3 +975,183 @@ button.google:hover {
     padding: 24px 14px 64px;
   }
 }
+
+/* ---- Structured lessons (Solar System study plan + chapters) ---- */
+.lesson-unit {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lesson {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lesson-section h3 {
+  margin: 4px 0 10px;
+  font-size: 20px;
+}
+.lesson-step {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.lesson-para,
+.lesson-list li {
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+.lesson-para {
+  margin: 0 0 12px;
+}
+.lesson-list {
+  margin: 4px 0 12px;
+  padding-left: 22px;
+}
+.lesson-list li + li {
+  margin-top: 4px;
+}
+.lesson-goals {
+  background: var(--gold-soft);
+  border-color: var(--gold-bright);
+}
+.lesson-goals,
+.lesson-goals .muted {
+  color: var(--gold-contrast);
+}
+.lesson-figure {
+  margin: 12px 0 0;
+}
+.lesson-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.lesson-figure figcaption {
+  margin-top: 6px;
+  font-size: 14px;
+}
+.key-facts li {
+  font-weight: 500;
+}
+.jargon {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-bottom: 2px dotted var(--gold);
+  border-radius: 0;
+  box-shadow: none;
+}
+.jargon:hover,
+.jargon[aria-expanded="true"] {
+  background: var(--gold-soft);
+  color: var(--gold-contrast);
+}
+.jargon-sample {
+  cursor: default;
+}
+.jargon-def {
+  display: block;
+  margin: 6px 0;
+  padding: 8px 12px;
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: var(--gold-soft);
+  color: var(--gold-contrast);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.word-bank {
+  margin: 0;
+}
+.word-bank-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.word-bank-row dt {
+  font-weight: 700;
+}
+.word-bank-row dd {
+  margin: 2px 0 0;
+  line-height: 1.6;
+}
+.quick-check {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quick-check-answer {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--success-soft);
+  color: var(--success);
+  line-height: 1.6;
+}
+.plan-unit {
+  margin-top: 20px;
+}
+.plan-unit h3 {
+  margin-bottom: 4px;
+}
+.ask-box input {
+  flex: 1;
+}
+.ask-turn {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ask-turn .chat-bubble.user {
+  align-self: flex-end;
+}
+.ask-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.ask-match {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-alt);
+}
+.ask-match-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.ask-match-text {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.ask-ai {
+  padding: 10px 12px;
+  border-left: 4px solid var(--navy);
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+.ask-box .error {
+  color: var(--danger);
+  margin: 0;
+}

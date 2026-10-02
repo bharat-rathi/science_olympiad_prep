@@ -61,6 +61,50 @@ export interface Topic {
   overview_assessed: string;
   overview_theme_2027: string;
   overview_notes: string;
+  // True when the topic has a structured lesson or study plan (getLesson).
+  has_lesson: boolean;
+}
+
+export interface LessonSection {
+  heading: string;
+  body: string;
+  // Caption of the Diagram (infographic) shown under this section, if any.
+  infographic: string | null;
+}
+
+export interface ChapterLesson {
+  kind: "lesson";
+  unit: number;
+  unit_title: string;
+  goals: string[];
+  sections: LessonSection[];
+  word_bank: { word: string; meaning: string }[];
+  key_facts: string[];
+  quick_check: { q: string; a: string }[];
+}
+
+export interface StudyPlan {
+  kind: "plan";
+  intro: string;
+  how_to_study: string[];
+  units: { number: number; title: string; summary: string; chapters: { name: string; description: string }[] }[];
+}
+
+export type Lesson = ChapterLesson | StudyPlan;
+
+export interface AskMatch {
+  topic_id: number;
+  chapter: string;
+  kind: "lesson" | "word" | "card" | "quick_check" | "fact" | "rules";
+  title: string;
+  text: string;
+}
+
+export interface AskResponse {
+  question: string;
+  matches: AskMatch[];
+  ai_answer: string | null;
+  ai_error: string | null;
 }
 
 export interface ScheduleEntry {
@@ -343,6 +387,12 @@ export const api = {
       body: JSON.stringify({ attempt_id: attemptId, question_id: questionId, message }),
     }),
 
+  getLesson: (topicId: number) => req<Lesson>(`/api/topics/${topicId}/lesson`),
+  askLesson: (topicId: number, question: string, useAi = false) =>
+    req<AskResponse>(`/api/topics/${topicId}/ask`, {
+      method: "POST",
+      body: JSON.stringify({ question, use_ai: useAi }),
+    }),
   getTopicChat: (topicId: number) => req<TopicChatMessage[]>(`/api/topics/${topicId}/chat`),
   topicChatTurn: (topicId: number, message: string) =>
     req<TopicChatMessage>(`/api/topics/${topicId}/chat/turn`, {

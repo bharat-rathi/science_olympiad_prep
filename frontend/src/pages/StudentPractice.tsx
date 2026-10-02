@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Resource, Topic } from "../api/client";
+import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Lesson, Resource, Topic } from "../api/client";
+import AskQuestions from "../components/AskQuestions";
+import { LessonReader, QuickCheck, StudyPlanView, WordBank } from "../components/LessonView";
 import TopicChat from "../components/TopicChat";
 import TopicOverview from "../components/TopicOverview";
 
@@ -22,7 +24,10 @@ export default function StudentPractice() {
   // Deterministic source material (seeded wiki excerpts / source-reader fact
   // sheets) -- published to students as-is, no coach step.
   const [sourceNotes, setSourceNotes] = useState<Resource[]>([]);
-  const [view, setView] = useState<"flashcards" | "story" | "notes">("flashcards");
+  type View = "lesson" | "words" | "flashcards" | "quiz" | "story" | "notes";
+  const [view, setView] = useState<View>("lesson");
+  // Structured deterministic lesson (a chapter) or study plan (an event).
+  const [lesson, setLesson] = useState<Lesson | null>(null);
   const [accessError, setAccessError] = useState("");
   // Diagram tiles are small; infographics need a full-size view to be readable.
   const [zoomed, setZoomed] = useState<Diagram | null>(null);
@@ -33,7 +38,8 @@ export default function StudentPractice() {
 
   useEffect(() => {
     setAccessError("");
-    setView("flashcards");
+    setView("lesson");
+    setLesson(null);
     api
       .getTopic(id)
       .then(setTopic)
@@ -50,6 +56,12 @@ export default function StudentPractice() {
       .then((all) => setSourceNotes(all.filter((r) => r.deterministic && r.raw_text.trim())))
       .catch(() => setSourceNotes([]));
   }, [id]);
+
+  useEffect(() => {
+    if (topic?.has_lesson && topic.id === id) {
+      api.getLesson(id).then(setLesson).catch(() => setLesson(null));
+    }
+  }, [topic, id]);
 
   useEffect(() => {
     setParent(null);
@@ -79,15 +91,23 @@ export default function StudentPractice() {
 
   if (!topic) return <p>Loading...</p>;
 
+  const chapterLesson = lesson?.kind === "lesson" ? lesson : null;
+  const plan = lesson?.kind === "plan" ? lesson : null;
   const learningLive = topic.content_published && (concepts.length > 0 || !!topic.story_md);
-  const views: { key: "flashcards" | "story" | "notes"; label: string; show: boolean }[] = [
+  // A structured lesson replaces the older Story / Source notes views (they
+  // hold the same text), so students see each piece of content once.
+  const views: { key: View; label: string; show: boolean }[] = [
+    { key: "lesson", label: "Lesson", show: !!chapterLesson },
+    { key: "words", label: `Word bank (${chapterLesson?.word_bank.length ?? 0})`, show: !!chapterLesson },
     { key: "flashcards", label: `Flashcards (${concepts.length})`, show: learningLive && concepts.length > 0 },
-    { key: "story", label: "Story", show: learningLive && !!topic.story_md },
-    { key: "notes", label: "Source notes", show: sourceNotes.length > 0 },
+    { key: "quiz", label: "Quick check", show: !!chapterLesson && chapterLesson.quick_check.length > 0 },
+    { key: "story", label: "Story", show: !chapterLesson && learningLive && !!topic.story_md },
+    { key: "notes", label: "Source notes", show: !chapterLesson && sourceNotes.length > 0 },
   ];
   const available = views.filter((v) => v.show);
   const activeView = available.some((v) => v.key === view) ? view : available[0]?.key;
   const nothingYet = available.length === 0 && chapters.length === 0;
+  const hasLessons = !!topic.has_lesson || !!parent?.has_lesson;
 
   return (
     <div>
@@ -96,6 +116,11 @@ export default function StudentPractice() {
           <Link to={`/student/${parent.id}`} className="muted">
             &larr; Back to {parent.name}
           </Link>
+        )}
+        {chapterLesson && (
+          <span className="lesson-unit">
+            Unit {chapterLesson.unit}: {chapterLesson.unit_title}
+          </span>
         )}
         <h1>{topic.name}</h1>
         <p className="muted">{topic.description}</p>
@@ -115,7 +140,9 @@ export default function StudentPractice() {
         </div>
       )}
 
-      {chapters.length > 0 && (
+      {plan && <StudyPlanView plan={plan} chapters={chapters} parentName={topic.name} />}
+
+      {!plan && chapters.length > 0 && (
         <>
           <h2>Chapters</h2>
           <div className="grid-2" style={{ marginBottom: 24 }}>
@@ -156,6 +183,14 @@ export default function StudentPractice() {
               </Link>
             )}
           </div>
+
+          {activeView === "lesson" && chapterLesson && (
+            <LessonReader lesson={chapterLesson} diagrams={diagrams} onZoom={setZoomed} />
+          )}
+
+          {activeView === "words" && chapterLesson && <WordBank lesson={chapterLesson} />}
+
+          {activeView === "quiz" && chapterLesson && <QuickCheck lesson={chapterLesson} />}
 
           {activeView === "flashcards" && (
             <div className="study-cards">
@@ -215,7 +250,7 @@ export default function StudentPractice() {
         </>
       )}
 
-      {diagrams.length > 0 && (
+      {diagrams.length > 0 && !chapterLesson && (
         <>
           <h2 style={{ marginTop: 24 }}>Infographics &amp; diagrams</h2>
           <p className="muted">Tap one to see it full screen.</p>
@@ -238,8 +273,17 @@ export default function StudentPractice() {
         </div>
       )}
 
-      <h2 style={{ marginTop: 24 }}>Ask about this content</h2>
-      <TopicChat topicId={id} />
+      {hasLessons ? (
+        <>
+          <h2 style={{ marginTop: 24 }}>Ask a question</h2>
+          <AskQuestions topicId={id} subject={parent?.name ?? topic.name} />
+        </>
+      ) : (
+        <>
+          <h2 style={{ marginTop: 24 }}>Ask about this content</h2>
+          <TopicChat topicId={id} />
+        </>
+      )}
     </div>
   );
 }

@@ -1036,7 +1036,7 @@ def orbit_tricks() -> str:
         body += circle(cx3 + r, 260, 5, c)
     body += text(cx3, 160, "Io  /  Europa  /  Ganymede", 13, TEXT, "bold", "middle")
     body += text(cx3, 370, "Io : Europa : Ganymede = 1:2:4", 13, TEXT, anchor="middle")
-    body += text(cx3, 388, "Neptune : Pluto = 3:2", 13, TEXT, anchor="middle")
+    body += text(cx3, 388, "Neptune : Pluto periods = 2:3", 13, TEXT, anchor="middle")
     # trojans
     cx4 = 920
     body += circle(cx4, 270, 14, "url(#sunglow)")
@@ -1182,3 +1182,9 @@ INFOGRAPHICS: dict[str, tuple[str, Callable[[], str]]] = {
     "astronomer_timeline": ("Timeline of the astronomers who mapped the solar system.", astronomer_timeline),
     "mission_timeline": ("Timeline of the space missions that explored the solar system.", mission_timeline),
 }
+
+
+# Infographics added with the restructured lessons (kept in their own module).
+from app.content.solar_system.infographics_extra import EXTRA_INFOGRAPHICS  # noqa: E402
+
+INFOGRAPHICS.update(EXTRA_INFOGRAPHICS)

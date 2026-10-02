@@ -134,6 +134,12 @@ class Topic(Base):
     # One narrative per topic (not per concept) weaving approved concepts
     # together -- generated only when a coach explicitly asks for it.
     story_md: Mapped[str] = mapped_column(Text, default="")
+    # Structured, deterministic lesson shipped with the app (see
+    # app/content/solar_system): {"kind": "lesson", sections, word_bank,
+    # key_facts, quick_check, ...} for a chapter, or {"kind": "plan", units,
+    # ...} for an event's study plan. NULL for everything else. Served by
+    # GET /api/topics/{id}/lesson rather than inline in TopicOut (it's big).
+    lesson_json: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
 
     resources: Mapped[list["Resource"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
     concepts: Mapped[list["ConceptTerm"]] = relationship(back_populates="topic", cascade="all, delete-orphan")
@@ -142,6 +148,10 @@ class Topic(Base):
     # TopicOut.created_by (a plain string) when Pydantic validates from
     # attributes -- schemas.py resolves the name explicitly in from_model().
     created_by_coach: Mapped["Coach | None"] = relationship(foreign_keys=[created_by_coach_id])
+
+    @property
+    def has_lesson(self) -> bool:
+        return bool(self.lesson_json)
 
 
 class ScheduleEntry(Base):
@@ -329,3 +339,14 @@ class TopicChatMessage(Base):
     role: Mapped[str] = mapped_column(String(20))  # user | assistant
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
+
+
+class AppMeta(Base):
+    """Small key/value store for one-time data migrations, e.g. the version
+    of the shipped Solar System content, so a destructive rebuild runs once
+    instead of on every startup."""
+
+    __tablename__ = "app_meta"
+
+    key: Mapped[str] = mapped_column(String(100), primary_key=True)
+    value: Mapped[str] = mapped_column(String(200), default="")
