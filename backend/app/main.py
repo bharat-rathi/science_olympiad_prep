@@ -12,7 +12,7 @@ from app.config import settings
 from app.content.deterministic import publish_deterministic_content
 from app.content.solar_system.seed import seed_solar_system_learning_content
 from app.db import SessionLocal, engine
-from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, students, topic_chat, topics, tutor
+from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, lessons, students, topic_chat, topics, tutor
 
 # INFO so llm/client.py's per-call logging (label, effort, char counts) shows
 # up in Render's logs -- the app's cheapest way to see LLM call volume.
@@ -107,6 +107,7 @@ _ensure_column("topics", "content_published", f"BOOLEAN DEFAULT {_bool_default}"
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("topics", "open_to_all_students", f"BOOLEAN DEFAULT {_bool_default}")
 _ensure_column("topics", "story_origin", "VARCHAR(20) DEFAULT ''")
+_ensure_column("topics", "lesson_json", "JSON")
 _ensure_column("resources", "deterministic", f"BOOLEAN DEFAULT {_bool_default}")
 _ensure_column("resources", "chunks_indexed", f"BOOLEAN DEFAULT {_bool_default}")
 _ensure_column("concept_terms", "origin", "VARCHAR(20) DEFAULT 'ai'")
@@ -246,6 +247,7 @@ app.include_router(assessment.router)
 app.include_router(attempts.router)
 app.include_router(tutor.router)
 app.include_router(topic_chat.router)
+app.include_router(lessons.router)
 app.include_router(students.router)
 
 
@@ -607,9 +609,9 @@ def seed_solar_system_deep_dive() -> None:
     seed_official_topics's overview backfill (which only fills empty
     fields), this unconditionally overwrites Solar System's description and
     overview_* with the corrected content, since this is an explicit,
-    sourced correction, not a first-time fill. Idempotent for the resource
-    creation via a title check, so re-running on every startup is safe and
-    doesn't duplicate it. (Chapters now come from app/content/solar_system.)
+    sourced correction, not a first-time fill. Study material (lessons,
+    flashcards, infographics, the study plan) comes from
+    app/content/solar_system.
     """
     db = SessionLocal()
     try:
@@ -662,115 +664,10 @@ def seed_solar_system_deep_dive() -> None:
             "(solarsystem.nasa.gov) and the ALMA Observatory site."
         )
 
-        if not db.query(models.Resource).filter(
-            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Solar System (event page)"
-        ).first():
-            db.add(
-                models.Resource(
-                    topic_id=topic.id,
-                    type="text",
-                    title="scioly.org wiki: Solar System (event page)",
-                    source_url="https://scioly.org/wiki/Solar_System",
-                    raw_text=(
-                        "EVENT INFO: Division B, 2 participants, ~50 minutes, written/sit-down test. "
-                        "Allowed resources: two note sheets, writing utensils (no calculator). "
-                        "First appearance 2006; topic rotates most years.\n\n"
-                        "TOPIC BY YEAR: 2027 Habitability | 2026 Planet Formation and Structure | "
-                        "2023 Habitability | 2022/2019/2018 Terrestrial Bodies | 2015/2014 "
-                        "Extraterrestrial Water | 2011/2010/2007/2006 No particular topic.\n\n"
-                        "ORIGINS OF THE SOLAR SYSTEM: formed ~4.57 billion years ago from a nebula "
-                        "collapsing around a protosun. Heavier rocky material gravitated inward, "
-                        "lighter gas moved outward, giving 4 inner rocky terrestrial planets "
-                        "(Mercury, Venus, Earth, Mars) and 4 outer Jovian gas/ice giants (Jupiter, "
-                        "Saturn, Uranus, Neptune). Leftover material between Mars and Jupiter formed "
-                        "the asteroid belt; leftovers at the far edges formed the Oort Cloud and "
-                        "Kuiper Belt, source of many comets and dwarf planets (Pluto, Ceres, Eris, "
-                        "Haumea, Makemake, and candidate Sedna).\n\n"
-                        "THE SUN: diameter 1,392,000 km, mass 1.989x10^30 kg, luminosity "
-                        "3.846x10^33 erg/s, composition ~74% hydrogen/25% helium. Holds 99.8% of "
-                        "the solar system's mass. Layers (outside in, with temperature): Corona "
-                        "(1,000,000 C), Transition Region, Chromosphere, Photosphere (6,000 C), "
-                        "Convection Zone (1,000,000 C), Radiative Zone (2,000,000 C), Core "
-                        "(15,000,000 C). Produces heat via hydrogen fusion.\n\n"
-                        "PLANETS TABLE (orbit period / rotation period / distance from Sun): "
-                        "Mercury 87.97 days / 58.6 days / 0.39 AU. Venus 224.7 days / 243 days / "
-                        "0.72 AU. Earth 365.25 days / 1 day / 1 AU. Mars 686.98 days / 1.03 days / "
-                        "1.52 AU. Jupiter 11.86 years / 0.41 days / 5.2 AU. Saturn 29.46 years / "
-                        "0.41667 days / 9.54 AU. Uranus 84.01 years / 0.71833 days / 19.18 AU "
-                        "(discovered 1781). Neptune 164.9 years / 0.67125 days / 30.06 AU "
-                        "(discovered 1846).\n\n"
-                        "DWARF PLANETS & PLUTOIDS: a dwarf planet has enough gravity to be round "
-                        "but hasn't cleared its orbital neighborhood, and isn't a moon. A Plutoid "
-                        "is a dwarf planet orbiting beyond Neptune -- the four official Plutoids are "
-                        "Pluto, Haumea, Makemake, and Eris. Sedna is a plutoid candidate (not yet "
-                        "official) with an ~11,518-year, highly eccentric orbit.\n\n"
-                        "SMALL BODIES: Asteroids are small, rocky, airless bodies mostly in the main "
-                        "belt between Mars and Jupiter; types include C (dark, carbon-rich), S "
-                        "(silicate), M (metal-rich), and several rarer classes. Comets are icy "
-                        "bodies (nucleus, coma, tail) from the colder outer solar system; periodic "
-                        "comets return in under ~200 years, non-periodic (long-period) comets can "
-                        "take thousands to millions of years. The Kuiper Belt (30-50 AU from the "
-                        "Sun) holds leftover debris from solar system formation. The Oort Cloud is "
-                        "a vast, distant cloud (mass ~40 Earths) believed to be the source of many "
-                        "comets and asteroids.\n\n"
-                        "MOONS: Earth has 1 moon. Mars has 2 (Phobos, Deimos). Jupiter's four "
-                        "Galilean moons are Io, Europa, Ganymede, and Callisto (discovered by "
-                        "Galileo, 1610) -- Jupiter has 79+ moons total. Saturn has 60+ moons "
-                        "(Titan is the largest, discovered by Huygens in 1655). Uranus's major "
-                        "moons include Miranda, Ariel, Umbriel, Titania, and Oberon. Neptune's "
-                        "largest moon is Triton (retrograde orbit). Pluto's largest moon is Charon.\n\n"
-                        "HOT JUPITERS, HOT NEPTUNES & COLD JUPITERS (2027 habitability-relevant "
-                        "exoplanet types): Hot Jupiters are gas giant exoplanets in extremely close, "
-                        "hot orbits (often just days), 0.36-13.6 Jupiter masses, easiest to detect "
-                        "via radial velocity/Doppler wobble, sometimes tidally locked. Hot Neptunes "
-                        "are smaller, less gas-rich, denser-cored, ice-giant-type exoplanets, often "
-                        "closer than 1 AU to their star. Cold Jupiters are gas giants like Hot "
-                        "Jupiters but orbiting beyond the frost/snow line, cold enough to freeze "
-                        "water/ammonia/methane into ice.\n\n"
-                        "KEPLER'S LAWS OF PLANETARY MOTION: (1) every planet's orbit is an ellipse "
-                        "with the Sun at one focus; (2) a line from the Sun to a planet sweeps equal "
-                        "areas in equal time (planets move faster near the Sun); (3) the square of "
-                        "the orbital period is proportional to the cube of the semi-major axis "
-                        "(p^2 = a^3). Newton's law of gravitation: F = G*m1*m2/r^2. Escape velocity: "
-                        "Ev = sqrt(2GM/R), where G = 6.67x10^-11 N*m^2/kg^2.\n\n"
-                        "TIDAL LOCKING, SHEPHERDING, RESONANCE & TROJANS: tidal locking is when one "
-                        "side of a body always faces another (e.g. the Moon and Earth). Shepherd "
-                        "moons keep a planetary ring's particles confined via gravity (e.g. Saturn's "
-                        "Pan and Prometheus). Orbital resonance is when two bodies' periods relate "
-                        "by a simple integer ratio (e.g. Neptune:Pluto is 2:3; Jupiter's moons Io, "
-                        "Europa, Ganymede are in a 1:2:4 Laplace resonance). Trojans share an orbit "
-                        "with a larger body without colliding, sitting 60 degrees ahead or behind it.\n\n"
-                        "ECLIPSES: a lunar eclipse occurs when Earth passes between the Sun and "
-                        "Moon (always at full moon) -- types are penumbral, total penumbral, "
-                        "partial, and total (up to ~107 minutes of totality). A solar eclipse occurs "
-                        "when the Moon passes between Earth and the Sun (always at new moon) -- "
-                        "types are total, annular (Moon appears smaller than the Sun), hybrid, and "
-                        "partial.\n\n"
-                        "FAMOUS ASTRONOMERS: Aristarchus (first proposed a heliocentric system); "
-                        "Nicholas Copernicus (1473-1543, developed the heliocentric model); Tycho "
-                        "Brahe (1546-1601, precise planetary/stellar measurements, discovered a "
-                        "1572 supernova); Galileo Galilei (1564-1642, discovered Jupiter's four "
-                        "largest moons, observed Venus's phases, improved the telescope); Johannes "
-                        "Kepler (1571-1630, developed the laws of planetary motion, was Tycho "
-                        "Brahe's assistant); Edmond Halley (1656-1742, first to calculate a comet's "
-                        "orbit -- Halley's Comet); Clyde Tombaugh (1906-1997, discovered Pluto in "
-                        "1930).\n\n"
-                        "NOTABLE MISSIONS: Voyager 1 & 2 (1977-, flybys of the outer planets); "
-                        "Galileo (1989-2003, Jupiter system); Cassini (1997-2017, Saturn system); "
-                        "New Horizons (2006-, first Pluto flyby in 2015, later the Kuiper Belt); "
-                        "Dawn (2007-2018, Vesta and Ceres); Lunar Reconnaissance Orbiter (2009-, "
-                        "the Moon); Juno (2011-, Jupiter); BepiColombo (2018-, Mercury); Hubble "
-                        "(1990-) and JWST (2021-) space telescopes."
-                    ),
-                )
-            )
-
-        # The four wiki-excerpt chapters this seed used to create ("Star &
-        # Planet Formation", "Bodies, Moons & Small Bodies", "Habitability &
-        # Exoplanet Types", "Orbital Mechanics, Eclipses & History") were
-        # merged into the de-duplicated Solar System learning chapters in
-        # app/content/solar_system (chapters_c.py holds what had no other
-        # home); seed.py retires the old rows on existing databases.
+        # Study material (the old wiki excerpt resource and chapters) now
+        # lives entirely in app/content/solar_system, rebuilt from the
+        # reader + wiki into one deduplicated set of lesson chapters; this
+        # seed only keeps the rules overview above.
 
         db.commit()
     finally:

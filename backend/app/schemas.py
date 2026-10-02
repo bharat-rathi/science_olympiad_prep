@@ -79,6 +79,9 @@ class TopicOut(BaseModel):
     overview_assessed: str = ""
     overview_theme_2027: str = ""
     overview_notes: str = ""
+    # True when the topic carries a structured lesson or study plan
+    # (GET /api/topics/{id}/lesson).
+    has_lesson: bool = False
 
     @staticmethod
     def from_model(topic) -> "TopicOut":
@@ -294,3 +297,23 @@ class TopicChatMessageOut(BaseModel):
 
 class TopicChatTurnRequest(BaseModel):
     message: str
+
+
+class AskRequest(BaseModel):
+    question: str
+    use_ai: bool = False
+
+
+class AskMatch(BaseModel):
+    topic_id: int
+    chapter: str
+    kind: str  # lesson | word | card | quick_check | fact | rules
+    title: str
+    text: str
+
+
+class AskResponse(BaseModel):
+    question: str
+    matches: list[AskMatch]
+    ai_answer: str | None = None
+    ai_error: str | None = None

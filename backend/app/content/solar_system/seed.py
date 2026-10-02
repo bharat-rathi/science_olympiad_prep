@@ -1,231 +1,253 @@
-"""Deterministic seed for the Solar System learning chapters.
+"""Deterministic seed for the Solar System study material.
 
-Turns the hand-written chapters (chapters_a/b/c.py) and the SVG
-infographics into ordinary rows -- a sub-topic per chapter under the
-"Solar System" event, a fact-sheet Resource, approved ConceptTerm
-flashcards with badge images, the long-form story, and infographic
-Diagrams -- publishes them, and marks them open_to_all_students, so every
-student gets real learning material with no LLM call, no coach clicks and
-no roster assignment.
+The event's material is a structured study plan (plan.py) of 19 lesson
+chapters (lessons_unit1..6.py), built from the coach-supplied source reader
+and scioly.org wiki with duplicates removed. Each chapter becomes a
+sub-topic of the "Solar System" event with:
 
-Runs on every startup and keeps existing databases in step with this file:
-sourced content (origin "sourced", story_origin "sourced", the seeded fact
-sheet and infographics) is updated to the latest text and images, and
-sourced cards that were merged away are removed. Anything a coach touched is
-left alone: an edited card becomes origin "coach" (topics.update_concept),
-a rewritten story becomes "coach"/"ai", AI drafts are origin "ai", and a
+- lesson_json: the in-depth lesson (sections with inline infographics, a
+  word bank explaining every jargon word, note-sheet facts, quick-check
+  questions) that the student page renders;
+- approved, origin "sourced" ConceptTerm flashcards with badge images;
+- infographic Diagrams (deterministic SVGs) hung off one "Lesson notes"
+  Resource, which also holds the full lesson text for the AI tools;
+- story_md: the same lesson as plain text (presentation / coach view).
+
+Everything is published and open to every student -- no LLM call, no coach
+click, no roster assignment. The event row itself gets the study plan as
+its lesson_json; its rules overview (overview_*) is never touched here.
+
+CONTENT REBUILD: the first startup with this version wipes all earlier
+Solar System study material (older chapters, their flashcards, diagrams,
+resources and stories, plus anything on the event row except the rules) so
+students see one clean, deduplicated set. AppMeta records the version, so
+the wipe never repeats and later coach work is safe. A chapter that holds a
+coach's assessment is not deleted -- its study material is removed and it
+is hidden and renamed "Archived: ...", keeping the tests and attempts.
+
+After that, every startup syncs the shipped content: sourced cards, the
+sourced story, the lesson and the infographics are updated; cards a coach
+edited (origin "coach") or AI drafts (origin "ai") are left alone, and a
 coach's unpublish is never undone.
-
-It also retires the four older wiki-excerpt chapters whose content was
-merged into these (see retire_legacy_chapters).
 """
 
 import logging
 
 from app import models
-from app.content.solar_system.chapters_a import CHAPTERS_A
-from app.content.solar_system.chapters_b import CHAPTERS_B
-from app.content.solar_system.chapters_c import CHAPTERS_C
 from app.content.solar_system.infographics import INFOGRAPHICS
+from app.content.solar_system.plan import CHAPTERS, UNITS, plan_json
 from app.content.solar_system.svg import badge_svg, data_url
 from app.db import SessionLocal
 
 log = logging.getLogger(__name__)
 
-CHAPTERS = CHAPTERS_A + CHAPTERS_B + CHAPTERS_C
-SOURCE_URL = "https://openstax.org/details/books/astronomy-2e"
-
-# Chapters the older wiki seed (main.py's seed_solar_system_deep_dive) used
-# to create. Their content now lives in CHAPTERS, mostly chapters_c.py.
-LEGACY_CHAPTER_NAMES = (
-    "Solar System: Star & Planet Formation",
-    "Solar System: Bodies, Moons & Small Bodies",
-    "Solar System: Habitability & Exoplanet Types",
-    "Solar System: Orbital Mechanics, Eclipses & History",
-)
-LEGACY_RESOURCE_TITLE = "scioly.org wiki: Solar System (excerpt for this chapter)"
-
-# Card terms earlier versions of this seed created that were since merged
-# into other cards -- still recognized as sourced so the sync can remove them.
-RETIRED_TERMS = {
-    "Circumstellar (protoplanetary) disks",
-    "Dwarf planets and TNOs",
-    "Asteroids, comets and dust",
-    "Exploring by spacecraft",
-    "Carl Sagan",
-    "Photosynthesis and the rise of oxygen",
-    "Life removed Earth's CO2",
-    "How life changed Earth's air",
-    "Titan's nitrogen atmosphere",
-    "Photosynthesis and the oxygen revolution",
-    "Inflated hot Jupiters and cold Jupiters",
-    "Did our planets move?",
-}
+CONTENT_KEY = "solar_system_content_version"
+CONTENT_VERSION = "lessons-v1"
+SOURCE_URL = "https://scioly.org/wiki/Solar_System"
+ARCHIVED_PREFIX = "Archived: "
+UNIT_TITLES = {unit["number"]: unit["title"] for unit in UNITS}
 
 
-def retire_legacy_chapters(db, parent: models.Topic) -> None:
-    """Delete a legacy chapter if it still holds only its seeded excerpt.
-    If a coach built anything on it (concepts, an assessment, a schedule
-    entry, extra resources, sub-chapters), keep it for the coach but hide it
-    from students so the event shows one de-duplicated set of chapters."""
-    legacy = (
-        db.query(models.Topic)
-        .filter(models.Topic.parent_topic_id == parent.id, models.Topic.name.in_(LEGACY_CHAPTER_NAMES))
-        .all()
-    )
-    for chapter in legacy:
-        coach_work = (
-            db.query(models.ConceptTerm).filter_by(topic_id=chapter.id).count()
-            + db.query(models.Assessment).filter_by(topic_id=chapter.id).count()
-            + db.query(models.ScheduleEntry).filter_by(topic_id=chapter.id).count()
-            + db.query(models.Topic).filter_by(parent_topic_id=chapter.id).count()
-            + db.query(models.Resource)
-            .filter(models.Resource.topic_id == chapter.id, models.Resource.title != LEGACY_RESOURCE_TITLE)
-            .count()
-        )
-        if coach_work:
-            chapter.open_to_all_students = False
-            chapter.content_published = False
-            # Retire its excerpt too, so app/content/deterministic.py doesn't
-            # see sourced material here and publish the chapter again.
-            for resource in chapter.resources:
-                if resource.title == LEGACY_RESOURCE_TITLE:
-                    resource.title = "Retired (merged into the Solar System chapters): " + resource.title
-                    resource.deterministic = False
-            continue
-        for resource in chapter.resources:
-            if resource.chunks_indexed:
-                try:
-                    from app.rag.vectorstore import delete_resource
+# ---------------------------------------------------------------- the wipe
 
-                    delete_resource(resource.id)
-                except Exception:  # vector store unavailable -- orphaned chunks are harmless
-                    log.warning("Could not delete indexed chunks for resource %s", resource.id)
-        db.query(models.StudentTopic).filter_by(topic_id=chapter.id).delete()
-        db.query(models.Diagram).filter_by(topic_id=chapter.id).delete()
-        db.delete(chapter)
+
+def _drop_indexed(resource: models.Resource) -> None:
+    if not resource.chunks_indexed:
+        return
+    try:
+        from app.rag.vectorstore import delete_resource
+
+        delete_resource(resource.id)
+    except Exception:  # vector store unavailable -- orphaned chunks are harmless
+        log.warning("Could not delete indexed chunks for resource %s", resource.id)
+
+
+def _strip_study_material(db, topic: models.Topic) -> None:
+    """Remove a topic's learning material (flashcards, diagrams, resources,
+    story, lesson) but leave its rules, assessments and chat history."""
+    for resource in topic.resources:
+        _drop_indexed(resource)
+    resource_ids = [r.id for r in topic.resources]
+    db.query(models.Diagram).filter(
+        (models.Diagram.topic_id == topic.id) | models.Diagram.resource_id.in_(resource_ids)
+    ).delete(synchronize_session=False)
+    db.query(models.Resource).filter_by(topic_id=topic.id).delete(synchronize_session=False)
+    db.query(models.ConceptTerm).filter_by(topic_id=topic.id).delete(synchronize_session=False)
+    db.expire(topic, ["resources", "concepts"])
+    topic.story_md = ""
+    topic.story_origin = ""
+    topic.lesson_json = None
+
+
+def _wipe_chapter(db, chapter: models.Topic) -> None:
+    for child in db.query(models.Topic).filter_by(parent_topic_id=chapter.id).all():
+        _wipe_chapter(db, child)
+    _strip_study_material(db, chapter)
+    if db.query(models.Assessment).filter_by(topic_id=chapter.id).count():
+        # Keep the coach's tests (and students' attempts) -- hide the rest.
+        chapter.content_published = False
+        chapter.open_to_all_students = False
+        if not chapter.name.startswith(ARCHIVED_PREFIX):
+            chapter.name = (ARCHIVED_PREFIX + chapter.name)[:200]
+        return
+    db.query(models.StudentTopic).filter_by(topic_id=chapter.id).delete()
+    db.query(models.ScheduleEntry).filter_by(topic_id=chapter.id).delete()
+    db.query(models.TopicChatMessage).filter_by(topic_id=chapter.id).delete()
+    db.flush()
+    db.delete(chapter)
+
+
+def wipe_old_study_material(db, parent: models.Topic) -> None:
+    """One-time clean slate: every Solar System chapter and every piece of
+    study material on the event row goes, except the rules overview."""
+    for chapter in db.query(models.Topic).filter_by(parent_topic_id=parent.id).all():
+        _wipe_chapter(db, chapter)
+    _strip_study_material(db, parent)
     db.flush()
 
 
+# ---------------------------------------------------------------- the sync
+
+
+def lesson_text(chapter: dict) -> str:
+    """The whole chapter as plain text: the story_md view, the Lesson notes
+    resource the AI tools read, and what the Ask box searches."""
+    parts = [chapter["name"].removeprefix("Solar System: ").upper(), chapter["description"], ""]
+    parts.append("BY THE END OF THIS CHAPTER YOU CAN:")
+    parts += [f"• {goal}" for goal in chapter["goals"]]
+    for section in chapter["sections"]:
+        parts += ["", section["heading"].upper(), "", section["body"]]
+    parts += ["", "WORD BANK"]
+    parts += [f"• {word}: {meaning}" for word, meaning in chapter["word_bank"]]
+    parts += ["", "NOTE-SHEET FACTS"]
+    parts += [f"• {fact}" for fact in chapter["key_facts"]]
+    parts += ["", "QUICK CHECK"]
+    for question, answer in chapter["quick_check"]:
+        parts += [f"Q: {question}", f"A: {answer}"]
+    return "\n".join(parts)
+
+
+def lesson_json(chapter: dict) -> dict:
+    return {
+        "kind": "lesson",
+        "unit": chapter["unit"],
+        "unit_title": UNIT_TITLES[chapter["unit"]],
+        "goals": chapter["goals"],
+        "sections": [
+            {
+                "heading": section["heading"],
+                "body": section["body"],
+                "infographic": INFOGRAPHICS[section["infographic"]][0] if section.get("infographic") else None,
+            }
+            for section in chapter["sections"]
+        ],
+        "word_bank": [{"word": word, "meaning": meaning} for word, meaning in chapter["word_bank"]],
+        "key_facts": chapter["key_facts"],
+        "quick_check": [{"q": q, "a": a} for q, a in chapter["quick_check"]],
+    }
+
+
+def _resource_title(chapter: dict) -> str:
+    return "Lesson notes: " + chapter["name"].removeprefix("Solar System: ")
+
+
 def _sync_chapter(db, parent: models.Topic, chapter: dict) -> None:
-    chapter_topic = (
+    text_version = lesson_text(chapter)
+    topic = (
         db.query(models.Topic)
         .filter(models.Topic.name == chapter["name"], models.Topic.parent_topic_id == parent.id)
         .first()
     )
-    if chapter_topic is None:
-        chapter_topic = models.Topic(
+    if topic is None:
+        topic = models.Topic(
             event_name=parent.event_name,
             name=chapter["name"],
             description=chapter["description"],
             assessment_type=parent.assessment_type,
             parent_topic_id=parent.id,
-            story_md=chapter["story"],
+            story_md=text_version,
             story_origin="sourced",
             content_published=True,
             open_to_all_students=True,
         )
-        db.add(chapter_topic)
+        db.add(topic)
         db.flush()
     else:
-        if not chapter_topic.open_to_all_students:
-            # Backfill for chapters created before this flag existed. A coach
-            # hides a chapter by unpublishing, which this never undoes.
-            chapter_topic.open_to_all_students = True
-        chapter_topic.description = chapter["description"]
-        if chapter_topic.story_origin == "sourced" or not chapter_topic.story_md:
-            chapter_topic.story_md = chapter["story"]
-            chapter_topic.story_origin = "sourced"
+        topic.open_to_all_students = True  # a coach hides a chapter by unpublishing
+        topic.description = chapter["description"]
+        if topic.story_origin in ("sourced", ""):
+            topic.story_md = text_version
+            topic.story_origin = "sourced"
+    topic.lesson_json = lesson_json(chapter)
 
-    # Seeded fact sheet, matched by title -- or by the seeded prefix so a
-    # retitled sheet is updated in place rather than duplicated.
+    # One deterministic "Lesson notes" resource per chapter: the full text for
+    # the AI tools, and the owner of the chapter's infographics.
     resource = (
         db.query(models.Resource)
-        .filter(models.Resource.topic_id == chapter_topic.id, models.Resource.title == chapter["source_title"])
-        .first()
-    ) or (
-        db.query(models.Resource)
-        .filter(
-            models.Resource.topic_id == chapter_topic.id,
-            models.Resource.deterministic.is_(True),
-            models.Resource.title.startswith("Source reader:") | models.Resource.title.startswith("Source notes:"),
-        )
+        .filter(models.Resource.topic_id == topic.id, models.Resource.title.startswith("Lesson notes:"))
         .first()
     )
     if resource is None:
         resource = models.Resource(
-            topic_id=chapter_topic.id,
+            topic_id=topic.id,
             type="text",
-            title=chapter["source_title"],
+            title=_resource_title(chapter),
             source_url=SOURCE_URL,
-            raw_text=chapter["source_text"],
+            raw_text=text_version,
             deterministic=True,
         )
         db.add(resource)
         db.flush()
-    elif resource.raw_text != chapter["source_text"] or resource.title != chapter["source_title"]:
-        resource.title = chapter["source_title"]
-        resource.raw_text = chapter["source_text"]
+    elif resource.raw_text != text_version or resource.title != _resource_title(chapter):
+        resource.title = _resource_title(chapter)
+        resource.raw_text = text_version
         resource.deterministic = True
         resource.chunks_indexed = False  # re-index on the next AI run
 
-    # Infographics: refresh images in place, add new ones, drop merged-away ones.
-    wanted = {INFOGRAPHICS[key][0]: (page, INFOGRAPHICS[key][1]) for page, key in enumerate(chapter["infographics"], start=1)}
-    existing_diagrams = db.query(models.Diagram).filter(models.Diagram.resource_id == resource.id).all()
-    for diagram in existing_diagrams:
+    # Infographics, in reading order.
+    keys = [s["infographic"] for s in chapter["sections"] if s.get("infographic")]
+    wanted = {INFOGRAPHICS[key][0]: (page, INFOGRAPHICS[key][1]) for page, key in enumerate(keys, start=1)}
+    existing = db.query(models.Diagram).filter(models.Diagram.resource_id == resource.id).all()
+    for diagram in existing:
         if diagram.caption not in wanted:
             db.delete(diagram)
-    have = {d.caption: d for d in existing_diagrams}
+    have = {d.caption: d for d in existing}
     for caption, (page, build) in wanted.items():
         image = data_url(build())
         if caption in have:
             have[caption].image_data_url = image
             have[caption].page_number = page
         else:
-            db.add(
-                models.Diagram(
-                    topic_id=chapter_topic.id, resource_id=resource.id, image_data_url=image, caption=caption, page_number=page
-                )
-            )
+            db.add(models.Diagram(topic_id=topic.id, resource_id=resource.id, image_data_url=image, caption=caption, page_number=page))
 
-    # Flashcards: sync sourced cards, add new ones, and remove sourced ones
-    # that were merged into another card. Coach-edited ("coach") and AI
-    # ("ai") cards are never touched.
-    seeded = {concept["term"]: concept for concept in chapter["concepts"]}
-    existing = db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == chapter_topic.id).all()
+    # Flashcards: sourced cards follow this file; coach/AI cards are untouched.
+    seeded = {card["term"]: card for card in chapter["cards"]}
     existing_terms = set()
-    for row in existing:
+    for row in db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == topic.id).all():
         existing_terms.add(row.term)
-        if (
-            row.origin == "ai"
-            and row.approved
-            and row.source_resource_ids == [resource.id]
-            and (row.term in seeded or row.term in RETIRED_TERMS)
-        ):
-            row.origin = "sourced"  # backfill: created by this seed before `origin` existed
         if row.origin != "sourced":
             continue
-        concept = seeded.get(row.term)
-        if concept is None:
+        card = seeded.get(row.term)
+        if card is None:
             db.delete(row)
             continue
-        label, sub, color = concept["badge"]
-        row.explanation_md = concept["explanation"]
-        row.analogy = concept["analogy"]
-        row.why_it_matters = concept["why"]
+        label, sub, color = card["badge"]
+        row.explanation_md = card["explanation"]
+        row.analogy = card["analogy"]
+        row.why_it_matters = card["why"]
         row.source_resource_ids = [resource.id]
         row.image_data_url = data_url(badge_svg(label, sub, color))
-    for term, concept in seeded.items():
+    for term, card in seeded.items():
         if term in existing_terms:
             continue
-        label, sub, color = concept["badge"]
+        label, sub, color = card["badge"]
         db.add(
             models.ConceptTerm(
-                topic_id=chapter_topic.id,
+                topic_id=topic.id,
                 term=term,
-                explanation_md=concept["explanation"],
-                analogy=concept["analogy"],
-                why_it_matters=concept["why"],
+                explanation_md=card["explanation"],
+                analogy=card["analogy"],
+                why_it_matters=card["why"],
                 source_resource_ids=[resource.id],
                 approved=True,
                 origin="sourced",
@@ -244,7 +266,14 @@ def seed_solar_system_learning_content() -> None:
         )
         if parent is None:
             return
-        retire_legacy_chapters(db, parent)
+        meta = db.get(models.AppMeta, CONTENT_KEY)
+        if meta is None or meta.value != CONTENT_VERSION:
+            wipe_old_study_material(db, parent)
+            if meta is None:
+                meta = models.AppMeta(key=CONTENT_KEY)
+                db.add(meta)
+            meta.value = CONTENT_VERSION
+        parent.lesson_json = plan_json()
         for chapter in CHAPTERS:
             _sync_chapter(db, parent, chapter)
         db.commit()
