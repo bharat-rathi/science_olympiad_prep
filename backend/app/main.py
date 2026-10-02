@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import auth, models
 from app.config import settings
+from app.content.deterministic import publish_deterministic_content
 from app.content.solar_system.seed import seed_solar_system_learning_content
 from app.db import SessionLocal, engine
 from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, students, topic_chat, topics, tutor
@@ -105,6 +106,10 @@ _ensure_column("assessments", "created_by_coach_id", "INTEGER")
 _ensure_column("topics", "content_published", f"BOOLEAN DEFAULT {_bool_default}")
 _ensure_column("topics", "story_md", "TEXT DEFAULT ''")
 _ensure_column("topics", "open_to_all_students", f"BOOLEAN DEFAULT {_bool_default}")
+_ensure_column("topics", "story_origin", "VARCHAR(20) DEFAULT ''")
+_ensure_column("resources", "deterministic", f"BOOLEAN DEFAULT {_bool_default}")
+_ensure_column("resources", "chunks_indexed", f"BOOLEAN DEFAULT {_bool_default}")
+_ensure_column("concept_terms", "origin", "VARCHAR(20) DEFAULT 'ai'")
 _ensure_column("concept_terms", "analogy", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "image_data_url", "TEXT DEFAULT ''")
 _ensure_column("concept_terms", "why_it_matters", "TEXT DEFAULT ''")
@@ -2026,6 +2031,15 @@ def seed_solar_system_learning_chapters() -> None:
     content, no LLM calls. Registered after seed_official_topics so the
     "Solar System" parent row already exists; see app/content/solar_system."""
     seed_solar_system_learning_content()
+
+
+@app.on_event("startup")
+def publish_deterministic() -> None:
+    """Registered last so every seed above has run: publishes all
+    deterministic (app-shipped, sourced) content as-is to every student --
+    official events' rules overviews and source notes, and each sourced
+    chapter inside its event. See app/content/deterministic.py."""
+    publish_deterministic_content()
 
 
 @app.get("/api/health")

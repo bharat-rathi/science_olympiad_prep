@@ -13,10 +13,13 @@
   padding: 32px 16px;
 }
 
+/* Was a fixed 16:9 box with overflow hidden, which clipped long titles and
+   explanations. Now a minimum-height stage that grows to fit its scene. */
 .pres-stage {
   width: 100%;
   max-width: 1100px;
-  aspect-ratio: 16 / 9;
+  min-height: min(560px, calc(100vh - 220px));
+  display: flex;
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -27,12 +30,13 @@
 }
 
 .pres-scene {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 8% 10%;
+  padding: clamp(24px, 5vw, 56px) clamp(20px, 7vw, 88px);
   gap: 18px;
 }
 
@@ -47,9 +51,10 @@
 
 .pres-hero-title {
   font-family: var(--font-head);
-  font-size: clamp(2.4rem, 6vw, 4.2rem);
+  font-size: clamp(1.9rem, 4.6vw, 3.4rem);
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.1;
+  overflow-wrap: break-word;
   color: var(--navy);
   margin: 0;
 }
@@ -105,10 +110,19 @@
 
 .pres-concept-term {
   font-family: var(--font-head);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(1.6rem, 3.4vw, 2.5rem);
   font-weight: 800;
+  line-height: 1.15;
   color: var(--navy);
   margin: 0;
+  overflow-wrap: break-word;
+}
+
+.pres-beat-progress {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
 }
 
 .pres-concept-beats {
@@ -159,10 +173,11 @@
 
 .pres-summary-title {
   font-family: var(--font-head);
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-size: clamp(1.6rem, 3.6vw, 2.4rem);
   font-weight: 800;
   color: var(--navy);
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .pres-summary-list {
@@ -172,8 +187,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 10px 20px;
-  max-height: 60%;
-  overflow-y: auto;
+  overflow-wrap: anywhere;
 }
 
 .pres-summary-item {
@@ -254,8 +268,7 @@
     grid-template-rows: auto 1fr;
   }
   .pres-concept-visual {
-    max-height: 30%;
-    max-width: 140px;
+    max-width: 120px;
     margin: 0 auto;
   }
 }

@@ -117,10 +117,14 @@ def require_coach(request: Request) -> models.Coach:
 
 
 def is_open_to_all_students(topic: models.Topic) -> bool:
-    """App-shipped deterministic chapters (Topic.open_to_all_students) are
-    visible to every student without a roster assignment, as long as they're
-    still published."""
-    return bool(topic.open_to_all_students and topic.content_published)
+    """Deterministic content (Topic.open_to_all_students, set by
+    app/content/deterministic.py) is visible to every student without a
+    roster assignment: an official event always (its rules and source notes
+    are published as-is), and a sourced chapter while it's still published --
+    so a coach can hide a chapter by unpublishing it."""
+    if not topic.open_to_all_students:
+        return False
+    return topic.parent_topic_id is None or bool(topic.content_published)
 
 
 def open_chapter_parent_ids(db: Session) -> set[int]:

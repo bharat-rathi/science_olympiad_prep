@@ -51,6 +51,7 @@ def seed_solar_system_learning_content() -> None:
                     assessment_type=parent.assessment_type,
                     parent_topic_id=parent.id,
                     story_md=chapter["story"],
+                    story_origin="sourced",
                     content_published=True,
                     open_to_all_students=True,
                 )
@@ -61,6 +62,8 @@ def seed_solar_system_learning_content() -> None:
                 # Not coach-editable, so setting it never clobbers an edit;
                 # a coach can still hide a chapter by unpublishing it.
                 chapter_topic.open_to_all_students = True
+            if not chapter_topic.story_origin and chapter_topic.story_md == chapter["story"]:
+                chapter_topic.story_origin = "sourced"
 
             resource = (
                 db.query(models.Resource)
@@ -74,6 +77,7 @@ def seed_solar_system_learning_content() -> None:
                     title=chapter["source_title"],
                     source_url=SOURCE_URL,
                     raw_text=chapter["source_text"],
+                    deterministic=True,
                 )
                 db.add(resource)
                 db.flush()
@@ -94,9 +98,13 @@ def seed_solar_system_learning_content() -> None:
                         )
                     )
 
-            existing_terms = {
-                row[0] for row in db.query(models.ConceptTerm.term).filter(models.ConceptTerm.topic_id == chapter_topic.id)
-            }
+            seeded_terms = {concept["term"] for concept in chapter["concepts"]}
+            existing = db.query(models.ConceptTerm).filter(models.ConceptTerm.topic_id == chapter_topic.id).all()
+            for row in existing:
+                # Backfill provenance for cards created before `origin` existed.
+                if row.term in seeded_terms and row.origin != "sourced":
+                    row.origin = "sourced"
+            existing_terms = {row.term for row in existing}
             for concept in chapter["concepts"]:
                 if concept["term"] in existing_terms:
                     continue
@@ -110,6 +118,7 @@ def seed_solar_system_learning_content() -> None:
                         why_it_matters=concept["why"],
                         source_resource_ids=[resource.id],
                         approved=True,
+                        origin="sourced",
                         image_data_url=data_url(badge_svg(label, sub, color)),
                     )
                 )

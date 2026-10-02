@@ -127,6 +127,10 @@ class Topic(Base):
     # assigned it on the roster. Still gated by content_published, so a coach
     # can hide it by unpublishing. See auth.student_can_see.
     open_to_all_students: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Where story_md came from: "sourced" (deterministic, shipped with the
+    # app), "ai" (generate_story), "coach" (hand-edited), or "" (none yet).
+    # Lets the coach view warn before AI replaces a sourced story.
+    story_origin: Mapped[str] = mapped_column(String(20), default="")
     # One narrative per topic (not per concept) weaving approved concepts
     # together -- generated only when a coach explicitly asks for it.
     story_md: Mapped[str] = mapped_column(Text, default="")
@@ -171,6 +175,15 @@ class Resource(Base):
     # Why status="failed" -- shown to the coach instead of a bare "Failed"
     # tag with no explanation. Empty for pending/ready.
     error_message: Mapped[str] = mapped_column(Text, default="")
+    # Deterministic, app-shipped source material (the seeded scioly.org wiki
+    # excerpts and source-reader fact sheets) -- published to students as-is
+    # as "Source notes", no LLM involved. See app/content/deterministic.py.
+    deterministic: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Seeded resources skip the embed/index step at startup (no API key
+    # needed to boot); they're indexed on demand the first time a coach
+    # runs AI generation on the topic. Coach-uploaded resources are indexed
+    # at ingestion and never read this flag.
+    chunks_indexed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=now)
 
     topic: Mapped["Topic"] = relationship(back_populates="resources")
@@ -211,6 +224,10 @@ class ConceptTerm(Base):
     # explanation_md so it renders as its own labeled section instead of
     # being buried in prose.
     why_it_matters: Mapped[str] = mapped_column(Text, default="")
+    # "sourced" = deterministic flashcard shipped with the app (published
+    # as-is, never deleted by a re-generate); "ai" = drafted by
+    # generate_explanations for the coach to review.
+    origin: Mapped[str] = mapped_column(String(20), default="ai")
     source_resource_ids: Mapped[list] = mapped_column(JSON, default=list)
     video_relevant: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)

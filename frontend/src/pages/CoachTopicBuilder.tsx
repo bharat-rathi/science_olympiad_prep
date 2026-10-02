@@ -335,6 +335,20 @@ export default function CoachTopicBuilder() {
   if (!topic) return <p>Loading...</p>;
 
   const approvedCount = concepts.filter((c) => c.approved).length;
+  // Deterministic = shipped with the app from a cited source (official rules,
+  // wiki excerpts, source-reader chapters). It's published to students as-is;
+  // the AI tools on this page are an optional layer on top.
+  const deterministicResourceIds = new Set(resources.filter((r) => r.deterministic).map((r) => r.id));
+  const sourcedConcepts = concepts.filter((c) => c.origin === "sourced").length;
+  const sourcedDiagrams = diagrams.filter((d) => deterministicResourceIds.has(d.resource_id)).length;
+  const hasRules = !!topic.overview_what.trim();
+  const deterministicParts = [
+    hasRules && "event rules & overview",
+    deterministicResourceIds.size > 0 && `${deterministicResourceIds.size} source note${deterministicResourceIds.size === 1 ? "" : "s"}`,
+    sourcedConcepts > 0 && `${sourcedConcepts} sourced flashcards`,
+    topic.story_origin === "sourced" && "a sourced story",
+    sourcedDiagrams > 0 && `${sourcedDiagrams} infographics`,
+  ].filter(Boolean) as string[];
 
   return (
     <div>
@@ -362,6 +376,25 @@ export default function CoachTopicBuilder() {
           Assessment
         </Link>
       </div>
+
+      {deterministicParts.length > 0 && (
+        <div className="card stack" style={{ marginBottom: 20 }}>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <strong>Deterministic content -- published as-is</strong>
+            {topic.open_to_all_students && (topic.parent_topic_id === null || topic.content_published) ? (
+              <span className="tag success">Live for every student</span>
+            ) : (
+              <span className="tag general">Hidden (unpublished)</span>
+            )}
+          </div>
+          <p className="muted" style={{ margin: 0 }}>
+            This topic has {deterministicParts.join(", ")}. It comes straight from the official rules and cited
+            sources, so students see it exactly as written -- nothing to generate or approve. The AI tools below are
+            optional: they draft extra flashcards or a story (reading these sources too) for you to review before
+            anything new reaches students.
+          </p>
+        </div>
+      )}
 
       {activeTab === "build" && (
         <>
@@ -589,10 +622,16 @@ export default function CoachTopicBuilder() {
       <TopicChat topicId={id} />
 
       <h2>Concept explanations</h2>
+      {sourcedConcepts > 0 && (
+        <p className="muted">
+          {sourcedConcepts} sourced flashcards are already published as-is. Generating with AI is optional -- it only
+          adds new drafts below them for you to approve, and never replaces or deletes a sourced card.
+        </p>
+      )}
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div className="row">
           <button className="accent" onClick={generate} disabled={busy}>
-            {busy ? "Working..." : "✨ Generate concept explanations"}
+            {busy ? "Working..." : sourcedConcepts > 0 ? "✨ Draft more with AI (optional)" : "✨ Generate concept explanations"}
           </button>
           <span className="muted">
             {approvedCount} of {concepts.length} approved
@@ -658,9 +697,13 @@ export default function CoachTopicBuilder() {
                   <div>
                     <span className="card-title">{c.term}</span>
                     <div>
-                      <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
-                        {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
-                      </span>
+                      {c.origin === "sourced" ? (
+                        <span className="tag success">source reader (as-is)</span>
+                      ) : (
+                        <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
+                          AI · {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -729,8 +772,26 @@ export default function CoachTopicBuilder() {
         of a list of definitions. Only generated when you ask for it.
       </p>
       <div className="card stack">
-        <button className="accent" onClick={generateStory} disabled={storyBusy || approvedCount === 0}>
-          {storyBusy ? "Writing..." : topic.story_md ? "✨ Regenerate story" : "✨ Generate story"}
+        {topic.story_origin === "sourced" && (
+          <p className="muted" style={{ margin: 0 }}>
+            This story is sourced and already live for students as-is. Rewriting it with AI is optional and replaces it.
+          </p>
+        )}
+        <button
+          className="accent"
+          onClick={() => {
+            if (topic.story_origin === "sourced" && !window.confirm("Replace the sourced story with an AI-written one?")) return;
+            generateStory();
+          }}
+          disabled={storyBusy || approvedCount === 0}
+        >
+          {storyBusy
+            ? "Writing..."
+            : topic.story_origin === "sourced"
+              ? "✨ Rewrite story with AI (optional)"
+              : topic.story_md
+                ? "✨ Regenerate story"
+                : "✨ Generate story"}
         </button>
         {approvedCount === 0 && <p className="muted">Approve at least one concept first.</p>}
         {topic.story_md && (
@@ -751,6 +812,8 @@ export default function CoachTopicBuilder() {
       <p className="muted">
         Controls only the flashcards and story from the Build tab -- separate from publishing the
         assessment, which has its own publish button on the assessment editor page.
+        {deterministicParts.length > 0 &&
+          " Deterministic content was published as-is automatically; unpublishing a sourced chapter hides it from students."}
       </p>
       <div className="card row" style={{ justifyContent: "space-between" }}>
         <span>
