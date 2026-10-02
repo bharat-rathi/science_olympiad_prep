@@ -699,6 +699,8 @@ export default function CoachTopicBuilder() {
                     <div>
                       {c.origin === "sourced" ? (
                         <span className="tag success">source reader (as-is)</span>
+                      ) : c.origin === "coach" ? (
+                        <span className="tag general">sourced · edited by coach</span>
                       ) : (
                         <span className={`tag ${c.video_relevant ? "video" : "general"}`}>
                           AI · {c.video_relevant ? "video coverage" : c.source_resource_ids.length ? "team resource" : "general knowledge"}

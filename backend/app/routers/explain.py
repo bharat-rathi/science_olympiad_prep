@@ -138,6 +138,8 @@ def refine_concept(
     concept.explanation_md = result["explanation_md"]
     concept.analogy = result["analogy"]
     concept.why_it_matters = result["why_it_matters"]
+    if concept.origin == "sourced":
+        concept.origin = "ai"  # coach applied AI on top of a sourced card; the seed stops syncing it
     db.commit()
     db.refresh(concept)
     return concept
@@ -167,6 +169,8 @@ def generate_concept_image(
         raise HTTPException(422, str(e))
 
     concept.image_data_url = "data:image/png;base64," + base64.b64encode(image_bytes).decode("ascii")
+    if concept.origin == "sourced":
+        concept.origin = "ai"  # replaced the sourced badge with an AI illustration
     db.commit()
     db.refresh(concept)
     return concept

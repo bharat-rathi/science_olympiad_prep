@@ -357,20 +357,6 @@ CHAPTERS_B = [
                 "why": "This is THE story of why only Earth stayed habitable.",
             },
             {
-                "term": "How life changed Earth's air",
-                "badge": ("free O₂", "only Earth", GREEN),
-                "analogy": "Earth's living things are like gardeners who completely remade the planet's sky.",
-                "explanation": "On Earth the presence first of water and then of life produced a very different atmosphere. CO2 was removed and deposited in marine sediments. Photosynthesizing life eventually released more oxygen than natural chemical reactions could remove. As a result Earth has a great deficiency of CO2, nitrogen as the most abundant gas, and the only planetary atmosphere containing free oxygen. An atmosphere can be changed by the life forms that inhabit the planet.",
-                "why": "Free oxygen + low CO2 = the signature of a living planet (biomarkers).",
-            },
-            {
-                "term": "Titan's nitrogen atmosphere",
-                "badge": ("N₂", "Titan", GAS),
-                "analogy": "Titan's freezer froze out the water and CO2, so nitrogen was left to fill the sky.",
-                "explanation": "In the outer solar system, Titan is the only moon with a substantial atmosphere. It must have contained sufficient volatiles -- ammonia, methane and nitrogen -- to form one. Temperatures are too low for carbon dioxide or water to be in vapor form, so with those two common volatiles frozen solid, nitrogen ended up as the primary atmospheric constituent. Nature, starting from one set of ingredients, makes very different atmospheres depending on each world's conditions and history.",
-                "why": "Shows how temperature controls which gases an atmosphere can hold.",
-            },
-            {
                 "term": "Solar System habitability survey",
                 "badge": ("H₂O", "follow it", BLUE),
                 "analogy": "Like a real-estate search for life: rule out the houses with no water first.",
@@ -488,7 +474,7 @@ CHAPTERS_B = [
                 "term": "How a star gets a disk",
                 "badge": ("SPIN", "+ flatten", PURPLE),
                 "analogy": "A spinning figure skater pulls in her arms and spins faster; a collapsing cloud does the same and flattens like pizza dough.",
-                "explanation": "Stars like the Sun form when dense regions in a molecular cloud (gas and dust) collapse under gravity -- a runaway process, since gravity strengthens as the cloud shrinks, concentrating material into a protostar. Roughly half the time the protostar fragments or is bound to other protostars, forming a binary or multiple star system; otherwise (as for the Sun) it collapses alone. Conservation of angular momentum spins up the protostar and flattens surrounding material into a disk. Hubble, JWST and big ground telescopes image these circumstellar disks in star-forming regions such as the Orion Nebula and Taurus.",
+                "explanation": "Stars like the Sun form when dense regions in a molecular cloud (gas and dust) collapse under gravity -- a runaway process, since gravity strengthens as the cloud shrinks, concentrating material into a protostar. Roughly half the time the protostar fragments or is bound to other protostars, forming a binary or multiple star system; otherwise (as for the Sun) it collapses alone. Conservation of angular momentum spins up the protostar and flattens surrounding material into a disk. Hubble, JWST and big ground telescopes image these circumstellar (protoplanetary) disks in star-forming regions such as the Orion Nebula and Taurus -- flattened, spinning clouds of gas and dust that are modern versions of our own solar nebula. Because nearly all very young stars have one, disks and stars must form together, and planets are probably forming in them right now.",
                 "why": "Disks are where every planet -- habitable or not -- is born.",
             },
             {
@@ -908,11 +894,18 @@ CHAPTERS_B = [
                 "why": "How we decide if an exoplanet is rocky (possibly habitable) or gaseous.",
             },
             {
-                "term": "Inflated hot Jupiters and cold Jupiters",
-                "badge": ("PUFFY", "giants", "#ff7a3d"),
-                "analogy": "A hot Jupiter is like a marshmallow held near a campfire -- it puffs up.",
-                "explanation": "Many detected gas giants above ~100 Earth masses have radii implying lower density than a pure hydrogen planet, even though hydrogen is the lightest element. Many sit in short-period orbits close to their stars and intercept a lot of energy; if trapped deep in the atmosphere, it makes the planet expand. Close-in planets on slightly eccentric orbits also get tides raised by the star, which circularize the orbit and dissipate energy that can inflate the atmosphere. Gas giants in wider, cooler orbits -- 'cold Jupiters' -- should not be inflated unless very young, but we don't yet have data on them.",
-                "why": "Hot vs. cold Jupiter definitions are a common exoplanet-type question.",
+                "term": "Hot Jupiters and cold Jupiters",
+                "badge": ("HOT", "Jupiters", "#ff7a3d"),
+                "analogy": "A hot Jupiter is like a marshmallow held right next to a campfire -- scorching and puffed up.",
+                "explanation": "HOT JUPITERS are gas-giant exoplanets in extremely close orbits around their stars -- often just a few days long and closer than Mercury is to the Sun -- with temperatures over 1,000 K. A commonly tested fact: their masses range from about 0.36 to 13.6 Jupiter masses. They were the first and easiest exoplanets to find with the Doppler (wobble) method because big, close planets make the biggest, fastest wobbles (51 Pegasi b, 1995). Many are probably tidally locked, with a permanent day side. Many are puffier than even pure hydrogen should be: they soak up so much starlight, and get so much tidal heating on slightly oval orbits, that their atmospheres inflate. COLD JUPITERS are gas giants like Jupiter that orbit beyond the frost (snow) line, where it is cold enough for water, ammonia and methane to freeze into ice; they shouldn't be inflated unless very young. Only a few percent of planetary systems have hot Jupiters.",
+                "why": "Hot vs. cold Jupiter definitions and the mass range are favorite exoplanet questions.",
+            },
+            {
+                "term": "Hot Neptunes",
+                "badge": ("HOT", "Neptunes", "#7fb8d8"),
+                "analogy": "A hot Neptune is a hot Jupiter's smaller cousin that got its puffy outer layers blown away.",
+                "explanation": "Hot Neptunes are exoplanets similar to hot Jupiters but smaller: they have less atmosphere and denser cores, because their star's radiation has stripped much of their gas away. They are more like ice giants (containing water, ammonia and methane) than the mostly hydrogen-and-helium hot Jupiters, and they often orbit within about 1 AU of their stars. Planets between Earth and Neptune in size -- super-Earths and mini-Neptunes -- turn out to be the most common kinds Kepler found, even though our solar system has none.",
+                "why": "Exoplanet-type classification questions often list hot Neptunes.",
             },
             {
                 "term": "Multi-planet systems",
@@ -957,10 +950,10 @@ CHAPTERS_B = [
                 "why": "Older rocky planets = more time for life to arise elsewhere (Fermi paradox link).",
             },
             {
-                "term": "Did our planets move?",
-                "badge": ("Nice?", "shuffle", GAS),
+                "term": "Did our planets move? (the Nice Model)",
+                "badge": ("Nice", "model", GAS),
                 "analogy": "Our solar system's furniture may have been rearranged after the house was built.",
-                "explanation": "Close-in rocky planets are common around other stars (like Kepler-444) but missing in our system, prompting speculation that more rocky planets once existed close to the Sun. Evidence from outer solar system motions suggests Jupiter may have migrated inward long ago, and its gravity could have dislodged close-in rocky planets into the Sun. Astronomers now think Uranus and Neptune formed closer to where Jupiter and Saturn are now and were kicked outward by gravitational interactions, because the disk beyond Saturn was too thin to build them in the few million years disks survive (it would take billions of years). Lesson: it's dangerous to draw conclusions from a single example.",
+                "explanation": "Close-in rocky planets are common around other stars (like Kepler-444) but missing in our system, so maybe more rocky planets once existed close to the Sun. Evidence from outer solar system motions suggests Jupiter may have migrated inward long ago, and its gravity could have knocked close-in rocky planets into the Sun. Astronomers also think Uranus and Neptune formed closer to where Jupiter and Saturn are now and were kicked outward by gravitational interactions, because the disk beyond Saturn was too thin to build them in the few million years disks survive (it would take billions of years). Models in which the giant planets' orbits shifted after they formed are often called the 'Nice Model'; such a shuffle in the first few hundred million years may also have flung asteroids inward, causing the heavy bombardment. Lesson: it's dangerous to draw conclusions from a single example.",
                 "why": "Ties exoplanet lessons back to our own solar system's history.",
             },
             {
@@ -1151,6 +1144,13 @@ CHAPTERS_B = [
                 "analogy": "Owning a house in a nice neighborhood doesn't help if the house has no plumbing.",
                 "explanation": "Even when planets orbit within their star's habitable zone, they aren't guaranteed to be habitable. Venus today has virtually no water, so even if suddenly moved to a 'just right' orbit, a critical requirement for life would still be missing. Habitability depends on distance AND the nature of the atmosphere (greenhouse effect), and on actually having water. Scientists study all factors defining the HZ and the habitability of planets within it, because this guides which exoplanets to search for life.",
                 "why": "A common trick question: HZ means 'could have liquid water', not 'has life'.",
+            },
+            {
+                "term": "Tidal locking and habitability",
+                "badge": ("DAY", "/ night", ICE),
+                "analogy": "A tidally locked planet is like a marshmallow on a stick that never gets turned -- one side toasts, the other stays cold.",
+                "explanation": "Planets in close orbits -- like those in the habitable zones of dim M-dwarf stars, which are 3-30 times closer than the Sun's -- are often tidally locked: one side always faces the star. That gives a permanent day side and a permanent night side, which strongly affects climate and where liquid water could last. A thick atmosphere and oceans that carry heat around the planet (winds and currents redistribute energy) could keep such a world habitable, maybe in a ring of 'twilight' between day and night. This is one of the open questions about planets like the one around Proxima Centauri (11-day orbit at 0.05 AU).",
+                "why": "Most nearby habitable-zone candidates orbit red dwarfs -- tidal locking is a key debate.",
             },
             {
                 "term": "Earth-like exoplanet statistics",
@@ -1358,13 +1358,6 @@ CHAPTERS_B = [
                 "analogy": "Chicken or egg? Proteins build DNA, DNA codes proteins -- RNA may be the 'egg' that does both jobs.",
                 "explanation": "Even the simplest genes contain millions of molecular units in precise sequence. Primitive life needed two capabilities: a means of extracting energy from its environment and a means of encoding and replicating information to copy itself. Modern life uses proteins (the functional molecules doing the cell's chemical work) and DNA (deoxyribonucleic acid, storing information). Neither works without the other -- a 'chicken and egg problem'. RNA (ribonucleic acid), which helps genetic information flow from DNA to proteins, can both store information and do chemical work, so an early 'RNA world' has become increasingly accepted, though much remains unknown.",
                 "why": "Explains a key open question in the origin of life.",
-            },
-            {
-                "term": "Photosynthesis and the oxygen revolution",
-                "badge": ("2.4", "bya O₂", GREEN),
-                "analogy": "Photosynthesis plugged life into the Sun's giant power outlet.",
-                "explanation": "Photosynthesis -- using sunlight to make energy-storing products (like carbohydrates) and releasing oxygen -- was perhaps the most important innovation in biology after life's origin, supporting a larger, more productive biosphere. Oxygen levels rose about 2.4 billion years ago, so oxygen-producing photosynthesis was globally important by then (and likely emerged earlier). Stromatolites suggest oxygen-producing bacteria almost 3.5 billion years ago (earliest known 3.47 billion years, Western Australia); a simpler non-oxygen photosynthesis probably came first; one or the other worked by at least 3.4 billion years ago. Oxygen formed the ozone layer (UV protection), letting life colonize land. Oxygen was deadly to some microbes (it damages biomolecules) but a boon to others: combining oxygen with organic matter releases lots of energy (like a burning log).",
-                "why": "Oxygen is both a life-changer and a detectable biomarker.",
             },
             {
                 "term": "Biomarkers (biosignatures)",

@@ -23,7 +23,7 @@ CHAPTERS_A = [
         "name": "Solar System: Meet Our Planetary System",
         "description": "A tour of everything that orbits the Sun -- planets, dwarf planets, moons, rings, asteroids, comets and dust -- with the key numbers for each planet.",
         "source_title": "Source reader: Overview of Our Planetary System (OpenStax Astronomy 2e, 7.1)",
-        "infographics": ["mass_budget", "planet_lineup"],
+        "infographics": ["mass_budget", "planet_lineup", "sun_layers", "small_bodies"],
         "source_text": (
             "The solar system = the Sun + planets, their moons and rings, asteroids, comets and dust. Most formed together "
             "with the Sun ~4.5 billion years ago from a huge cloud of gas and dust. 'Planetary system' is the general term; "
@@ -117,31 +117,35 @@ CHAPTERS_A = [
             "TNOs are called dwarf planets, and so is Ceres, the largest asteroid. The five known dwarf planets are Eris, "
             "Haumea, Pluto, Ceres and Makemake. Pluto's orbit is tilted out of the planets' flat plane. NASA's New Horizons "
             "flew past Pluto in July 2015 (photographing the bright Sputnik Plain) and later visited the TNO Arrokoth.\n\n"
+            "THE SUN UP CLOSE\n"
+            "The Sun is 1,392,000 km across (about 109 Earths side by side), weighs 1.989 x 10^30 kg, and is about 74% hydrogen and "
+            "25% helium. Deep in its core, at about 15,000,000 C, hydrogen is squeezed into helium by nuclear fusion, releasing the "
+            "energy that lights the solar system (3.846 x 10^26 watts!). That energy creeps outward through the RADIATIVE ZONE, then "
+            "gets carried up by boiling gas in the CONVECTION ZONE, and finally shines from the visible surface, the PHOTOSPHERE "
+            "(about 6,000 C). Above that are the CHROMOSPHERE, a thin TRANSITION REGION and the wispy CORONA -- which is strangely "
+            "hotter than the surface, about 1,000,000 C. The Sun is an ordinary star about halfway through its life.\n\n"
             "THE SMALLER MEMBERS\n"
             "• Moons: about 430 known, orbiting planets and dwarf planets. Only Mercury and Venus have none. The biggest -- our "
             "Moon, Jupiter's four Galilean moons, Saturn's Titan and Neptune's Triton -- are as big and interesting as small planets.\n"
             "• Rings: all four giant planets have rings made of countless pieces, from mountain-sized chunks to dust, circling "
             "the planet's equator. Saturn's are the brightest; moons shape all of them.\n"
-            "• Asteroids: rocky bodies orbiting like mini-planets, mostly between Mars and Jupiter. Some, like Eros, cross "
-            "Earth's orbit. They are leftovers from before the planets formed; Mars' small moons are probably captured asteroids.\n"
-            "• Comets: icy bodies of frozen water, carbon dioxide and carbon monoxide, also leftovers, kept in a cosmic 'deep "
-            "freeze' far from the Sun -- the same cold realm where the larger icy dwarf planets live.\n"
-            "• Cosmic dust: bits of broken rock. When they hit our air (millions a day!) they burn up as meteors, or 'shooting "
-            "stars'. A piece that survives and lands is a meteorite.\n\n"
+            "• Asteroids: rocky, airless leftovers, mostly in the main belt between Mars and Jupiter, where Jupiter's gravity kept "
+            "them from building a planet. They come in types: dark carbon-rich C-types (most common), stony S-types and metal-rich "
+            "M-types. Some, like Eros, cross Earth's orbit; Mars' small moons are probably captured asteroids.\n"
+            "• Comets: 'dirty snowballs' of frozen water, carbon dioxide and carbon monoxide. Near the Sun the ice of the solid "
+            "NUCLEUS turns to gas, making a fuzzy COMA and long TAILS. Periodic comets come back within about 200 years (like "
+            "Halley's); long-period comets take thousands to millions of years. They live in two deep freezers: the KUIPER BELT "
+            "(about 30-50 AU out, just past Neptune) and the far more distant OORT CLOUD (a huge shell with about 40 Earths' worth "
+            "of icy bodies).\n"
+            "• Dwarf planets: round from their own gravity, but they haven't cleared their orbits. The five known: Ceres, Pluto, "
+            "Eris, Haumea and Makemake. The ones beyond Neptune are called PLUTOIDS (Pluto, Haumea, Makemake, Eris); Sedna is a "
+            "candidate with an 11,518-year orbit!\n"
+            "• Cosmic dust: bits of broken rock. When they hit our air (millions a day!) they burn up as METEORS, or 'shooting "
+            "stars'. A piece that survives and lands is a METEORITE.\n\n"
             "HOW WE EXPLORED IT\n\n"
-            "Planetary astronomy is the one part of astronomy where we can actually visit what we study. Robot explorers with "
-            "names like Voyager, Pioneer, Curiosity and Pathfinder have flown past, orbited or landed on every planet. We have "
-            "studied two dwarf planets, hundreds of moons, four ring systems, a dozen asteroids and several comets. Probes have "
-            "dived into Jupiter's atmosphere and landed on Venus, Mars, the Moon, Saturn's moon Titan, the asteroids Eros, "
-            "Itokawa, Ryugu and Bennu, and comet 67P. Astronauts walked on the Moon and brought back soil, and we have even "
-            "flown a helicopter drone on Mars.\n\n"
-            "HERO OF THE CHAPTER: CARL SAGAN (1934-1996)\n\n"
-            "Sagan grew up in Brooklyn loving astronomy and science fiction. He calculated that Venus' thick air acts like a "
-            "giant greenhouse (making it scorching hot), showed that seasonal color changes on Mars were wind-blown dust rather "
-            "than plants, helped put a message plaque on the Pioneer spacecraft and records on Voyager, co-founded The "
-            "Planetary Society, simulated how life's building blocks might form on early Earth, and warned about 'nuclear "
-            "winter'. His TV series Cosmos was seen by about 500 million people in 60 countries, and he inspired Neil deGrasse "
-            "Tyson to become a scientist."
+            "Planetary astronomy is the one part of astronomy where we can actually visit what we study: robot explorers have flown "
+            "past, orbited or landed on every planet. The people and spacecraft behind these discoveries have their own chapter: "
+            "'Astronomers & Space Missions'."
         ),
         "concepts": [
             {
@@ -157,6 +161,13 @@ CHAPTERS_A = [
                 "analogy": "If the solar system were a 1,000-pound pile, the Sun would be 998 pounds and everything else would share the last 2 pounds.",
                 "explanation": "Table 7.1: Sun 99.80%; Jupiter 0.10%; comets 0.0005-0.03% (estimate); all other planets and dwarf planets 0.04%; moons and rings 0.00005%; asteroids 0.000002% (estimate); cosmic dust 0.0000001% (estimate). The Sun is about 1.4 million km across, brighter than about 80% of the Galaxy's stars, and millions of degrees inside. Jupiter is more massive than all other planets combined, and about 1,300 Earths could fit inside it. Planet masses were first found using Kepler's laws and Newton's gravity (tugs on each other and on moons) and are now measured precisely by tracking spacecraft that fly past.",
                 "why": "Ranking questions ('which holds most of the mass after the Sun?') -- the answer is Jupiter, not 'all the planets'.",
+            },
+            {
+                "term": "The Sun up close",
+                "badge": ("15M°C", "core", SUN),
+                "analogy": "The Sun is a giant nuclear furnace: in its core, hydrogen is squeezed into helium and the leftover energy shines out as light.",
+                "explanation": "Diameter 1,392,000 km (about 109 Earths across); mass 1.989 x 10^30 kg; luminosity 3.846 x 10^26 watts (3.846 x 10^33 erg/s); about 74% hydrogen and 25% helium. It makes energy by nuclear fusion of hydrogen into helium in its core. Its layers, from the center out: CORE (about 15,000,000 C) -> RADIATIVE ZONE (energy creeps out as light, ~2,000,000 C) -> CONVECTION ZONE (hot gas rises and sinks like boiling water) -> PHOTOSPHERE (the visible surface, ~6,000 C) -> CHROMOSPHERE -> TRANSITION REGION -> CORONA (the thin outer atmosphere, strangely about 1,000,000 C). The Sun is an ordinary star about halfway through its life, and it slowly brightens over time -- it is at least 30% brighter than 4 billion years ago.",
+                "why": "Sun facts and layer order are classic short-answer questions, and the Sun's brightening moves the habitable zone.",
             },
             {
                 "term": "Terrestrial planets",
@@ -175,8 +186,8 @@ CHAPTERS_A = [
             {
                 "term": "Planet data table (Table 7.2)",
                 "badge": ("AU", "the numbers", BLUE),
-                "analogy": "Like a baseball card for each planet -- distance, year, size, weight and density.",
-                "explanation": "Distance (AU) / year (Earth years) / diameter (km) / mass (10^23 kg) / density (g/cm3): Mercury 0.39 / 0.24 / 4,878 / 3.3 / 5.4. Venus 0.72 / 0.62 / 12,120 / 48.7 / 5.2. Earth 1.00 / 1.00 / 12,756 / 59.8 / 5.5. Mars 1.52 / 1.88 / 6,787 / 6.4 / 3.9. Jupiter 5.20 / 11.86 / 142,984 / 18,991 / 1.3. Saturn 9.54 / 29.46 / 120,536 / 5,686 / 0.7. Uranus 19.18 / 84.07 / 51,118 / 866 / 1.3. Neptune 30.06 / 164.82 / 49,660 / 1,030 / 1.6. An AU (astronomical unit) is the Earth-Sun distance. Five planets were known to the ancients; Uranus and Neptune were found with telescopes.",
+                "analogy": "Like a baseball card for each planet -- distance, year, day, size, weight and density.",
+                "explanation": "Distance (AU) / year / day (one spin) / diameter (km) / mass (10^23 kg) / density (g/cm3): Mercury 0.39 AU / 0.24 y (87.97 days) / 58.6 days / 4,878 / 3.3 / 5.4. Venus 0.72 / 0.62 y (224.7 days) / 243 days, backward / 12,120 / 48.7 / 5.2. Earth 1.00 / 1.00 y / 1 day / 12,756 / 59.8 / 5.5. Mars 1.52 / 1.88 y / 1.03 days / 6,787 / 6.4 / 3.9. Jupiter 5.20 / 11.86 y / 0.41 days (~10 hours, the shortest day) / 142,984 / 18,991 / 1.3. Saturn 9.54 / 29.46 y / 0.42 days / 120,536 / 5,686 / 0.7. Uranus 19.18 / 84.07 y / 0.72 days / 51,118 / 866 / 1.3 (discovered 1781). Neptune 30.06 / 164.82 y / 0.67 days / 49,660 / 1,030 / 1.6 (discovered 1846). An AU (astronomical unit) is the Earth-Sun distance. Five planets were known to the ancients; Uranus and Neptune were found with telescopes. Notice: farther out = longer year (Kepler's third law), and Venus' day is longer than its year!",
                 "why": "Put this table on your note sheet -- it powers Kepler's third law, density and comparison questions.",
             },
             {
@@ -194,11 +205,11 @@ CHAPTERS_A = [
                 "why": "The shared direction and plane are the #1 clue that everything formed from one spinning disk.",
             },
             {
-                "term": "Dwarf planets and TNOs",
+                "term": "Dwarf planets, Plutoids and TNOs",
                 "badge": ("TNO", "past Neptune", ICE),
-                "analogy": "TNOs are the Sun's far-off icy cousins, living past the last big planet like houses at the edge of town.",
-                "explanation": "Trans-Neptunian objects (TNOs) orbit beyond Neptune. Pluto was the first found (1930); more than 3,900 are now known, and New Horizons explored one called Arrokoth after flying past Pluto in July 2015 (it photographed the bright Sputnik Plain). Eris is about Pluto's size and has at least one moon; Pluto has five moons. The largest TNOs are dwarf planets, and so is Ceres, the largest asteroid. The five currently known dwarf planets: Eris, Haumea, Pluto, Ceres, Makemake. Pluto's orbit is not in the plane of the planets.",
-                "why": "Dwarf planets and TNOs are fair game, and icy bodies matter for where water lives in the solar system.",
+                "analogy": "Dwarf planets are like kids who are big enough to be round but haven't cleaned up their room (their orbit) yet.",
+                "explanation": "A DWARF PLANET is round because of its own gravity, orbits the Sun, has NOT cleared its orbital neighborhood of other objects, and is not a moon. The five currently known dwarf planets are Ceres (the largest asteroid, in the main belt), Pluto, Eris, Haumea and Makemake. A PLUTOID is a dwarf planet that orbits beyond Neptune -- the four official Plutoids are Pluto, Haumea, Makemake and Eris. Sedna is a Plutoid candidate (not official yet) with an extremely stretched orbit lasting about 11,518 years. Objects beyond Neptune are called trans-Neptunian objects (TNOs): Pluto was the first found (1930); more than 3,900 are now known. Eris is about Pluto's size and has at least one moon; Pluto has five (Charon is the biggest). Pluto's orbit is tilted out of the planets' plane. New Horizons flew past Pluto in July 2015 (photographing the bright Sputnik Plain) and later visited the TNO Arrokoth.",
+                "why": "Definitions of dwarf planet vs. Plutoid vs. TNO are favorite test questions.",
             },
             {
                 "term": "Moons and rings",
@@ -208,25 +219,25 @@ CHAPTERS_A = [
                 "why": "Moons (not planets) are where most of the solar system's possible extra-terrestrial habitats are.",
             },
             {
-                "term": "Asteroids, comets and dust",
-                "badge": ("BITS", "leftovers", ROCK),
-                "analogy": "They're the crumbs left on the table after the planets were 'baked' -- and they still tell us the recipe.",
-                "explanation": "Asteroids are rocky bodies orbiting the Sun like miniature planets, mostly between Mars and Jupiter; some cross Earth's orbit (like Eros, which NEAR-Shoemaker orbited for a year and then landed on). Most are remnants of the population that existed before the planets formed; Mars' small moons are very likely captured asteroids. Comets are made mostly of ice -- frozen water, carbon dioxide and carbon monoxide -- and are also remnants, stored in distant cold regions (e.g. comet 67P, visited by Rosetta, with gas jets). Cosmic dust grains that enter our air burn up as meteors ('shooting stars'), millions every day; a piece that reaches the ground is a meteorite.",
-                "why": "Comets and asteroids may have delivered water and organic molecules to the young Earth.",
+                "term": "Asteroids and their types",
+                "badge": ("C-S-M", "asteroids", ROCK),
+                "analogy": "Asteroids are the crumbs left on the table after the planets were 'baked' -- and they still tell us the recipe.",
+                "explanation": "Asteroids are small, rocky, airless bodies that orbit the Sun like miniature planets, mostly in the MAIN BELT between Mars and Jupiter. They are leftover planetesimals that never built a full planet, because Jupiter's strong gravity stirred them up and stopped them from clumping. Ongoing collisions have broken them into many sizes. Their makeup depends on how hot it was where they formed: C-type (dark, carbon-rich -- the most common), S-type (stony silicate rock, brighter) and M-type (metal-rich, like iron-nickel), plus several rarer classes. Some asteroids cross Earth's orbit, like Eros (orbited and landed on by NEAR-Shoemaker); others share Jupiter's orbit as Trojans. Objects smaller than about 400 km can be lumpy, like 60-km-long Ida; Mars' tiny moons are probably captured asteroids.",
+                "why": "Asteroids preserve the solar system's original ingredients -- and can deliver water and organics.",
             },
             {
-                "term": "Exploring by spacecraft",
-                "badge": ("PROBE", "robots", BLUE),
-                "analogy": "Planetary science is the only part of astronomy with a 'field trip' option -- we send robots to visit.",
-                "explanation": "In about 50 years spacecraft have flown past, orbited or landed on every planet (Voyager, Pioneer, Curiosity, Pathfinder and more), investigating two dwarf planets, hundreds of moons, four ring systems, a dozen asteroids and several comets. Probes have penetrated Jupiter's atmosphere and landed on Venus, Mars, the Moon, Titan, asteroids Eros, Itokawa, Ryugu and Bennu, and comet 67P (Churyumov-Gerasimenko). Humans walked on the Moon (Apollo, e.g. Apollo 15's rover) and returned soil; a helicopter drone has flown on Mars.",
-                "why": "Mission names and what they visited are classic Solar System test questions.",
+                "term": "Comets, the Kuiper Belt and the Oort Cloud",
+                "badge": ("ICE", "comets", ICE),
+                "analogy": "Comets are dirty snowballs stored in the solar system's deep freezer, which sprout glowing tails when they visit the Sun.",
+                "explanation": "Comets are icy bodies -- frozen water, carbon dioxide and carbon monoxide mixed with dust -- formed in the cold outer solar system. A comet has a solid NUCLEUS; near the Sun its ices turn to gas, making a fuzzy COMA and long TAILS pointing away from the Sun (e.g. comet 67P, visited by Rosetta, with gas jets). PERIODIC (short-period) comets return in less than about 200 years (like Halley's Comet); NON-PERIODIC (long-period) comets take thousands to millions of years. They come from two reservoirs of leftover building blocks: the KUIPER BELT, a flat disk of icy objects about 30-50 AU from the Sun just beyond Neptune (home of Pluto and many dwarf planets), and the OORT CLOUD, a vast, distant, spherical shell of icy bodies (estimated mass about 40 Earths) thought to supply many comets. Dust left along a comet's path causes meteor showers when Earth passes through it.",
+                "why": "Comets may have delivered water and organic molecules to young Earth.",
             },
             {
-                "term": "Carl Sagan",
-                "badge": ("Sagan", "1934-1996", PURPLE),
-                "analogy": "Carl Sagan was astronomy's best storyteller -- like a science teacher for the whole planet.",
-                "explanation": "Born in Brooklyn in 1934. He calculated that Venus' thick atmosphere acts like a giant greenhouse, raising the temperature enormously; showed Mars' seasonal changes were wind-blown dust, not vegetation; served on many mission teams; got a message plaque onto Pioneer and audio-video records onto Voyager; helped found The Planetary Society (the world's largest space-interest group); simulated early-Earth chemistry ('primordial soup'); modeled 'nuclear winter'. Books: Cosmos, The Cosmic Connection, Pale Blue Dot, The Demon-Haunted World, the novel Contact. His TV series Cosmos reached ~500 million people in 60 countries. He inspired Neil deGrasse Tyson.",
-                "why": "His Venus greenhouse work is the root of today's runaway-greenhouse habitability story.",
+                "term": "Meteors and meteorites",
+                "badge": ("ZOOM", "shooting star", GOLD),
+                "analogy": "A meteor is a grain of space dust burning up like a spark; a meteorite is a piece tough enough to land.",
+                "explanation": "Countless grains of broken rock, called cosmic dust, float through the solar system. When they enter Earth's atmosphere -- millions every day -- they burn up as a brief streak of light called a METEOR ('shooting star'). Many meteors seeming to come from one point in the sky (the radiant) form a METEOR SHOWER, made when Earth crosses a comet's dust trail. A piece that survives the trip and hits the ground is a METEORITE: irons (iron-nickel), stony-irons, and stones. The most primitive stones, carbonaceous meteorites like Murchison and Allende, date to the solar system's birth 4.5 billion years ago and contain organic molecules, including amino acids and sugars from space.",
+                "why": "Meteorites are physical samples of the early solar system and of life's building blocks.",
             },
         ],
     },
@@ -235,7 +246,7 @@ CHAPTERS_A = [
         "name": "Solar System: How the Solar System Was Born",
         "description": "The solar nebula model: the motion and chemistry clues, why the inner planets are rocky, planetesimals, giant impacts and differentiation.",
         "source_title": "Source reader: Origin of the Solar System (OpenStax Astronomy 2e, 7.4, 14.3, 14.5)",
-        "infographics": ["nebula_steps"],
+        "infographics": ["nebula_steps", "star_lifecycle"],
         "source_text": (
             "Patterns among planets reveal the origin. All planets lie in nearly the same plane and revolve the same direction; "
             "the Sun spins the same way -> Sun and planets formed together from a spinning cloud of gas and dust, the SOLAR "
@@ -315,6 +326,13 @@ CHAPTERS_A = [
             "Thousands of planets found around other stars show that many planetary systems look nothing like ours. Many have "
             "'super-Earths' (between Earth and Neptune in size), and some have giant planets hugging their stars -- the reverse "
             "of our order. A good theory must explain them too (see the exoplanet chapters).\n\n"
+            "THE LIFE OF A STAR\n"
+            "Our Sun is just one star, and stars have life stories. A star is born when a cold, dense clump of a nebula collapses "
+            "into a PROTOSTAR, heating up as it shrinks. Once its core is hot enough to fuse hydrogen, it becomes a MAIN-SEQUENCE "
+            "star and shines steadily for most of its life. A Sun-like star later swells into a RED GIANT, puffs off its outer "
+            "layers, and leaves a small, hot WHITE DWARF. A much heavier star becomes a RED SUPERGIANT and explodes as a SUPERNOVA, "
+            "leaving a NEUTRON STAR or a BLACK HOLE. Supernovas spread heavy elements through space -- the iron, oxygen and carbon "
+            "that later build planets and people.\n\n"
             "A GOOD THEORY MUST PASS THREE TESTS\n"
             "• Motion: same plane, same direction, Sun's spin.\n"
             "• Chemistry: rocky inside, icy and gassy outside.\n"
@@ -348,13 +366,6 @@ CHAPTERS_A = [
                 "analogy": "Like the line on a mountain above which snow stays frozen all year.",
                 "explanation": "The distance from a young star beyond which it is cold enough for water (and other volatiles like ammonia and methane) to freeze into solid ice grains. Inside it, only rock and metal can condense, giving rocky terrestrial planets; outside it, ice is plentiful, so solid cores can grow big enough to capture gas and become giant planets. Giant planets cannot form without condensing water ice -- which is why hot Jupiters must have formed beyond the frost line and migrated inward.",
                 "why": "Frost line + migration is the key to explaining hot and cold Jupiters on exoplanet questions.",
-            },
-            {
-                "term": "Circumstellar (protoplanetary) disks",
-                "badge": ("DISK", "baby systems", PURPLE),
-                "analogy": "Looking at a young star's disk is like seeing a baby photo of our own solar system.",
-                "explanation": "Circumstellar disks are flattened, spinning clouds of gas and dust around young stars -- other 'solar nebulas'. Hubble images of the Orion Nebula show disks around very young stars, some glowing, some dark silhouettes against bright gas. They are common around very young stars, which means disks and stars form together, and they are contemporary analogs of our solar nebula where planets are probably forming today.",
-                "why": "Direct observational evidence for the formation model (more in the 'Planets Forming Around Other Stars' chapter).",
             },
             {
                 "term": "Planetesimals",
@@ -397,6 +408,13 @@ CHAPTERS_A = [
                 "analogy": "Like a detective's story that must match the fingerprints, the alibi AND the timeline.",
                 "explanation": "A viable theory of solar system formation must satisfy (1) motion constraints -- planets in one plane, same direction, Sun spinning the same way; (2) chemical constraints -- rock and metal inside, ice and gas outside; and (3) age constraints -- the oldest materials (meteorites) date to about 4.5 billion years. The solar nebula model passes all three, while random giant impacts explain the exceptions.",
                 "why": "Good framework for any 'explain the evidence' free-response question.",
+            },
+            {
+                "term": "The life cycle of a star",
+                "badge": ("STAR", "life cycle", SUN),
+                "analogy": "Stars have life stories like people: born in a cloud, a long adulthood, and an ending that depends on how big they are.",
+                "explanation": "Stars form in cold, dense regions of a nebula that collapse under their own gravity into a PROTOSTAR, which heats up as it shrinks. When its core gets hot and dense enough, hydrogen fusion starts and it becomes a MAIN-SEQUENCE star -- where it spends most of its life (the Sun is about halfway through). Low- to medium-mass stars like the Sun later swell into RED GIANTS, puff off their outer layers, and leave behind a hot, dense WHITE DWARF. High-mass stars become RED SUPERGIANTS and explode as a SUPERNOVA, leaving a NEUTRON STAR or a BLACK HOLE. Supernovas scatter heavy elements (like iron, carbon and oxygen) into space, where they become part of new stars, planets -- and people.",
+                "why": "Star evolution is the background for planet formation and for 'we are made of star stuff'.",
             },
         ],
     },
@@ -730,18 +748,18 @@ CHAPTERS_A = [
                 "why": "Links Earth's origin of life to hydrothermal vents and to life on Mars questions.",
             },
             {
-                "term": "Photosynthesis and the rise of oxygen",
-                "badge": ("O₂", "~2 bya", GREEN),
-                "analogy": "Plants exhale what we inhale -- we breathe their 'waste'.",
-                "explanation": "Blue-green algae take in CO2 and release oxygen as waste, using sunlight's energy (photosynthesis); they gave rise to all plants. Free oxygen stayed scarce until about 2 billion years ago (chapter 30: ~2.4 billion) because reactions with the crust removed it as fast as it formed. More plant life and heavy erosion (burying plant carbon before it recombined with oxygen) let oxygen accumulate. Oxygen formed the ozone layer, which shielded the land from UV so life could colonize it, and animals evolved to breathe oxygen.",
-                "why": "Abundant atmospheric oxygen is a top biomarker for exoplanets.",
+                "term": "Photosynthesis and the oxygen revolution",
+                "badge": ("O₂", "~2.4 bya", GREEN),
+                "analogy": "Photosynthesis plugged life into the Sun's giant power outlet -- and the 'exhaust' was the oxygen we breathe.",
+                "explanation": "Photosynthesis uses sunlight to turn carbon dioxide and water into energy-storing food (carbohydrates), releasing oxygen as a by-product. Blue-green algae (cyanobacteria) did it first and gave rise to all plants. Besides the origin of life itself, it may be biology's most important invention: sunlight is a huge energy supply, so it supported a much larger biosphere. A simpler kind that makes no oxygen probably came first; one kind or the other was working at least 3.4 billion years ago, and stromatolites suggest oxygen-makers almost 3.5 billion years ago. At first, chemical reactions with the crust grabbed the oxygen as fast as it formed. As plant life grew and erosion buried plant carbon, free oxygen began piling up in the air about 2.4 billion years ago (another chapter of the source says about 2 billion). Oxygen formed the OZONE LAYER, which blocks deadly ultraviolet light, so life could finally leave the oceans and colonize the land. Oxygen poisoned some microbes (it damages delicate molecules) but was a jackpot for others: combining oxygen with food releases lots of energy, like a burning log, so animals evolved to breathe it -- we breathe plants' waste product!",
+                "why": "Abundant oxygen is both a life-changer and the strongest biomarker for exoplanets.",
             },
             {
-                "term": "Life removed Earth's CO2",
-                "badge": ("−CO₂", "by life", BLUE),
-                "analogy": "Life acted like a giant vacuum cleaner, sucking carbon dioxide out of the sky into rocks.",
-                "explanation": "On a planetary scale, one consequence of life has been a decrease in atmospheric CO2. Without life, Earth would probably have an atmosphere dominated by CO2 like Mars or Venus. Living things, together with high geological activity, stripped our atmosphere of most of this gas (CO2 ended up in marine sediments and carbonate rocks).",
-                "why": "A planet's atmosphere can reveal whether life is shaping it.",
+                "term": "How life rebuilt Earth's air",
+                "badge": ("−CO₂", "+O₂", BLUE),
+                "analogy": "Earth's living things were like gardeners who completely remade the planet's sky.",
+                "explanation": "Earth, Venus and Mars probably started with similar CO2-rich atmospheres. On Earth, liquid water and then life changed everything: CO2 dissolved in the oceans and got locked into marine sediments and carbonate rocks, and photosynthesis released more oxygen than natural chemical reactions could remove. Living things, together with Earth's active geology, stripped the air of most of its CO2. The result: Earth's air is low in CO2, mostly nitrogen (78%), and it is the ONLY planetary atmosphere with free oxygen (21%). Without life, Earth would probably have a CO2-dominated atmosphere like Venus and Mars (each about 96% CO2). An atmosphere can be changed by the life on a planet -- which is exactly why astronomers look at exoplanet atmospheres for signs of life.",
+                "why": "Free oxygen + low CO2 = the signature of a living planet.",
             },
             {
                 "term": "Why Earth has few craters",
@@ -1319,15 +1337,22 @@ CHAPTERS_A = [
                 "term": "Jupiter's and Saturn's systems",
                 "badge": ("97/274", "moons", GAS),
                 "analogy": "Saturn's rings are like a giant highway jammed with ice cubes from ping-pong ball to basketball size.",
-                "explanation": "Jupiter: 97 known moons and a faint ring; four large Galilean moons (Io, Europa, Ganymede, Callisto, found by Galileo in 1610); most others are small retrograde moons >20 million km out, likely captured asteroids. Saturn: at least 274 known moons (128 small ones announced in early 2025) and magnificent rings. Titan is almost as big as Ganymede and is the only moon with a substantial atmosphere and liquid hydrocarbon (methane, ethane) lakes/seas. Six other large regular moons are 400-1,600 km across; Enceladus has active water geysers. Saturn's rings are broad and flat with major and minor gaps, not solid -- icy fragments, mostly water ice, the size of ping-pong balls, tennis balls and basketballs.",
-                "why": "Titan and Enceladus are among the solar system's top habitability targets.",
+                "explanation": "JUPITER: 97 known moons and a faint ring. Its four large Galilean moons -- Io, Europa, Ganymede and Callisto -- were discovered by Galileo in 1610; most of the others are small moons in backward (retrograde) orbits more than 20 million km out, probably captured asteroids. SATURN: at least 274 known moons (128 small ones announced in early 2025) plus its magnificent rings. Its largest moon, TITAN, was discovered by Christiaan Huygens in 1655; it is almost as big as Ganymede and is the only moon with a thick atmosphere and lakes of liquid methane and ethane. Six other large regular moons are 400-1,600 km across, and little Enceladus shoots geysers of water. Saturn's rings are broad and flat with gaps, made of countless icy pieces the size of ping-pong balls to basketballs, kept in line partly by shepherd moons like Pan and Prometheus. Note: older references list 'Jupiter 79+ moons, Saturn 60+' -- moon counts keep rising as telescopes find more tiny ones, so use the newest numbers.",
+                "why": "Moon counts, discoverers and Titan facts are common test questions.",
             },
             {
                 "term": "Uranus' and Neptune's systems",
                 "badge": ("98°", "tilt", ICE),
                 "analogy": "Uranus is a planet rolling on its side, and its moons and rings roll along with it.",
-                "explanation": "Uranus' ring and moon system is tilted 98 deg, like the planet: 11 rings and 29 known moons; the five largest are 500-1,600 km across (similar to Saturn's six regular moons). Its rings, discovered in 1977, are narrow ribbons of dark material with broad gaps, likely confined by small, mostly unseen moons. Neptune has 16 known moons; Triton is relatively large, orbits retrograde, has a very thin atmosphere and active eruptions (Voyager, 1989), and may have originated as a dwarf planet like Pluto. Neptune's rings are narrow, faint and dark.",
-                "why": "Tilt and captured moons are evidence of collisions and capture in the solar system's past.",
+                "explanation": "URANUS (discovered 1781): its ring and moon system is tilted 98 degrees, like the planet. It has 11 rings and 29 known moons; the five major moons are Miranda, Ariel, Umbriel, Titania and Oberon (500-1,600 km across). Its rings, discovered in 1977, are narrow ribbons of dark material with wide gaps, probably held in place by small, mostly unseen shepherd moons. NEPTUNE (discovered 1846): 16 known moons and narrow, faint, dark rings. Its largest moon, TRITON, orbits backward (retrograde) -- unusual for a big moon -- has a thin atmosphere, and showed active eruptions to Voyager 2 in 1989; it may be a captured dwarf planet like Pluto. Neptune and Pluto are in a 3:2 orbital resonance.",
+                "why": "Uranus' moon names and Triton's retrograde orbit are classic test facts.",
+            },
+            {
+                "term": "Moons of the rocky planets and Pluto",
+                "badge": ("1+2", "inner moons", "#bdbdbd"),
+                "analogy": "The inner planets travel light: Mercury and Venus have no moons at all, Earth has one, and Mars has two little potatoes.",
+                "explanation": "Mercury and Venus have no moons. EARTH has one, the Moon (3,476 km across, density 3.3), which is tidally locked so we always see the same face; it has been geologically dead since major volcanism stopped about 3.3 billion years ago. MARS has two tiny, lumpy moons, PHOBOS and DEIMOS, discovered in 1877 -- probably captured asteroids. Out past Neptune, the dwarf planet PLUTO has five known moons; the largest, CHARON, is so big compared to Pluto that the two are mutually tidally locked, each always showing the other the same face. In all, about 430 moons are known around the planets and dwarf planets.",
+                "why": "Completes the moon roster tests ask about, not just the giant planets'.",
             },
             {
                 "term": "Galilean moons data (Table 12.1)",

@@ -73,21 +73,21 @@ def mass_budget() -> str:
 
 
 def planet_lineup() -> str:
-    w, h = 1040, 660
+    w, h = 1040, 680
     planets = [
         # name, AU, period (y), diameter (km), density (g/cm^3), mass (10^23 kg)
-        ("Mercury", "0.39", "0.24", 4878, "5.4", "3.3"),
-        ("Venus", "0.72", "0.62", 12120, "5.2", "48.7"),
-        ("Earth", "1.00", "1.00", 12756, "5.5", "59.8"),
-        ("Mars", "1.52", "1.88", 6787, "3.9", "6.4"),
-        ("Jupiter", "5.20", "11.86", 142984, "1.3", "18,991"),
-        ("Saturn", "9.54", "29.46", 120536, "0.7", "5,686"),
-        ("Uranus", "19.18", "84.07", 51118, "1.3", "866"),
-        ("Neptune", "30.06", "164.82", 49660, "1.6", "1,030"),
+        ("Mercury", "0.39", "0.24", 4878, "5.4", "3.3", "58.6 d"),
+        ("Venus", "0.72", "0.62", 12120, "5.2", "48.7", "243 d (back)"),
+        ("Earth", "1.00", "1.00", 12756, "5.5", "59.8", "1 d"),
+        ("Mars", "1.52", "1.88", 6787, "3.9", "6.4", "1.03 d"),
+        ("Jupiter", "5.20", "11.86", 142984, "1.3", "18,991", "0.41 d"),
+        ("Saturn", "9.54", "29.46", 120536, "0.7", "5,686", "0.42 d"),
+        ("Uranus", "19.18", "84.07", 51118, "1.3", "866", "0.72 d"),
+        ("Neptune", "30.06", "164.82", 49660, "1.6", "1,030", "0.67 d"),
     ]
     body = ""
-    body += rect(20, 96, 470, 474, fill="#1d1a12", stroke=ROCK, rx=14, opacity=0.9)
-    body += rect(530, 96, 490, 474, fill="#0f1f3a", stroke=ICE, rx=14, opacity=0.9)
+    body += rect(20, 96, 470, 490, fill="#1d1a12", stroke=ROCK, rx=14, opacity=0.9)
+    body += rect(530, 96, 490, 490, fill="#0f1f3a", stroke=ICE, rx=14, opacity=0.9)
     body += text(255, 124, "TERRESTRIAL (inner) planets", 17, ROCK, "bold", "middle")
     body += text(775, 124, "JOVIAN / GIANT (outer) planets", 17, ICE, "bold", "middle")
     body += text(510, 330, "asteroid", 12, MUTED, "middle")
@@ -95,7 +95,7 @@ def planet_lineup() -> str:
     for k in range(9):
         body += circle(503 + (k % 3) * 7, 260 + k * 7, 1.6, ROCK)
     xs = [75, 190, 305, 420, 600, 728, 852, 960]
-    for (name, au, period, diam, dens, mass), x in zip(planets, xs):
+    for (name, au, period, diam, dens, mass, day), x in zip(planets, xs):
         r = 5 + 45 * (diam / 142984) ** 0.75
         cy = 230
         body += circle(x, cy, r, PLANET_COLORS[name])
@@ -106,11 +106,12 @@ def planet_lineup() -> str:
         body += text(x, 370, f"year {period} y", 13, TEXT, anchor="middle")
         body += text(x, 392, f"{diam:,} km", 13, TEXT, anchor="middle")
         body += text(x, 414, f"{dens} g/cm3", 13, TEXT, anchor="middle")
-        body += text(x, 436, f"{mass}e23 kg", 12, MUTED, anchor="middle")
-    body += para(36, 470, "Small, rocky and metal-rich, with solid surfaces scarred by craters, mountains and volcanoes. Dense: 3.9 to 5.5 g/cm3 (water = 1). Earth is the densest planet.", 60, 14, TEXT)
-    body += para(546, 470, "Huge worlds of light gases, liquids and ices with no solid surface to land on -- like giant spherical oceans around small dense cores. Saturn (0.7) would float in water!", 62, 14, TEXT)
-    body += para(30, 600, "Every planet orbits the Sun in the same direction and in nearly the same flat plane. Sizes of the small planets are enlarged so you can see them; the numbers are real (Table 7.2). 1 AU = Earth-Sun distance.", 140, 13, MUTED)
-    return canvas(w, h, "Meet the Eight Planets", "Distance from the Sun, length of year, diameter, density and mass", body)
+        body += text(x, 436, f"day {day}", 13, TEXT, anchor="middle")
+        body += text(x, 456, f"{mass}e23 kg", 12, MUTED, anchor="middle")
+    body += para(36, 486, "Small, rocky and metal-rich, with solid surfaces scarred by craters, mountains and volcanoes. Dense: 3.9 to 5.5 g/cm3 (water = 1). Earth is the densest planet.", 60, 14, TEXT)
+    body += para(546, 486, "Huge worlds of light gases, liquids and ices with no solid surface to land on -- like giant spherical oceans around small dense cores. Saturn (0.7) would float in water!", 62, 14, TEXT)
+    body += para(30, 606, "Every planet orbits the Sun in the same direction and in nearly the same flat plane. Sizes of the small planets are enlarged so you can see them; the numbers are real (Table 7.2). 1 AU = Earth-Sun distance.", 140, 13, MUTED)
+    return canvas(w, h, "Meet the Eight Planets", "Distance from the Sun, year, diameter, density, day and mass", body)
 
 
 # ---------------------------------------------------------------- chapter 2
@@ -717,13 +718,10 @@ def exoplanet_zoo() -> str:
         ("Jupiter", 70, PLANET_COLORS["Jupiter"], "gas giant"),
         ("Hot Jupiter", 74, "#ff7a3d", "closer than Mercury; puffed up by heat"),
     ]
-    x = 60
-    for name, r, color, note in zoo:
-        cx = x + r
+    for (name, r, color, note), cx in zip(zoo, [90, 250, 410, 570, 740, 930]):
         body += circle(cx, 240, r, color)
         body += text(cx, 340, name, 15, TEXT, "bold", "middle")
-        body += mtext(cx, 362, wrap(note, 18), 12, MUTED, anchor="middle")
-        x += 2 * r + 60
+        body += mtext(cx, 362, wrap(note, 20), 13, MUTED, anchor="middle", line_height=17)
     body += card(30, 430, 330, 160, "Most common sizes", "Kepler found the most planets in sizes we DON'T have: between Earth and Neptune. Small planets are actually more common than giants once detection bias is corrected.", GOLD, body_size=13)
     body += card(376, 430, 330, 160, "How common?", "About half (or more) of stars have planets: at least 100 billion planets in our Galaxy. Over 1,000 multi-planet systems known by 2025 -- one has 8 planets.", ICE, body_size=13)
     body += card(722, 430, 308, 160, "Mass vs size", "More mass usually means bigger, but above ~1,000 Earth masses gravity squeezes planets SMALLER. Some hot Jupiters are puffier than pure hydrogen should be.", RED, body_size=13)
@@ -843,6 +841,309 @@ def biomarkers() -> str:
     return canvas(w, h, "Biomarkers: Spotting Life from Afar", "Reading a planet's light for signs of a biosphere (Section 30.3)", body)
 
 
+# ---------------------------------------------------------------- chapter 1 (merged)
+
+
+def sun_layers() -> str:
+    w, h = 1040, 640
+    cx, cy = 300, 360
+    body = ""
+    layers = [
+        (250, "#ffe7a8", 0.35, "Corona ~1,000,000 C"),
+        (215, "#ffcf6b", 0.6, "Chromosphere + transition region"),
+        (198, "#ffb347", 1, "Photosphere (surface) ~6,000 C"),
+        (180, "#ff9a3c", 1, "Convection zone"),
+        (130, "#ff7b2e", 1, "Radiative zone ~2,000,000 C"),
+        (62, "#fff1a8", 1, "Core ~15,000,000 C"),
+    ]
+    for r, color, op, _ in layers:
+        body += circle(cx, cy, r, color, opacity=op)
+    for k in range(10):
+        a = math.radians(200 + k * 14)
+        body += path(f"M {cx + 140 * math.cos(a):.0f} {cy + 140 * math.sin(a):.0f} q 12 -10 22 0 q 10 10 22 0", "#c75c1e", 2)
+    body += text(cx, cy + 6, "CORE", 16, "#5a2a00", "bold", "middle")
+    labels = [
+        (cy - 236, "CORONA", "thin outer atmosphere, ~1,000,000 C (hotter than the surface!)"),
+        (cy - 196, "CHROMOSPHERE + TRANSITION REGION", "thin layers above the surface"),
+        (cy - 150, "PHOTOSPHERE", "the visible surface, ~6,000 C"),
+        (cy - 104, "CONVECTION ZONE", "hot gas rises and sinks like boiling soup"),
+        (cy - 50, "RADIATIVE ZONE", "energy creeps out as light, ~2,000,000 C"),
+        (cy + 4, "CORE", "hydrogen fuses into helium, ~15,000,000 C"),
+    ]
+    for y, name, desc in labels:
+        body += line(cx + 40, y + 4, 600, y + 4, MUTED, 1, dash="3 4")
+        body += text(610, y, name, 15, GOLD, "bold")
+        body += text(610, y + 20, desc, 14, TEXT)
+    body += card(610, 430, 400, 170, "Sun by the numbers", "Diameter 1,392,000 km (about 109 Earths) - mass 1.989 x 10^30 kg (99.8% of the Solar System) - power 3.846 x 10^26 W - about 74% hydrogen, 25% helium - halfway through its life.", SUN, body_size=15)
+    return canvas(w, h, "Inside the Sun", "Layers from the core out (temperatures from the scioly.org Solar System wiki)", body)
+
+
+def small_bodies() -> str:
+    w, h = 1060, 660
+    body = ""
+    y = 300
+    body += circle(50, y, 30, "url(#sunglow)")
+    body += line(84, y, 600, y, PANEL_EDGE, 1.5, dash="4 6")
+    zones = [
+        (120, 170, PLANET_COLORS["Earth"], "inner planets", "rocky"),
+        (205, 240, ROCK, "asteroid belt", "Mars-Jupiter"),
+        (275, 380, PLANET_COLORS["Jupiter"], "giant planets", "5-30 AU"),
+        (420, 480, ICE, "Kuiper Belt", "30-50 AU"),
+        (520, 600, "#c9d3e8", "Oort Cloud", "far, far out"),
+    ]
+    for i, (x1, x2, color, name, sub) in enumerate(zones):
+        body += rect(x1, y - 120, x2 - x1, 240, fill=color, stroke="none", rx=10, opacity=0.13)
+        body += text((x1 + x2) / 2, y + 150 + (i % 2) * 44, name, 15, color, "bold", "middle")
+        body += text((x1 + x2) / 2, y + 168 + (i % 2) * 44, sub, 13, MUTED, anchor="middle")
+    for k, x in enumerate([130, 148, 162]):
+        body += circle(x, y, 6 + k, [PLANET_COLORS["Mercury"], PLANET_COLORS["Earth"], PLANET_COLORS["Mars"]][k])
+    for k in range(26):
+        body += circle(208 + (k * 13) % 30, y - 100 + (k * 37) % 200, 2.4, ROCK)
+    for x, r, c in [(296, 22, PLANET_COLORS["Jupiter"]), (330, 18, PLANET_COLORS["Saturn"]), (354, 11, PLANET_COLORS["Uranus"]), (372, 10, PLANET_COLORS["Neptune"])]:
+        body += circle(x, y, r, c)
+    for k in range(34):
+        body += circle(424 + (k * 17) % 54, y - 104 + (k * 41) % 208, 2.2, ICE)
+    for k in range(40):
+        body += circle(524 + (k * 23) % 74, y - 112 + (k * 53) % 224, 1.8, "#c9d3e8", opacity=0.7)
+    body += text(326, y - 140, "not to scale -- the Oort Cloud is thousands of times farther out", 13, MUTED, anchor="middle")
+    cards = [
+        ("ASTEROIDS", "Rocky leftovers, mostly between Mars and Jupiter. Types: C (dark, carbon-rich, most common), S (stony silicate), M (metal-rich).", ROCK),
+        ("COMETS", "'Dirty snowballs' of ice + dust. Nucleus -> coma -> tails pointing away from the Sun. Periodic: < ~200 yrs; long-period: thousands to millions.", ICE),
+        ("DWARF PLANETS", "Round, but haven't cleared their orbits: Ceres, Pluto, Eris, Haumea, Makemake. Plutoids = the ones beyond Neptune. Candidate: Sedna (11,518-yr orbit).", PURPLE),
+        ("METEORS + METEORITES", "Dust burning up in our air = meteor. A piece that lands = meteorite (irons, stony-irons, stones).", GOLD),
+    ]
+    for i, (head, desc, color) in enumerate(cards):
+        body += card(640, 100 + i * 134, 400, 122, head, desc, color, body_size=14)
+    return canvas(w, h, "Small Bodies of the Solar System", "Where the leftovers live -- not to scale", body)
+
+
+# ---------------------------------------------------------------- chapter 2 (merged)
+
+
+def star_lifecycle() -> str:
+    w, h = 1060, 650
+    body = ""
+    body += '<ellipse cx="110" cy="300" rx="80" ry="56" fill="#6c5a8f" opacity="0.6"/>'
+    body += text(110, 380, "NEBULA", 16, TEXT, "bold", "middle")
+    body += text(110, 400, "cold gas + dust", 14, MUTED, anchor="middle")
+    body += line(196, 300, 246, 300, GOLD, 3, arrow=True)
+    body += circle(290, 300, 30, "#ff9a5a")
+    body += text(290, 380, "PROTOSTAR", 16, TEXT, "bold", "middle")
+    body += text(290, 400, "shrinks + heats", 14, MUTED, anchor="middle")
+    body += line(326, 300, 376, 300, GOLD, 3, arrow=True)
+    body += circle(420, 300, 34, "url(#sunglow)")
+    body += text(420, 380, "MAIN SEQUENCE", 16, TEXT, "bold", "middle")
+    body += text(420, 400, "fuses hydrogen", 14, MUTED, anchor="middle")
+    body += text(420, 440, "(the Sun: halfway)", 14, MUTED, anchor="middle")
+    body += path("M 460 280 C 520 200, 560 170, 600 170", GOLD, 3, arrow=True)
+    body += path("M 460 320 C 520 400, 560 430, 600 430", RED, 3, arrow=True)
+    body += text(500, 200, "Sun-like star", 14, GOLD, "bold", "end")
+    body += text(560, 470, "massive star", 14, RED, "bold", "middle")
+    for x, r, color, name, sub, y in [
+        (660, 46, "#ff6b4a", "RED GIANT", "swells up", 170),
+        (820, 30, "#cfe3ff", "planetary nebula", "outer layers drift off", 170),
+        (960, 12, "#ffffff", "WHITE DWARF", "small hot leftover", 170),
+        (660, 58, "#ff4a3a", "RED SUPERGIANT", "huge", 430),
+        (820, 44, "#ffe27a", "SUPERNOVA", "explodes!", 430),
+        (960, 14, "#9fb4ff", "NEUTRON STAR", "or BLACK HOLE", 430),
+    ]:
+        body += circle(x, y, r, color, opacity=0.95)
+        body += text(x, y + r + 26, name, 15, TEXT, "bold", "middle")
+        body += text(x, y + r + 46, sub, 14, MUTED, anchor="middle")
+    body += line(712, 170, 770, 170, MUTED, 2, arrow=True)
+    body += line(856, 170, 930, 170, MUTED, 2, arrow=True)
+    body += line(724, 430, 768, 430, MUTED, 2, arrow=True)
+    body += line(870, 430, 930, 430, MUTED, 2, arrow=True)
+    body += para(40, 588, "Supernovas scatter heavy elements (iron, carbon, oxygen) into space, where they become part of new stars, planets -- and you.", 120, 15, TEXT)
+    return canvas(w, h, "The Life Cycle of a Star", "What happens depends on how massive the star is", body)
+
+
+# ---------------------------------------------------------------- chapter 15
+
+
+def kepler_laws() -> str:
+    w, h = 1080, 640
+    body = ""
+    # law 1
+    body += rect(24, 100, 336, 330)
+    body += text(192, 128, "1. Orbits are ellipses", 17, GOLD, "bold", "middle")
+    body += f'<ellipse cx="192" cy="270" rx="140" ry="90" fill="none" stroke="{ICE}" stroke-width="2.5"/>'
+    body += circle(85, 270, 14, "url(#sunglow)")
+    body += circle(299, 270, 4, MUTED)
+    body += text(105, 304, "Sun at a focus", 14, TEXT, anchor="middle")
+    body += text(290, 292, "empty focus", 13, MUTED, anchor="middle")
+    body += circle(192, 180, 8, PLANET_COLORS["Earth"])
+    body += para(40, 384, "Not the center! a = semi-major axis (average distance).", 40, 14, TEXT)
+    # law 2
+    body += rect(372, 100, 336, 330)
+    body += text(540, 128, "2. Equal areas, equal times", 17, GOLD, "bold", "middle")
+    body += f'<ellipse cx="540" cy="270" rx="140" ry="90" fill="none" stroke="{ICE}" stroke-width="2.5"/>'
+    body += f'<path d="M 433 270 L 418.8 225 A 140 90 0 0 0 418.8 315 Z" fill="{GOLD}" opacity="0.55"/>'
+    body += f'<path d="M 433 270 L 677.9 254.4 A 140 90 0 0 1 677.9 285.6 Z" fill="{GOLD}" opacity="0.55"/>'
+    body += circle(433, 270, 14, "url(#sunglow)")
+    body += text(450, 372, "FAST near the Sun", 14, RED, "bold", "middle")
+    body += text(600, 172, "SLOW far away", 14, BLUE, "bold", "middle")
+    body += para(388, 384, "Both shaded slices = same time and same area.", 40, 14, TEXT)
+    # law 3
+    body += rect(720, 100, 336, 330)
+    body += text(888, 128, "3.  p² = a³", 20, GOLD, "bold", "middle")
+    body += text(888, 152, "p in years, a in AU", 14, MUTED, anchor="middle")
+    rows = [("Earth", "1.00", "1.00", "1.00"), ("Mars", "1.52", "3.51", "1.87"), ("Jupiter", "5.20", "140.6", "11.86"), ("Neptune", "30.06", "27,162", "164.8")]
+    body += text(740, 186, "planet      a        a³       p = √a³", 14, ICE, "bold")
+    for i, (n, a, a3, p) in enumerate(rows):
+        y = 214 + i * 30
+        body += text(740, y, n, 14, TEXT, "bold")
+        body += text(830, y, a, 14, TEXT)
+        body += text(898, y, a3, 14, TEXT)
+        body += text(980, y, p, 14, GOLD, "bold")
+    body += para(736, 352, "Farther out = much longer year. Mars check: table says 1.88 y.", 40, 14, TEXT)
+    body += card(24, 446, 520, 160, "Newton's gravity", "F = G m1 m2 / r^2 with G = 6.67 x 10^-11 N m^2/kg^2. More mass = more pull; double the distance = 1/4 the pull. Gravity is mutual: star and planet both orbit their center of mass.", PURPLE, body_size=15)
+    body += card(560, 446, 496, 160, "Escape velocity", "Ev = sqrt(2GM/R) -- radius in METERS. Earth 11.2 km/s, Venus 10.4, Mars 5.0. Low escape velocity lets light gas atoms leak away.", RED, body_size=15)
+    return canvas(w, h, "Kepler's Laws and Gravity", "How planets move -- and how to calculate it", body)
+
+
+def orbit_tricks() -> str:
+    w, h = 1060, 600
+    body = ""
+    panels = [
+        ("TIDAL LOCKING", ICE), ("SHEPHERD MOONS", PURPLE), ("RESONANCE", GAS), ("TROJANS", ROCK),
+    ]
+    for i, (head, color) in enumerate(panels):
+        x = 24 + i * 258
+        body += rect(x, 100, 244, 300)
+        body += text(x + 122, 130, head, 17, color, "bold", "middle")
+    # tidal locking
+    body += circle(146, 270, 40, PLANET_COLORS["Earth"])
+    body += circle(146, 270, 92, "none", PANEL_EDGE, 1.5, opacity=0.8)
+    for ang in (0, 90, 180, 270):
+        a = math.radians(ang)
+        mx, my = 146 + 92 * math.cos(a), 270 + 92 * math.sin(a)
+        body += circle(mx, my, 12, "#bdbdbd")
+        body += circle(mx - 9 * math.cos(a), my - 9 * math.sin(a), 4, RED)
+    body += text(146, 388, "red dot always faces Earth", 13, TEXT, anchor="middle")
+    # shepherd
+    cx2 = 404
+    body += circle(cx2, 270, 30, PLANET_COLORS["Saturn"])
+    body += f'<ellipse cx="{cx2}" cy="270" rx="96" ry="34" fill="none" stroke="#f3e2b0" stroke-width="10" opacity="0.7"/>'
+    body += circle(cx2 + 104, 262, 6, "#bdbdbd")
+    body += circle(cx2 - 88, 290, 6, "#bdbdbd")
+    body += text(cx2, 388, "Pan, Prometheus keep edges sharp", 13, TEXT, anchor="middle")
+    # resonance
+    cx3 = 662
+    body += circle(cx3, 260, 16, PLANET_COLORS["Jupiter"])
+    for r, n, c in [(36, "Io", "#f4d35e"), (60, "Europa", "#e8e2d0"), (86, "Ganymede", "#a39e93")]:
+        body += circle(cx3, 260, r, "none", c, 2)
+        body += circle(cx3 + r, 260, 5, c)
+    body += text(cx3, 160, "Io  /  Europa  /  Ganymede", 13, TEXT, "bold", "middle")
+    body += text(cx3, 370, "Io : Europa : Ganymede = 1:2:4", 13, TEXT, anchor="middle")
+    body += text(cx3, 388, "Neptune : Pluto = 3:2", 13, TEXT, anchor="middle")
+    # trojans
+    cx4 = 920
+    body += circle(cx4, 270, 14, "url(#sunglow)")
+    body += circle(cx4, 270, 90, "none", PANEL_EDGE, 1.5)
+    body += circle(cx4 + 90, 270, 12, PLANET_COLORS["Jupiter"])
+    for ang in (-60, 60):
+        a = math.radians(ang)
+        for k in range(6):
+            body += circle(cx4 + 90 * math.cos(a) + (k % 3 - 1) * 7, 270 + 90 * math.sin(a) + (k // 3) * 7, 2.6, ROCK)
+    body += text(cx4, 388, "60 deg ahead + behind Jupiter", 13, TEXT, anchor="middle")
+    body += card(24, 420, 1012, 150, "Why it matters", "Tidal locking gives close-in planets a permanent day side and night side. Shepherding is how young planets carve gaps in dusty disks. Resonance keeps Io's orbit oval, which powers its volcanoes -- and keeps Pluto safe from Neptune even though their paths cross.", GOLD, body_size=15)
+    return canvas(w, h, "Orbit Tricks", "Tidal locking, shepherd moons, orbital resonance and Trojans", body)
+
+
+def eclipses() -> str:
+    w, h = 1060, 640
+    body = ""
+    for i, (title, y, order, phase) in enumerate([("SOLAR ECLIPSE -- only at NEW moon", 120, ["Sun", "Moon", "Earth"], "Moon's shadow falls on Earth"), ("LUNAR ECLIPSE -- only at FULL moon", 330, ["Sun", "Earth", "Moon"], "Earth's shadow falls on the Moon")]):
+        body += rect(24, y, 1012, 190)
+        body += text(44, y + 30, title, 18, GOLD, "bold")
+        body += text(44, y + 52, phase, 14, MUTED)
+        xs = {"Sun": 130, "Earth": 560 if order[1] == "Earth" else 820, "Moon": 560 if order[1] == "Moon" else 820}
+        sizes = {"Sun": 56, "Earth": 30, "Moon": 12}
+        mid = order[1]
+        body += f'<path d="M {xs[mid]} {y + 115 - sizes[mid]} L 1000 {y + 105} L 1000 {y + 125} L {xs[mid]} {y + 115 + sizes[mid]} Z" fill="#000" opacity="0.55"/>'
+        body += f'<path d="M {xs[mid]} {y + 115 - sizes[mid]} L 1000 {y + 60} L 1000 {y + 170} L {xs[mid]} {y + 115 + sizes[mid]} Z" fill="#000" opacity="0.25"/>'
+        for name in order:
+            fill = "url(#sunglow)" if name == "Sun" else (PLANET_COLORS["Earth"] if name == "Earth" else "#bdbdbd")
+            body += circle(xs[name], y + 115, sizes[name], fill)
+            body += text(xs[name], y + 115 + sizes[name] + 20, name, 14, TEXT, "bold", "middle")
+        body += text(960, y + 92, "umbra", 13, TEXT, "bold", "end")
+        body += text(960, y + 160, "penumbra", 13, MUTED, anchor="end")
+    body += para(44, 552, "SOLAR types: total, annular (Moon looks smaller -- 'ring of fire'), hybrid, partial. Never look without eclipse glasses!", 140, 15, TEXT)
+    body += para(44, 584, "LUNAR types: penumbral, total penumbral, partial, total (Moon turns coppery red; totality up to ~107 minutes).", 140, 15, TEXT)
+    return canvas(w, h, "Solar and Lunar Eclipses", "Shadow play between the Sun, Earth and Moon -- not to scale", body)
+
+
+# ---------------------------------------------------------------- chapter 16
+
+
+def _timeline(events: list[tuple[str, str, str]], start: int, end: int, width: int = 1100) -> str:
+    x0, x1, y = 60, width - 60, 330
+    body = line(x0, y, x1, y, GOLD, 4)
+
+    def xpos(year: int) -> float:
+        return x0 + (year - start) / (end - start) * (x1 - x0)
+
+    for i, (yr, title, sub) in enumerate(events):
+        x = xpos(int(yr[:4]))
+        lx = x0 + 40 + i * ((x1 - x0 - 80) / max(1, len(events) - 1))
+        up = i % 2 == 0
+        body += circle(x, y, 7, GOLD)
+        if up:
+            body += path(f"M {x:.1f} {y - 7} L {lx:.1f} {y - 80}", MUTED, 1.5)
+            body += text(lx, y - 150, yr, 14, GOLD, "bold", "middle")
+            body += text(lx, y - 130, title, 15, TEXT, "bold", "middle")
+            body += mtext(lx, y - 112, wrap(sub, 22)[:2], 13, MUTED, anchor="middle", line_height=16)
+        else:
+            body += path(f"M {x:.1f} {y + 7} L {lx:.1f} {y + 60}", MUTED, 1.5)
+            body += text(lx, y + 80, yr, 14, GOLD, "bold", "middle")
+            body += text(lx, y + 100, title, 15, TEXT, "bold", "middle")
+            body += mtext(lx, y + 118, wrap(sub, 22)[:2], 13, MUTED, anchor="middle")
+    return body
+
+
+def astronomer_timeline() -> str:
+    w, h = 1100, 560
+    events = [
+        ("1543", "Copernicus", "Sun-centered model"),
+        ("1572", "Tycho Brahe", "precise data; supernova"),
+        ("1609", "Kepler", "laws of planetary motion"),
+        ("1610", "Galileo", "Jupiter's moons, Venus phases"),
+        ("1655", "Huygens", "discovers Titan"),
+        ("1705", "Halley", "first comet orbit"),
+        ("1781", "Uranus", "found (Herschel)"),
+        ("1846", "Neptune", "predicted + found"),
+        ("1877", "Schiaparelli", "'canali'; Phobos + Deimos"),
+        ("1930", "Tombaugh", "discovers Pluto"),
+        ("1980", "Carl Sagan", "Cosmos; Venus greenhouse"),
+        ("1995", "Mayor + Queloz", "first Sun-like exoplanet"),
+    ]
+    body = _timeline(events, 1520, 2010, w)
+    body += para(60, 500, "Aristarchus (ancient Greece) first proposed a Sun-centered system, almost 2,000 years before Copernicus. Dates mark each person's key work.", 150, 14, TEXT)
+    return canvas(w, h, "Astronomers Who Mapped the Solar System", "From the Sun-centered model to the first exoplanet", body)
+
+
+def mission_timeline() -> str:
+    w, h = 1100, 560
+    events = [
+        ("1962", "Mariner 2", "first Venus flyby"),
+        ("1970", "Venera 7", "first Venus landing data"),
+        ("1977", "Voyager 1 + 2", "outer planet flybys"),
+        ("1990", "Hubble", "space telescope"),
+        ("1995", "Galileo", "Jupiter orbiter"),
+        ("2004", "Cassini", "Saturn; Huygens lands on Titan 2005"),
+        ("2004", "Spirit + Opp.", "Mars rovers"),
+        ("2009", "Kepler", "thousands of exoplanets"),
+        ("2012", "Curiosity", "Mars: habitable past"),
+        ("2015", "New Horizons", "Pluto flyby"),
+        ("2021", "JWST", "infrared telescope"),
+        ("2024", "Europa Clipper", "launched; arrives 2030"),
+    ]
+    body = _timeline(events, 1958, 2030, w)
+    body += para(60, 500, "Also: Magellan (Venus radar), Dawn (Vesta + Ceres), Juno (Jupiter), Rosetta (comet 67P), NEAR (Eros), BepiColombo (Mercury), TESS, Perseverance, Dragonfly (Titan, launch 2027).", 150, 14, TEXT)
+    return canvas(w, h, "Missions That Explored the Solar System", "Year each mission launched or reached its target", body)
+
+
 INFOGRAPHICS: dict[str, tuple[str, Callable[[], str]]] = {
     "mass_budget": ("Who owns the Solar System's mass? The Sun has 99.8% -- Jupiter has most of the rest.", mass_budget),
     "planet_lineup": ("Meet the eight planets: terrestrial vs. jovian, with distance, year, size, density and mass.", planet_lineup),
@@ -872,4 +1173,12 @@ INFOGRAPHICS: dict[str, tuple[str, Callable[[], str]]] = {
     "greenhouse_numbers": ("Greenhouse warming on Mars, Earth and Venus.", greenhouse_numbers),
     "life_recipe": ("The recipe for life: liquid water, the right elements and energy.", life_recipe),
     "biomarkers": ("Biomarkers: how we could spot life on a distant planet.", biomarkers),
+    "sun_layers": ("Inside the Sun: core, radiative and convection zones, photosphere, chromosphere and corona.", sun_layers),
+    "small_bodies": ("Small bodies: asteroids, comets, dwarf planets, the Kuiper Belt and the Oort Cloud.", small_bodies),
+    "star_lifecycle": ("The life cycle of a star: Sun-like stars vs. massive stars.", star_lifecycle),
+    "kepler_laws": ("Kepler's three laws with p squared = a cubed practice, Newton's gravity and escape velocity.", kepler_laws),
+    "orbit_tricks": ("Orbit tricks: tidal locking, shepherd moons, orbital resonance and Trojans.", orbit_tricks),
+    "eclipses": ("Solar and lunar eclipses: when they happen and all the types.", eclipses),
+    "astronomer_timeline": ("Timeline of the astronomers who mapped the solar system.", astronomer_timeline),
+    "mission_timeline": ("Timeline of the space missions that explored the solar system.", mission_timeline),
 }

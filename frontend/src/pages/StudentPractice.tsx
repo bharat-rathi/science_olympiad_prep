@@ -6,6 +6,7 @@ import TopicOverview from "../components/TopicOverview";
 
 function sourceTag(c: ConceptTerm): string {
   if (c.origin === "sourced") return "from the source reader";
+  if (c.origin === "coach") return "edited by your coach";
   if (c.video_relevant) return "from team video";
   return c.source_resource_ids.length ? "from team resource" : "general knowledge";
 }
@@ -217,8 +218,8 @@ export default function StudentPractice() {
       {diagrams.length > 0 && (
         <>
           <h2 style={{ marginTop: 24 }}>Infographics &amp; diagrams</h2>
-          <p className="muted">Tap one to see it full size.</p>
-          <div className="diagram-grid">
+          <p className="muted">Tap one to see it full screen.</p>
+          <div className="infographic-list">
             {diagrams.map((d) => (
               <div className="card diagram-card zoomable" key={d.id} onClick={() => setZoomed(d)} role="button" tabIndex={0}>
                 <img src={d.image_data_url} alt={d.caption} />

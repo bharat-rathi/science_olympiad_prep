@@ -502,6 +502,22 @@ label {
   cursor: zoom-in;
 }
 
+/* Student view: infographics are dense, so show each one at full content
+   width (one per row) instead of as small grid tiles. */
+.infographic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.infographic-list .diagram-card {
+  padding: 10px;
+}
+
+.infographic-list .diagram-card p {
+  font-size: 0.95rem;
+}
+
 .lightbox {
   position: fixed;
   inset: 0;
@@ -567,8 +583,8 @@ label {
 }
 
 .study-card-badge {
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
