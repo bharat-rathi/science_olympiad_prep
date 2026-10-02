@@ -16,6 +16,8 @@ export default function StudentPractice() {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [accessError, setAccessError] = useState("");
+  // Diagram tiles are small; infographics need a full-size view to be readable.
+  const [zoomed, setZoomed] = useState<Diagram | null>(null);
 
   useEffect(() => {
     setAccessError("");
@@ -30,6 +32,15 @@ export default function StudentPractice() {
     api.getLatestAssessment(id).then((a) => setAssessment(a && a.status === "published" ? a : null));
     api.listDiagrams(id).then(setDiagrams);
   }, [id]);
+
+  useEffect(() => {
+    if (!zoomed) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setZoomed(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [zoomed]);
 
   function toggleFlip(conceptId: number) {
     setFlipped((prev) => {
@@ -178,16 +189,25 @@ export default function StudentPractice() {
 
       {diagrams.length > 0 && (
         <>
-          <h2 style={{ marginTop: 24 }}>Diagrams from your resources</h2>
+          <h2 style={{ marginTop: 24 }}>Infographics &amp; diagrams</h2>
+          <p className="muted">Tap one to see it full size.</p>
           <div className="diagram-grid">
             {diagrams.map((d) => (
-              <div className="card diagram-card" key={d.id}>
+              <div className="card diagram-card zoomable" key={d.id} onClick={() => setZoomed(d)} role="button" tabIndex={0}>
                 <img src={d.image_data_url} alt={d.caption} />
                 <p className="muted">{d.caption}</p>
               </div>
             ))}
           </div>
         </>
+      )}
+
+      {zoomed && (
+        <div className="lightbox" onClick={() => setZoomed(null)} role="dialog" aria-label={zoomed.caption}>
+          <img src={zoomed.image_data_url} alt={zoomed.caption} />
+          <p>{zoomed.caption}</p>
+          <span className="lightbox-hint">Tap anywhere or press Esc to close</span>
+        </div>
       )}
 
       <h2 style={{ marginTop: 24 }}>Ask about this content</h2>

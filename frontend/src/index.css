@@ -484,7 +484,7 @@ label {
 
 .diagram-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
 }
 
@@ -496,6 +496,44 @@ label {
 
 .diagram-card p {
   margin: 8px 0 0;
+}
+
+.diagram-card.zoomable {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(8, 12, 28, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: calc(100vh - 110px);
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+}
+
+.lightbox p {
+  margin: 0;
+  color: #eef2ff;
+  text-align: center;
+  max-width: 900px;
+}
+
+.lightbox-hint {
+  color: #a9b8e0;
+  font-size: 0.8rem;
 }
 
 /* ---------- Flashcards ---------- */

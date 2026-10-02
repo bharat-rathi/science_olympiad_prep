@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app import auth, models
 from app.config import settings
+from app.content.solar_system.seed import seed_solar_system_learning_content
 from app.db import SessionLocal, engine
 from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, students, topic_chat, topics, tutor
 
@@ -2015,6 +2016,15 @@ def seed_botany_deep_dive() -> None:
         db.commit()
     finally:
         db.close()
+
+
+@app.on_event("startup")
+def seed_solar_system_learning_chapters() -> None:
+    """Kid-friendly Solar System learning chapters (flashcards, stories,
+    infographics) from the coach-supplied 2027 source reader -- deterministic
+    content, no LLM calls. Registered after seed_official_topics so the
+    "Solar System" parent row already exists; see app/content/solar_system."""
+    seed_solar_system_learning_content()
 
 
 @app.get("/api/health")
