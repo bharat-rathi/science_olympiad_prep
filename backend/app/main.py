@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import auth, models
 from app.config import settings
 from app.content.deterministic import publish_deterministic_content
+from app.content.official_rules import RULES_2027, apply_official_rules
 from app.content.solar_system.seed import seed_solar_system_learning_content
 from app.db import SessionLocal, engine
 from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, lessons, students, topic_chat, topics, tutor
@@ -345,221 +346,33 @@ def seed_official_topics() -> None:
     exists for a coach who wants a narrower custom topic on top of one of
     these (e.g. splitting "Dynamic Planet" into sub-topics).
 
-    Assembled from soinc.org's 2027 Division B event slate (not scraped live
-    -- this app has no route to that site at build time; WebFetch to
-    soinc.org/scioly.org is blocked in this environment, so this was built
-    from search-result snippets, not a direct read of the rules PDFs) -- a
-    coach should still sanity-check names/groupings against the official
-    page. "Protein Builders" and "Code Craze" are deliberately left off this
-    slate -- they're still unconfirmed trial events, not on soinc.org's
-    confirmed 2027 Division B roster (see `_remove_unconfirmed_trial_events`
-    below, which also cleans up any row seeded for them by an earlier
-    version of this app). Everything else here was corroborated as a
-    current, confirmed Division B event.
+    The slate matches the 2027 Division B Rules Manual. "Protein Builders"
+    and "Code Craze" are deliberately left off -- the manual prints them
+    only as trial events, not part of the national roster (see
+    `_remove_unconfirmed_trial_events` above, which also cleans up any row
+    seeded for them by an earlier version of this app).
 
     Matched by `name`, so this is a no-op for any event a coach has already
-    got (e.g. by editing one of these, or by name colliding with a manually
-    created topic) -- never overwrites existing rows.
+    got (e.g. by name colliding with a manually created topic). Rules text
+    is filled in afterwards by apply_official_rules_2027.
     """
-    # (name, description, assessment_type) -- assessment_type is one of
-    # "test" (written exam only), "practical" (hands-on/build, no separate
-    # written exam), or "test_practical" (both).
+    # Every confirmed event, grouped as before. Description, assessment_type
+    # ("test" = written only, "practical" = hands-on/build only,
+    # "test_practical" = both) and the overview_* rules all come from
+    # content/official_rules.py (the 2027 Division B Rules Manual), which
+    # apply_official_rules re-applies on every startup.
     catalog = [
         # Earth & Space Science
-        ("Dynamic Planet", "Written test on Earth science processes; the 2027 rotation focuses on fresh water systems -- rivers, lakes, groundwater, and watersheds.", "test"),
-        ("Meteorology", "Written test on atmospheric science and weather; the 2027 rotation focuses on severe storms -- thunderstorms, tornadoes, and hurricanes.", "test"),
-        ("Remote Sensing", "Written test on interpreting satellite and aerial imagery to study Earth's surface, atmosphere, and oceans.", "test"),
-        ("Rocks and Minerals", "Written test on identifying and classifying rocks and minerals and understanding the processes that form them.", "test"),
-        ("Solar System", "Written test on the Sun, planets, moons, and other bodies that make up our solar system.", "test"),
-        # Technology & Engineering (build events)
-        ("Hovercraft", "Build event: design and build a hovercraft that travels a course, scored on performance criteria like distance and time.", "practical"),
-        ("Circuit Lab", "Combines a written test on circuit theory with a hands-on task building and analyzing real circuits.", "test_practical"),
-        ("Thermodynamics", "Build a device that insulates a container of hot water for as long as possible, plus a written test on heat and thermodynamics concepts.", "test_practical"),
-        ("Boomilever", "Build a lightweight wood structure that cantilevers from a wall and holds as much weight as possible before breaking.", "practical"),
-        ("Elastic Launched Glider", "Build and launch a glider using stored elastic (rubber band) energy, scored on flight time and/or accuracy.", "practical"),
-        ("Roller Coaster", "Build a device that transports a marble/ball through a course using only gravity and track design, applying concepts of energy conservation and forces.", "practical"),
-        ("Scrambler", "Build a device that carries an egg across a set distance as fast as possible, stopping just short of a wall without breaking it.", "practical"),
+        "Dynamic Planet", "Meteorology", "Remote Sensing", "Rocks and Minerals", "Solar System",
+        # Technology & Engineering
+        "Hovercraft", "Circuit Lab", "Thermodynamics", "Boomilever", "Elastic Launched Glider",
+        "Roller Coaster", "Scrambler",
         # Life, Personal & Social Science
-        ("Anatomy and Physiology", "Written test on human body systems; the 2027 rotation focuses on the digestive, immune, and respiratory systems.", "test"),
-        ("Disease Detectives", "Written test on epidemiology -- how diseases spread through a population and how outbreaks are investigated and controlled.", "test"),
-        ("Heredity", "Written test on genetics -- inheritance patterns, Punnett squares, pedigrees, and molecular genetics.", "test"),
-        ("Botany", "Written test on plant biology -- structure, physiology, classification, and ecology.", "test"),
-        ("Water Quality", "Written test on aquatic ecosystems and water testing; the 2027 rotation focuses on marine and estuary environments.", "test"),
+        "Anatomy and Physiology", "Disease Detectives", "Heredity", "Botany", "Water Quality",
         # Inquiry & Nature of Science
-        ("Crime Busters", "Hands-on forensic lab event (chemical tests, fingerprint analysis, and more) combined with a written test, applied to solving a mock crime scenario.", "test_practical"),
-        ("Food Science", "Hands-on food science lab tasks combined with a written test on food chemistry, nutrition, and food safety.", "test_practical"),
-        ("Codebusters", "Written test: decode cryptograms and ciphers (Aristocrats, Patristocrats, and other classical ciphers) under time pressure.", "test"),
-        ("Experimental Design", "Hands-on event: design, carry out, and write up a controlled experiment using materials provided on the spot.", "practical"),
-        ("Ping Pong Parachute", "Build event: launch rockets that release a ping-pong ball on a parachute, scored on airborne (hang) time.", "practical"),
-        ("Write It Do It", "Practical communication event: one partner writes instructions describing a structure, and the other builds it from the instructions alone.", "practical"),
+        "Crime Busters", "Food Science", "Codebusters", "Experimental Design", "Ping Pong Parachute",
+        "Write It Do It",
     ]
-
-    # (see docstring on the 5 overview_* fields on Topic in models.py) --
-    # keyed by exact catalog name above, used both for new inserts and to
-    # backfill any existing row whose overview is still empty.
-    overview_content: dict[str, dict[str, str]] = {
-        "Dynamic Planet": {
-            "what": "An Earth science event, run as a written exam or rotating stations, that goes deep on one Earth-process topic that changes each season.",
-            "learn": "The water cycle, groundwater and aquifers, water tables, watersheds and stream systems, and water-budget calculations -- plus general map- and graph-reading skills applied to that topic.",
-            "assessed": "Teams of 2, roughly 50 minutes, either a rotating station test (samples/displays/models) or a sit-down written exam depending on the tournament. A Class II calculator and a binder of notes are allowed.",
-            "theme_2027": "Earth's Fresh Waters (freshwater hydrology). This event rotates its topic on a multi-year cycle (past years: oceanography, glaciers, tectonics) -- confirm the exact 2027 scope on soinc.org.",
-            "notes": "Any binder is allowed (tabs, sheet protectors, lamination all fine), so a well-organized binder matters as much as raw memorization. Because the topic rotates, last year's binder is only partly reusable.",
-        },
-        "Meteorology": {
-            "what": "A written (occasionally station-based) exam on atmospheric science and weather, with a yearly sub-focus.",
-            "learn": "How severe weather forms and behaves -- thunderstorms, tornadoes, hurricanes, hail, derechos -- plus reading station models, weather maps, soundings, and satellite/radar imagery, and weather calculations (dew point, heat index, wind chill) in metric units.",
-            "assessed": "Teams of 2, roughly 50 minutes, mostly a sit-down written test heavy on chart/map interpretation; some invitationals add stations. Two non-graphing calculators are typically allowed; answers generally need metric units and correct significant figures.",
-            "theme_2027": "Severe Storms. Confirm the exact scope (e.g. whether hurricanes and winter storms are both included) on soinc.org.",
-            "notes": "Resource allowances here are broader than most events (loose notes/binders/folders, not just one sheet) -- worth double-checking the current wording since it's unusually generous.",
-        },
-        "Remote Sensing": {
-            "what": "A written/station event on how remote sensing works and on interpreting satellite and aerial imagery, data, and maps of Earth systems.",
-            "learn": "The electromagnetic spectrum and how sensors detect radiation, interpreting true- and false-color imagery, basic mapping/coordinate/scale principles, and applications like weather tracking, land-use change, disaster response, and agriculture monitoring.",
-            "assessed": "Teams of 2, roughly 50 minutes, primarily a written test built around interpreting provided images, maps, and data. Teams may bring a three-ring binder plus up to 2 calculators, 2 rulers, and 2 protractors.",
-            "theme_2027": "Doesn't rotate a headline theme the way Dynamic Planet or Meteorology do -- content centers on core remote-sensing principles and current applications. Confirm if any application area is emphasized for 2027.",
-            "notes": "Shares image/map-literacy skills with Dynamic Planet and Meteorology, so many coaches train these three together.",
-        },
-        "Rocks and Minerals": {
-            "what": "A station-based identification event where teams examine physical rock and mineral specimens (sometimes photos/data) and identify them, plus answer formation/concept questions.",
-            "learn": "Mineral identification properties (hardness, luster, streak, cleavage vs. fracture), the rock cycle, and distinguishing igneous, sedimentary, and metamorphic rocks by texture, composition, and formation process.",
-            "assessed": "Teams of 2, timed station rotation (no returning to prior stations). IDs are limited to the official National Rocks and Minerals List and make up roughly 30-50% of points; other stations test concepts even without a specimen (key properties given instead).",
-            "theme_2027": "Doesn't rotate a yearly theme -- content and the specimen list stay fairly stable, though the official list can be revised slightly each year. Confirm the current list on soinc.org.",
-            "notes": "One of the most specimen-ID-heavy events -- hands-on practice with real samples matters more than pictures. Allowed: a binder, one magnifying glass, one commercial field guide (tabbed/annotated), an annotated copy of the official list, and a calculator.",
-        },
-        "Solar System": {
-            "what": "A written (occasionally station-based) exam on solar system science, following a 2-year rotating focus between planetary formation/structure and habitability.",
-            "learn": "For the habitability year: what makes a world potentially habitable (liquid water, atmosphere, magnetic field, habitable-zone location), exoplanet detection methods (transit, radial velocity, spectroscopy), and comparing solar-system bodies to known exoplanet systems, plus calculations like Kepler's laws and equilibrium temperature.",
-            "assessed": "Teams of 2, roughly 50 minutes, written exam with data/graph interpretation and calculation-heavy questions; a calculator and resource sheet/binder are typically allowed.",
-            "theme_2027": "Habitability within and beyond the Solar System -- Year 2 of the current 2-year rotation (Year 1 covered planet formation and structure). Confirm the exact wording/scope on soinc.org, since rotation years can shift.",
-            "notes": "More math/physics-calculation-heavy than the other Earth/space events -- a good fit for students who like applying formulas over pure memorization.",
-        },
-        "Anatomy and Physiology": {
-            "what": "A written test and/or lab-practical station event on human body systems, following a 4-year rotation through different organ systems (2-3 systems per year).",
-            "learn": "For 2027: the respiratory, digestive, and immune systems -- structures and functions, how the systems interrelate, and common disorders/diseases affecting each.",
-            "assessed": "Teams of 2, roughly 50 minutes. Can run as a sit-down written test or as lab-practical stations with models, diagrams, specimens, or data-collection tasks.",
-            "theme_2027": "Respiratory, Digestive, and Immune systems -- Year 3 of the current 4-year rotation (2026 covered Nervous, Sense Organs, and Endocrine). Worth a final confirm on soinc.org.",
-            "notes": "One double-sided 8.5x11 resource sheet is typically allowed. Station formats often lean on picture/diagram/model-based structure ID, not just written recall -- easy to under-prepare for.",
-        },
-        "Disease Detectives": {
-            "what": "A life-science event on epidemiology -- investigating disease outbreaks and interpreting public health data, typically built around one detailed case-study scenario.",
-            "learn": "Epidemiological study design (cohort, case-control, cross-sectional), the steps of outbreak investigation, modes of disease transmission, and calculating/interpreting rates like attack rate, relative risk, and odds ratio from tables and graphs.",
-            "assessed": "Teams of 2, roughly 50 minutes. May run as a written exam, stations, or both -- commonly built around a single outbreak scenario mixing concept and calculation questions.",
-            "theme_2027": "No named rotating theme like the geoscience events -- the specific outbreak/disease used changes yearly, but the epidemiology skillset tested is stable.",
-            "notes": "One of the more statistics-heavy life science events (2x2 tables, relative risk, odds ratio, sensitivity/specificity) -- budget real calculation practice, not just vocabulary.",
-        },
-        "Heredity": {
-            "what": "A written, sit-down exam on genetics -- problem-solving with crosses and pedigrees plus conceptual questions on DNA and inheritance.",
-            "learn": "Mendelian inheritance (mono- and dihybrid Punnett squares), non-Mendelian patterns (incomplete dominance, codominance, sex-linked traits), pedigree analysis, and DNA structure, replication, and mutation basics.",
-            "assessed": "Teams of 2, roughly 50 minutes, sit-down written exam mixing short-answer concepts with cross/pedigree problems.",
-            "theme_2027": "Doesn't rotate -- core genetics content stays essentially the same year to year.",
-            "notes": "Typically one double-sided 8.5x11 resource sheet allowed. Overlaps closely with a standard intro biology genetics unit; rewards students who like probability/logic puzzles.",
-        },
-        "Botany": {
-            "what": "A written exam and/or lab-station event on general plant biology, sometimes involving live or preserved specimens.",
-            "learn": "Plant anatomy and physiology (photosynthesis, transpiration, tissue types), plant diversity and classification (algae vs. vascular, monocot vs. dicot, gymnosperm vs. angiosperm), and basic plant ecology and adaptations.",
-            "assessed": "Teams of 2, roughly 50 minutes. Can run as a sit-down exam or lab stations with live/preserved specimens, slides, microscopes, images, and data tables.",
-            "theme_2027": "No rotating sub-focus -- broad general botany each season rather than one narrow yearly topic. Confirm if any group/process is emphasized for 2027.",
-            "notes": "Lab coats and goggles are commonly required when specimens are used at stations. One double-sided 8.5x11 resource sheet is typically allowed.",
-        },
-        "Water Quality": {
-            "what": "A non-build, knowledge-and-skills event on freshwater aquatic environments, combined with a hands-on task using a student-built salinometer/hydrometer.",
-            "learn": "Freshwater ecology (food webs, population/community dynamics, nutrient cycling), aquatic chemistry and its effects on organisms, water treatment processes, watershed management issues, and building/using a simple water-testing tool.",
-            "assessed": "Teams of 2, roughly 50 minutes. Scoring combines a written/station test with a hands-on salinometer task; one double-sided 8.5x11 reference sheet, two non-programmable calculators, and a student-built salinometer allowed. Eye protection required during testing.",
-            "theme_2027": "Core content areas (freshwater ecology, aquatic chemistry, water treatment, invasive species) are stable year to year -- confirm any specific 2027 emphasis or salinometer task changes on soinc.org.",
-            "notes": "Teams that actually build and calibrate a working salinometer, and practice with real pH/dissolved-oxygen/turbidity kits and macroinvertebrate ID, do noticeably better than pure memorizers.",
-        },
-        "Hovercraft": {
-            "what": "A build event: design, construct, and calibrate a self-propelled, air-levitated vehicle that carries nickels down a track, brought complete to competition.",
-            "learn": "Aerodynamic lift via an air cushion, propulsion system design (motors, propellers/impellers, batteries, switches), weight distribution and stability, and iterative calibration using test data.",
-            "assessed": "Run-based scoring, typically on how quickly/consistently the hovercraft travels the track; devices are impounded and inspected (including propeller safety shielding) before runs. Teams of 2; each run is seconds long, with calibration/practice time given.",
-            "theme_2027": "Recent rules specify a bounding box in ready-to-run configuration and a set nickel payload count -- confirm this year's exact dimensions and track length on soinc.org, as these numbers are commonly revised.",
-            "notes": "Propeller/impeller shielding (must block a 3/8\" dowel) is a common impound failure point -- build safety guards in from the start. Performance drifts with battery charge and track friction, so practice a repeatable pre-run calibration routine.",
-        },
-        "Circuit Lab": {
-            "what": "A knowledge-and-skills event, not a build event -- a written test plus hands-on circuit-building/measurement tasks using equipment supplied on site.",
-            "learn": "DC circuit fundamentals: Ohm's Law, series and parallel circuit analysis, resistor color codes, basic capacitor behavior, reading/building circuit diagrams, and multimeter use for voltage/current/resistance.",
-            "assessed": "Teams of 2, roughly 50 minutes. Score combines a written test (multiple choice, true/false, calculations) with hands-on station tasks scored on correct measurements and analysis.",
-            "theme_2027": "Core DC circuit content is stable year to year -- check soinc.org for the exact 2027 topic list and any allowed reference-sheet rules.",
-            "notes": "Offered separately for Division B and Division C with different topic depth -- make sure any practice materials used are the Division B version, not C. Hands-on multimeter/breadboard practice matters as much as theory.",
-        },
-        "Thermodynamics": {
-            "what": "A build event: construct an insulating device ahead of time to minimize heat loss from a container of hot water, plus a written test on thermodynamics concepts.",
-            "learn": "Heat transfer mechanisms (conduction, convection, radiation), insulation material selection and thermal conductivity trade-offs, calorimetry and specific heat, and timed data collection/graphing.",
-            "assessed": "The device is tested by how much a set volume of hot water cools over a fixed window, combined with a written test score. Teams of 2; device is impounded pre-test; Division B's cooling/test window is commonly around 25 minutes.",
-            "theme_2027": "Recent seasons used a roughly 60-75 degrees C starting range and a 250 mL beaker with 75-125 mL water fill -- confirm exact 2027 figures on soinc.org, as starting temperature and timing are frequently adjusted.",
-            "notes": "Build and destructively test multiple insulation prototypes at home under conditions matching the real setup (same water volume, similar starting temp, a real thermometer and timer) to build real design intuition.",
-        },
-        "Boomilever": {
-            "what": "A build event: construct a lightweight cantilevered wood truss structure that mounts to a vertical Testing Wall and supports a heavy load at a set distance from the wall.",
-            "learn": "Cantilever and truss structural design, material properties of balsa and basswood (compression/tension strength), glue-joint technique, and optimizing weight-to-strength ratio rather than just raw strength.",
-            "assessed": "Scored on structural efficiency (load supported relative to the structure's own weight), with a required maximum load (recently around 15 kg) the structure must hold without failing. Teams of 2; the load test itself takes just a few minutes.",
-            "theme_2027": "Recent rules specified a span around 40-45 cm, wood cross-section capped near 1/4\" x 1/4\", and a target load around 15 kg -- confirm exact 2027 span, wall geometry, and load numbers on soinc.org.",
-            "notes": "Glue-joint failure and excess glue weight are the most common pitfalls -- build and destructively load-test several iterations before finalizing a competition structure, with eye protection during testing.",
-        },
-        "Elastic Launched Glider": {
-            "what": "A build event: construct a lightweight free-flight model glider launched by an elastic (rubber band) launcher, built and test-flown well ahead of competition.",
-            "learn": "Aerodynamics of lift, drag, and stability (wing shape, dihedral, center-of-gravity placement), lightweight airframe construction, and the iterative trimming/tuning process for a stable flight path.",
-            "assessed": "Score is based on total or best flight time across a limited number of official flights (commonly up to 3) within a set flight period (commonly around 6 minutes); mass and size are checked at impound. Teams of 2.",
-            "theme_2027": "Recent limits were near 15 g mass and roughly 30 cm wingspan/fuselage length -- confirm exact 2027 mass/wingspan/length limits and launch-handle rules on soinc.org.",
-            "notes": "Needs a high-ceiling practice space (gym or large hall) for realistic test flights. Trimming for stable flight takes many repeated sessions; gliders are fragile, so bring spares and a repair kit.",
-        },
-        "Roller Coaster": {
-            "what": "A build event: design and build a gravity-only marble/ball roller coaster track ahead of time, run at competition to match a target time revealed on the spot -- no external power source allowed.",
-            "learn": "Conservation of energy (gravitational potential to kinetic), track and curve design to control ball speed, the effects of friction and momentum, and estimation skills for hitting a target run time.",
-            "assessed": "Teams typically learn a Target Time on competition day and are scored on how close their ball's actual run time comes to it (often with an asymmetric penalty for running long vs. short), alongside build/design criteria. Teams of 2.",
-            "theme_2027": "The gravity-only, reveal-and-match-target-time format is stable across recent seasons -- confirm the exact scoring formula and any track footprint/height limits on soinc.org.",
-            "notes": "Teams sometimes get a short window to adjust their track once the target time is revealed, so practicing quick, repeatable adjustments is valuable. Plan for a sturdy carrying case -- a track that's both rigid and transportable is a real logistical challenge.",
-        },
-        "Scrambler": {
-            "what": "A build event: a device powered solely by a falling mass carries a raw egg along a track as quickly as possible and stops it safely at a Terminal Barrier without breaking it.",
-            "learn": "Energy conversion (a falling mass's potential energy driving, then arresting, a vehicle), momentum and braking/deceleration mechanism design, mechanical linkages and gearing, and cushioning/protection design for a fragile payload.",
-            "assessed": "Score combines run speed with stopping accuracy relative to the Terminal Barrier; the egg must survive intact for the run to count. Falling mass is capped (recently 2.00 kg) and impounded separately from the vehicle. Teams of 2; each run is seconds long.",
-            "theme_2027": "Recent rules capped the falling mass near 2.00 kg and the device bounding box around 100 x 50 x 100 cm -- confirm exact 2027 numbers on soinc.org.",
-            "notes": "The self-contained automatic stopping mechanism is usually the hardest engineering problem here. Practice with real or dummy eggs repeatedly to dial in stopping repeatability, and bring spare eggs/cushioning to competition.",
-        },
-        "Crime Busters": {
-            "what": "A hands-on forensic-science lab event: given a crime scenario, physical evidence, and a suspect list, teams run qualitative chemistry and pattern-evidence tests at stations to solve the case.",
-            "learn": "Qualitative analysis of unknown powders, solids, and liquids; polymer/plastic identification; paper chromatography of inks; and pattern evidence analysis (fingerprints, footprints, tire prints).",
-            "assessed": "Teams of 2, roughly 50 minutes. Rotate through lab stations, record test results, then use those plus scenario clues to answer questions and identify a suspect. One double-sided 8.5x11 reference sheet and up to two Class II calculators allowed.",
-            "theme_2027": "No confirmed year-specific scenario twist -- the core station content (powders/solids, polymers, chromatography, prints) is consistent with past seasons; check the station list against the current rules manual.",
-            "notes": "Powder/solid qualitative analysis is typically the highest-weighted section -- drilling flame tests, solubility, and simple chemical ID pays off most.",
-        },
-        "Food Science": {
-            "what": "A combined written-test-and-lab event: teams answer questions on food science concepts and run hands-on experiments or quality evaluations tied to a food category that changes each season.",
-            "learn": "Food chemistry fundamentals (macronutrients, preservation, spoilage/safety) and sensory/quality testing methods, applied to the current season's food category.",
-            "assessed": "Teams of 2, mixing written test questions with practical/lab tasks scored against a rubric or answer key; roughly 50 minutes in past seasons (not separately reconfirmed for 2027).",
-            "theme_2027": "Indications point to milk and dairy products for 2027 -- unconfirmed against the actual rules PDF, so verify before finalizing study materials.",
-            "notes": "The food-category focus rotates each season, so prior years' study guides won't directly transfer -- get the actual current rules/test packet before planning.",
-        },
-        "Codebusters": {
-            "what": "A written cryptography event: teams decode a packet of encrypted messages using classical cipher systems, under time pressure and without electronic decoding aids.",
-            "learn": "Manual cryptanalysis (frequency analysis, letter-pattern recognition) across Division B's roughly 13 cipher types, including Aristocrat and Patristocrat substitution ciphers, Baconian, Atbash/Caesar shift ciphers, Vigenere, and Pigpen.",
-            "assessed": "Teams of 2, roughly 50 minutes. Scoring allows a small number of free errors, penalizes additional errors, and awards time bonuses for fast solves; calculators permitted.",
-            "theme_2027": "The confirmed 2027 change is the addition of the Homophonic Cipher to Division B's cipher list.",
-            "notes": "The Hill (matrix) cipher is Division C-only, so Division B doesn't need matrix math for it. Scoring rewards speed and accuracy, so timed drilling with online cipher-practice tools is high-value prep.",
-        },
-        "Experimental Design": {
-            "what": "A lab-based event: teams get a prompt and materials on-site and must design, carry out, and write up an original experiment entirely during the event period.",
-            "learn": "Full scientific-method skills: writing a testable question and hypothesis, identifying/controlling variables, building data tables, graphing results, basic statistics, and claim-evidence-reasoning and error analysis.",
-            "assessed": "Teams of 2, roughly 50 minutes, scored against an official checklist covering research question, hypothesis, variables, materials, data, graphs, statistics, analysis, conclusion, and future-experimentation recommendations.",
-            "theme_2027": "No rotating yearly theme -- the prompt and materials are freshly assigned on-site each competition. Get the current checklist PDF in case point weightings changed.",
-            "notes": "Since the exact prompt is unknown in advance, the best prep is repeated timed practice designing and running quick experiments while filling out the official checklist format.",
-        },
-        "Ping Pong Parachute": {
-            "what": "A build event: design and build up to two small rockets ahead of time, bring them to the tournament, and launch a ping-pong ball on a parachute to keep it airborne as long as possible without hitting the ceiling.",
-            "learn": "Aerodynamics and parachute design basics (drag, descent rate, stability), simple rocket propulsion fundamentals, and iterative build-test-refine practice.",
-            "assessed": "A limited number of launch attempts per team, timed for airborne (hang) time. Teams of 2; devices must meet size/safety specs checked at check-in (unaltered standard ping-pong ball, parachute attached with tape only).",
-            "theme_2027": "Promoted from a 2026 trial event to a full Division B and C event for 2027 -- worth double-checking the newly released rules closely, since specs (ceiling limits, launcher construction, number of attempts) commonly shift between a trial and full-event version.",
-            "notes": "Bring required eye protection/safety gear and backup parts -- typically only two devices are allowed. Because it's newly stabilized as a full event, expect less standardized rule interpretation across regions than long-running build events.",
-        },
-        "Write It Do It": {
-            "what": "A communication event: one teammate examines a pre-built object and writes instructions for reconstructing it (words/numerals only, no drawings or symbols), while the other, who never sees the original, rebuilds it solely from those instructions.",
-            "learn": "Precise technical/descriptive writing, spatial reasoning and vocabulary for describing 3D construction, and careful literal reading and sequencing of written instructions under time pressure.",
-            "assessed": "The writer gets about 25 minutes to write the description; a builder from another team gets about 20 minutes to reconstruct the object from it alone. Teams of 2; scoring compares the rebuild to the original piece-by-piece, plus instruction clarity.",
-            "theme_2027": "Objects are typically built from inexpensive materials (straws, foam balls, paper cups, popsicle sticks) or construction sets (K'Nex, LEGO, Lincoln Logs, Tinkertoys) -- no 2027-specific format change found.",
-            "notes": "Drill students on using only allowed vocabulary (precise spatial/directional terms, no symbols or diagrams) and describing steps in a strict, unambiguous order.",
-        },
-    }
 
     db = SessionLocal()
     try:
@@ -567,108 +380,17 @@ def seed_official_topics() -> None:
         _apply_official_event_name_corrections()
 
         existing_names = {row[0] for row in db.query(models.Topic.name)}
-        for name, description, assessment_type in catalog:
-            overview = overview_content.get(name, {})
+        for name in catalog:
             if name not in existing_names:
+                rules = RULES_2027[name]
                 db.add(
                     models.Topic(
                         event_name=name,
                         name=name,
-                        description=description,
-                        assessment_type=assessment_type,
-                        overview_what=overview.get("what", ""),
-                        overview_learn=overview.get("learn", ""),
-                        overview_assessed=overview.get("assessed", ""),
-                        overview_theme_2027=overview.get("theme_2027", ""),
-                        overview_notes=overview.get("notes", ""),
+                        description=rules["description"],
+                        assessment_type=rules["assessment_type"],
                     )
                 )
-        db.commit()
-
-        # Backfill: rows seeded before this overview content existed. Only
-        # touches a row whose overview is still completely empty, so it
-        # never clobbers anything a coach has since edited.
-        for name, overview in overview_content.items():
-            topic = db.query(models.Topic).filter(models.Topic.name == name, models.Topic.parent_topic_id.is_(None)).first()
-            if topic is not None and not topic.overview_what:
-                topic.overview_what = overview.get("what", "")
-                topic.overview_learn = overview.get("learn", "")
-                topic.overview_assessed = overview.get("assessed", "")
-                topic.overview_theme_2027 = overview.get("theme_2027", "")
-                topic.overview_notes = overview.get("notes", "")
-        db.commit()
-    finally:
-        db.close()
-
-
-@app.on_event("startup")
-def seed_solar_system_deep_dive() -> None:
-    """One-time content correction + deep-dive setup for Solar System, from
-    the actual scioly.org wiki page (fetched by the coach as a PDF -- direct
-    fetches to scioly.org are blocked from this environment). Unlike
-    seed_official_topics's overview backfill (which only fills empty
-    fields), this unconditionally overwrites Solar System's description and
-    overview_* with the corrected content, since this is an explicit,
-    sourced correction, not a first-time fill. Study material (lessons,
-    flashcards, infographics, the study plan) comes from
-    app/content/solar_system.
-    """
-    db = SessionLocal()
-    try:
-        topic = (
-            db.query(models.Topic)
-            .filter(models.Topic.name == "Solar System", models.Topic.parent_topic_id.is_(None))
-            .first()
-        )
-        if topic is None:
-            return
-
-        topic.description = (
-            "Written knowledge test on the Sun, planets, moons, and other bodies in our solar "
-            "system; the 2027 rotation focuses on habitability within and beyond the Solar System."
-        )
-        topic.overview_what = (
-            "A sit-down knowledge event (no hands-on task), run in Division B since 2006. Teams "
-            "of 2 take a written test on solar system science; the specific focus rotates most seasons."
-        )
-        topic.overview_learn = (
-            "Star and planet formation/evolution as background for habitability; what makes a "
-            "world potentially habitable, plus related exoplanet types (Hot Jupiters, Hot "
-            "Neptunes, Cold Jupiters) and concepts like tidal locking; Kepler's laws of planetary "
-            "motion, escape velocity, and other orbital mechanics; core facts about the Sun, the "
-            "8 planets, moons, dwarf planets/Plutoids, asteroids, comets, the Kuiper Belt, and the "
-            "Oort Cloud; solar and lunar eclipses; key astronomers (Copernicus, Galileo, Kepler, "
-            "Tycho Brahe, Halley, Tombaugh) and major missions (Voyager, Cassini, New Horizons, "
-            "JWST, and others)."
-        )
-        topic.overview_assessed = (
-            "Teams of 2, about 50 minutes, entirely a written/sit-down test -- no hands-on "
-            "component. Two note sheets plus writing utensils are allowed (no calculator listed "
-            "on the official resource list). The event often includes questions not explicitly on "
-            "the official rules sheet, so broad general knowledge pays off, not just the listed topics."
-        )
-        topic.overview_theme_2027 = (
-            "Habitability within and beyond the Solar System -- confirmed on the official wiki's "
-            "year-by-year topics table for the 2027 season (2026 was Planet Formation and "
-            "Structure; 2023 was also Habitability). Note: as of the wiki snapshot this was "
-            "sourced from, its background-content sections still mostly cover planet/star/asteroid "
-            "formation and evolution -- likely carried over from last year's topic -- so supplement "
-            "with dedicated habitability research (habitable zones, biosignatures, exoplanet "
-            "detection methods) rather than relying on that section alone."
-        )
-        topic.overview_notes = (
-            "This event often asks about things not on the official rules sheet -- a good "
-            "reference book and a well-organized note sheet (the community wiki suggests OneNote, "
-            "Google Slides, or Canva to fit lots of text and diagrams on one page) reportedly helps "
-            "get a top-ten finish. Useful outside links: NASA's Solar System site "
-            "(solarsystem.nasa.gov) and the ALMA Observatory site."
-        )
-
-        # Study material (the old wiki excerpt resource and chapters) now
-        # lives entirely in app/content/solar_system, rebuilt from the
-        # reader + wiki into one deduplicated set of lesson chapters; this
-        # seed only keeps the rules overview above.
-
         db.commit()
     finally:
         db.close()
@@ -677,18 +399,11 @@ def seed_solar_system_deep_dive() -> None:
 @app.on_event("startup")
 def seed_thermodynamics_deep_dive() -> None:
     """One-time content correction + deep-dive setup for Thermodynamics,
-    from the actual scioly.org wiki page (coach-supplied PDF). Same pattern
-    as seed_solar_system_deep_dive -- unconditionally overwrites the topic's
-    description/overview with corrected content, then idempotently seeds a
-    grounding resource plus 4 real deep-dive chapters.
-
-    Important finding this correction is built around: the wiki explicitly
-    flags that the *device* task changed for 2027 -- the classic "insulate
-    a 250mL beaker of hot water" task (used through the 2018/2019 seasons)
-    is described as a past version, and the page doesn't fully detail what
-    replaces it as of this snapshot. The written-test content (the four
-    laws, gas laws, Carnot cycle, conversions, history) is unaffected by
-    that change and is what most of the deep-dive chapters below cover.
+    from the actual scioly.org wiki page (coach-supplied PDF): idempotently
+    seeds a grounding resource plus 4 deep-dive chapters. The event's
+    rules (including the new 2027 heat-collection device) live in
+    content/official_rules.py; the chapters cover the written test, which
+    the device change doesn't affect.
     """
     db = SessionLocal()
     try:
@@ -700,56 +415,7 @@ def seed_thermodynamics_deep_dive() -> None:
         if topic is None:
             return
 
-        topic.description = (
-            "Teams build a device to collect and retain heat -- the classic \"insulate a beaker "
-            "of hot water\" task changed for 2027, so confirm the current device task on soinc.org "
-            "-- and take a written test on thermodynamics concepts."
-        )
-        topic.overview_what = (
-            "A Division B and C build/lab event (impounded device + written test), first run in "
-            "2012 (as \"Keep the Heat\" in Division B), returning in 2018, 2019, and 2027. Teams "
-            "of 2 build a heat-retention device ahead of time and bring it to the tournament, "
-            "testing it while also taking a written exam."
-        )
-        topic.overview_learn = (
-            "The four laws of thermodynamics (zeroth through third) and thermodynamic systems/"
-            "processes (open/closed/isolated/adiabatic; isobaric/isochoric/isothermal/adiabatic/"
-            "isentropic); gas laws (Boyle's, Charles's, Gay-Lussac's, Avogadro's, the combined and "
-            "ideal gas law) and the Carnot cycle (its 4 steps, efficiency, entropy); heat/"
-            "temperature unit conversions and key equations (Joule's Laws, Gibbs' free energy, "
-            "linear/area/volume expansion); the historical figures behind thermodynamics (Joule, "
-            "Carnot, Clausius, Kelvin, Maxwell, Nernst, Celsius, Fahrenheit)."
-        )
-        topic.overview_assessed = (
-            "Teams of 2, about 50 minutes, eye protection required. The written test draws 3 "
-            "questions from each of 5 subject areas (thermodynamic systems/zeroth law/"
-            "temperature; phases of matter/ideal gas law; heat transfer/specific heat; "
-            "thermodynamic laws & the Carnot cycle; history of thermodynamics), plus "
-            "State/National-only material (blackbody radiation, Stefan-Boltzmann law, third law). "
-            "Device testing is impounded and scored alongside the test. Allowed resources: one "
-            "hole-punched 3-ring binder of any size (sheets removable), tools/supplies, writing "
-            "utensils, and two Class III calculators."
-        )
-        topic.overview_theme_2027 = (
-            "Important change for 2027: the device task itself changed from the long-running "
-            "classic version. Previously (through 2019), teams insulated a 250 mL beaker of hot "
-            "water for a fixed time window (25 minutes in Division B, starting at 60-75 C). The "
-            "wiki explicitly flags the 2027 version as \"very different\" but doesn't fully detail "
-            "the new device task as of this snapshot -- confirm the actual 2027 device "
-            "requirements and scoring on soinc.org/thermodynamics-b before building anything. The "
-            "written-test content (the four laws, gas laws, Carnot cycle, conversions) is stable "
-            "and unaffected by this change."
-        )
-        topic.overview_notes = (
-            "Eye protection is required. The device must be easy to disassemble for post-event "
-            "inspection. In the pre-2027 device format, two identical, unaltered glass/plastic "
-            "beakers were required and the device had to fit a size cube (20 cm for Division B) -- "
-            "confirm whether this still applies under the 2027 rules. This event was called \"Hot "
-            "House\" (1988-1991) and \"Keep the Heat\" (Division B, 1992-1995 and 2012-2013) before "
-            "becoming \"Thermodynamics\" -- older study materials under either name likely describe "
-            "the outdated device task, so double-check any inherited notes against the current "
-            "rules."
-        )
+        # Rules (description + overview_*) come from content/official_rules.py.
 
         if not db.query(models.Resource).filter(
             models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Thermodynamics (event page)"
@@ -1053,7 +719,9 @@ def seed_hovercraft_content() -> None:
     portion no longer exists (pure build/run event now), participants,
     eye protection, impound, allowed resources, and time. A coach with the
     actual 2027 rules PDF (soinc.org/hovercraft-b) can prompt a follow-up
-    to add real deep-dive chapters once those specifics exist.
+    to add real deep-dive chapters once those specifics exist. The rules
+    themselves (dimensions, Target Time scoring, nickel loads) now come
+    from the 2027 Rules Manual via content/official_rules.py.
     """
     db = SessionLocal()
     try:
@@ -1065,49 +733,7 @@ def seed_hovercraft_content() -> None:
         if topic is None:
             return
 
-        topic.description = (
-            "Build event: design, construct, and calibrate a self-propelled, air-levitated "
-            "hovercraft that travels down a track -- no written test (removed from the current "
-            "rules), pure build/run scoring."
-        )
-        topic.overview_what = (
-            "A Division B and C build event, first appearing in 2017. Teams of 2 design, build, "
-            "and calibrate ahead of time a self-propelled, air-levitated vehicle, then run it down "
-            "a track at competition. It must actually levitate on its air cushion -- if it doesn't, "
-            "it's judged a wheeled/sliding vehicle instead of a hovercraft, and event supervisors "
-            "may check this if they suspect it isn't truly levitating."
-        )
-        topic.overview_learn = (
-            "Aerodynamic lift via an air cushion, propulsion system design (motor, propeller/"
-            "impeller, battery, switch), weight distribution and stability, and iterative "
-            "calibration -- testing and adjusting the device using real run data before "
-            "competition day. Specific construction dimensions, materials, and scoring formulas "
-            "for the 2027 season weren't available on the wiki source this was built from (see "
-            "note below) -- pull those from the official rules."
-        )
-        topic.overview_assessed = (
-            "Teams of 2, about 8 minutes, eye protection required (Category B), device and notes "
-            "both impounded before running. No written test component in the current rules (this "
-            "event used to be a dual lab with a test portion; that's been removed). Allowed at "
-            "competition: the vehicle itself, papers/notes (also impounded), tools/supplies, spare "
-            "parts, and two Class III calculators."
-        )
-        topic.overview_theme_2027 = (
-            "Confirmed current for 2027 (Division B and C both). Note: the scioly.org wiki page "
-            "this was sourced from is largely unfilled for this season -- its construction-"
-            "parameters, competition-parameters, design-tips, and scoring sections are still "
-            "literal placeholder text (\"Add current construction parameters here!\"), not real "
-            "numbers. Get exact dimensions, weight/power limits, the track layout, and the scoring "
-            "formula from the official 2027 rules PDF at soinc.org/hovercraft-b before building "
-            "anything -- this app hasn't been given those specifics yet."
-        )
-        topic.overview_notes = (
-            "The core eligibility check -- it must genuinely levitate on an air cushion, not just "
-            "roll or slide -- is worth emphasizing early, since a non-levitating device can be "
-            "disqualified even if it otherwise performs well. Both the vehicle and any notes "
-            "brought to competition are impounded, so plan for a supervised, hands-off wait before "
-            "the run."
-        )
+        # Rules (description + overview_*) come from content/official_rules.py.
 
         if not db.query(models.Resource).filter(
             models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Hovercraft (event page)"
@@ -1176,54 +802,7 @@ def seed_meteorology_deep_dive() -> None:
         if topic is None:
             return
 
-        topic.description = (
-            "Written test (occasionally stations) on interpreting meteorological data, graphs, "
-            "charts, tables, and images; the 2027 focus topic is Severe Storms. Division B only -- "
-            "no Division C equivalent."
-        )
-        topic.overview_what = (
-            "A Division B-only Earth Science event (first run 2003) testing meteorological "
-            "principles and data interpretation. Its focus topic rotates yearly among Everyday "
-            "Weather, Severe Storms, and Climate -- each gets one year before the rotation moves "
-            "on -- though some foundational meteorology knowledge (atmosphere, pressure, wind, "
-            "water vapor) applies regardless of the year's topic. Usually a written test or "
-            "slide-based test; occasionally run as rotating stations."
-        )
-        topic.overview_learn = (
-            "Foundational atmospheric science that applies every year: atmosphere composition and "
-            "layers (troposphere through exosphere), pressure systems (cyclones/anticyclones, "
-            "pressure gradient force), the Coriolis effect, and the water vapor/cloud/precipitation "
-            "cycle (saturation, dew point, condensation, deposition). For 2027 specifically: Severe "
-            "Storms -- the wiki names Thunderstorms, Hurricanes, Winter Storms, Mid-Latitude "
-            "Cyclones, and Atmospheric Rivers as its sub-topics, though their detailed content "
-            "lives on separate wiki pages not included in this source."
-        )
-        topic.overview_assessed = (
-            "Teams of 2, about 50 minutes. Question formats include multiple choice, true/false, "
-            "matching, diagram labeling, short answer, and free response -- generally no penalty "
-            "for wrong answers, so answering everything (even a guess) is usually worth it. As of "
-            "the 2023-24 season, teams may bring one binder of any size with information in any "
-            "form (written or typed) plus two stand-alone Class II calculators of any type -- a "
-            "notably permissive resource policy compared to most other events."
-        )
-        topic.overview_theme_2027 = (
-            "Severe Storms -- confirmed both by the event description's own wording and by the "
-            "wiki's topic-rotation table (2026 Everyday Weather, 2027 Severe Storms, Climate next "
-            "in the cycle). The wiki names Thunderstorms, Hurricanes, Winter Storms, Mid-Latitude "
-            "Cyclones, and Atmospheric Rivers as this topic's sub-pages, but their content lives on "
-            "separate wiki pages this source didn't include -- treat that as a study checklist, and "
-            "get the actual storm-science content from those pages, a meteorology textbook, or "
-            "soinc.org/meteorology-b directly."
-        )
-        topic.overview_notes = (
-            "Since teams can split the binder-lookup work between partners, prepping a "
-            "well-organized, tabbed/labeled binder matters as much as raw knowledge -- the wiki "
-            "specifically recommends including diagrams (Coriolis effect, atmosphere layers, cloud "
-            "types, classification systems). A general meteorology textbook covering all three "
-            "rotation topics is worth having even after the focus topic changes, since foundational "
-            "questions can still appear. Free resources: soinc.org/meteorology-b and NOAA's "
-            "Science Olympiad education page."
-        )
+        # Rules (description + overview_*) come from content/official_rules.py.
 
         if not db.query(models.Resource).filter(
             models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Meteorology (event page)"
@@ -1400,6 +979,9 @@ def seed_botany_deep_dive() -> None:
     deep-dive chapters below. Only content before that marker (plant
     groups/classification, anatomy/reproduction, photosynthesis/ecology,
     human uses, history) is shared between B and C and included here.
+    Note the 2027 Division B Rules Manual does list plant diseases and
+    nutrient deficiencies for Division B; the event's rules overview
+    (content/official_rules.py) says so, but these wiki chapters predate it.
 
     Also confirms Botany is brand new as an official national event for
     2027 -- it ran as a trial event since 2020 and replaces Entomology on
@@ -1416,52 +998,7 @@ def seed_botany_deep_dive() -> None:
         if topic is None:
             return
 
-        topic.description = (
-            "Written exam on plant life and general botany principles -- newly promoted to an "
-            "official national event for 2027 (a trial event since 2020), replacing Entomology. "
-            "Division B is tested only on the shared baseline content, not Division C's extra "
-            "material."
-        )
-        topic.overview_what = (
-            "A Division B and Division C exam-only event, run nationally for the first time in "
-            "2027 after four seasons as a trial event (starting 2020 at New Jersey regionals). "
-            "Teams of 2 take a written test on plant biology and horticulture; Division C's "
-            "version adds extra material (plant diseases, nutrient deficiencies) that Division B "
-            "is not tested on."
-        )
-        topic.overview_learn = (
-            "Major plant groupings (algae vs. multicellular plants, monocots vs. dicots, "
-            "embryophytes vs. cryptogams, woody vs. herbaceous plants); vascular plant anatomy "
-            "(shoot vs. root systems, xylem/phloem) and reproduction (alternation of generations, "
-            "spore types, the life cycles of mosses, ferns, gymnosperms, and angiosperms); "
-            "photosynthesis (chloroplast structure, light-dependent reactions, the Calvin cycle) "
-            "and plants' role in energy flow and the carbon/nitrogen/water/phosphorus cycles; how "
-            "humans and animals use plants (fibers, wood, food-storage structures, medicines); "
-            "plant competition (for light, water, and nutrients, including allelopathy); and key "
-            "historical figures in botany."
-        )
-        topic.overview_assessed = (
-            "Teams of 2, about 50 minutes, a written exam only -- no lab or build component in "
-            "Division B. Each participant may bring one 8.5x11 note sheet (information on both "
-            "sides). Note: the wiki's own summary box lists two Class II (non-programmable, "
-            "non-graphing) calculators, but its body text mentions only one stand-alone "
-            "calculator -- a genuine inconsistency on the source page itself, so double-check the "
-            "current official rules on this specific point."
-        )
-        topic.overview_theme_2027 = (
-            "No rotating focus topic. This is Botany's first season as an official national event "
-            "(2027) after running as a trial event since 2020 -- it replaces Entomology on the "
-            "national roster. Content reads as stable/comprehensive baseline material rather than "
-            "a yearly-changing focus."
-        )
-        topic.overview_notes = (
-            "Botany is similar in spirit to the Wisconsin regional event Horticulture. Division C "
-            "shares this event's baseline content but is additionally tested on plant diseases and "
-            "nutrient deficiencies -- Division B is not, so if a coach finds outside \"Botany\" "
-            "study material, check whether it's actually Division-C-specific content before using "
-            "it for Division B prep. (This app's own content below excludes that Division C-only "
-            "material entirely.)"
-        )
+        # Rules (description + overview_*) come from content/official_rules.py.
 
         if not db.query(models.Resource).filter(
             models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Botany (event page, Division B scope)"
@@ -1770,6 +1307,14 @@ def seed_solar_system_learning_chapters() -> None:
     content, no LLM calls. Registered after seed_official_topics so the
     "Solar System" parent row already exists; see app/content/solar_system."""
     seed_solar_system_learning_content()
+
+
+@app.on_event("startup")
+def apply_official_rules_2027() -> None:
+    """Registered after every per-event seed above: writes each official
+    event's description and rules overview from the 2027 Division B Rules
+    Manual, overriding any older summary. See app/content/official_rules.py."""
+    apply_official_rules()
 
 
 @app.on_event("startup")
