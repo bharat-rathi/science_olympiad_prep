@@ -106,7 +106,7 @@ def three_systems() -> str:
     cols = ["", "TRAPPIST-1", "Kepler-452", "LHS 1140", "Sun / Earth"]
     colors = [TEXT, "#ff8a6a", SUN, "#ff9a5a", PLANET_COLORS["Earth"]]
     rows = [
-        ("Distance", "~40 ly", "~1,800 ly", "~49 ly", "--"),
+        ("Distance", "~40 ly", "~1,800 ly", "~48 ly", "--"),
         ("Star type", "M8 red dwarf", "G2, Sun-like", "M4.5 red dwarf", "G2"),
         ("Star temp.", "~2,550 K", "~5,750 K", "~3,100 K", "~5,770 K"),
         ("Key planet", "e, f, g", "452 b", "1140 b", "Earth"),
@@ -137,7 +137,7 @@ def habitability_math() -> str:
     cards = [
         ("Stefan-Boltzmann", "Power per m² = sigma x T^4. Double the temperature -> 16x the power. A star's luminosity L = 4 pi R² sigma T^4.", GOLD),
         ("Wien's law", "Peak wavelength = 2,900 µm·K / T. Sun (5,800 K): 0.5 µm, visible. TRAPPIST-1 (2,550 K): ~1.1 µm, infrared. Earth (290 K): 10 µm.", RED),
-        ("Albedo A", "Fraction of light reflected: 0 = black, 1 = mirror. Moon ~0.1, Earth ~0.3, Venus ~0.75, fresh ice (Enceladus) ~0.8-0.9.", ICE),
+        ("Albedo A", "Fraction of light reflected: 0 = black, 1 = mirror. Moon ~0.1, Earth ~0.3, Venus ~0.75, Enceladus > 0.9 (most reflective).", ICE),
         ("Equilibrium temp.", "T_eq = T_star x sqrt(R_star / 2d) x (1 - A)^(1/4). Same star: T_eq ~ 1/sqrt(d). 4x farther -> half the temperature.", GREEN),
         ("Doppler shift", "Delta lambda / lambda = v / c. A 30 m/s wobble: 30 / (3 x 10^8) = 10^-7 of a shift.", BLUE),
         ("Tides", "Tidal force ~ M / r^3. Twice as far -> 1/8 the tidal stretch. Close-in planets and moons get squeezed (tidal heating).", PURPLE),
@@ -177,7 +177,7 @@ def extremophiles() -> str:
         ("Salt lovers", "Halophiles live in water 10x saltier than the ocean.", GOLD),
         ("Acid / base", "Acidophiles at pH ~0; alkaliphiles at pH 11+.", GREEN),
         ("Pressure", "Piezophiles thrive at the bottom of the Mariana Trench.", BLUE),
-        ("Radiation", "Deinococcus radiodurans survives ~1,000x a lethal human dose.", PURPLE),
+        ("Radiation", "Deinococcus radiodurans survives thousands of times a lethal human dose.", PURPLE),
     ]
     for i, (head, desc, color) in enumerate(kinds):
         col, row = i % 3, i // 3
@@ -225,12 +225,12 @@ def mission_list() -> str:
     groups = [
         ("VENUS", PLANET_COLORS["Venus"], [
             ("Venus Express", "ESA orbiter 2006-2014"),
-            ("DAVINCI", "NASA descent probe, 2030s"),
-            ("VERITAS", "NASA radar orbiter, 2030s"),
+            ("DAVINCI", "NASA descent probe, ~Dec 2030"),
+            ("VERITAS", "NASA radar orbiter, ~2031"),
         ]),
         ("MARS", PLANET_COLORS["Mars"], [
             ("Mars Recon. Orbiter", "NASA, orbiting since 2006"),
-            ("MAVEN", "NASA, atmosphere loss, 2014-"),
+            ("MAVEN", "NASA, air loss, 2014-2025 (lost)"),
             ("Perseverance", "NASA rover, Jezero, 2021-"),
         ]),
         ("JUPITER SYSTEM", PLANET_COLORS["Jupiter"], [
@@ -249,7 +249,7 @@ def mission_list() -> str:
         ("TELESCOPES", BLUE, [
             ("Kepler", "Transit survey 2009-2018"),
             ("JWST", "Infrared, L2, 2021-"),
-            ("Roman", "Wide-field + microlensing"),
+            ("Roman", "Launched Aug 2026; microlensing"),
         ]),
     ]
     for i, (head, color, missions) in enumerate(groups):

@@ -361,7 +361,7 @@ UNIT5 = [
                     "smoothly and then fades over days to weeks. The nearer star is the LENS; the distant one is the SOURCE. "
                     "This is GRAVITATIONAL MICROLENSING.\n\n"
                     "If the lens star has a PLANET, the planet's own small gravity adds a short extra BLIP to the light "
-                    "curve -- lasting about a day for a Jupiter-mass planet and only hours for an Earth-mass one. The shape "
+                    "curve -- lasting a few days for a Jupiter-mass planet and only a few hours for an Earth-mass one. The shape "
                     "of the blip reveals the planet's mass compared with its star and how far apart they are.\n\n"
                     "• STRENGTHS: it finds planets thousands of light-years away (toward the crowded center of the galaxy), "
                     "it works best for planets about 1-10 AU from their stars -- cold planets the transit and Doppler "
@@ -371,8 +371,8 @@ UNIT5 = [
                     "host star is usually too faint and far to study afterward. Surveys must watch millions of stars "
                     "every night to catch the rare events.\n\n"
                     "The first planet found this way was announced in 2004 (OGLE-2003-BLG-235 b), by ground surveys like "
-                    "OGLE, MOA and KMTNet. NASA's Nancy Grace Roman Space Telescope will run a huge microlensing survey "
-                    "toward the galactic center and is expected to find more than a thousand planets this way."
+                    "OGLE, MOA and KMTNet. NASA's Nancy Grace Roman Space Telescope (launched August 2026) will run a huge microlensing "
+                    "survey toward the galactic center and is expected to find more than a thousand planets this way."
                 ),
                 "infographic": "microlensing",
             },

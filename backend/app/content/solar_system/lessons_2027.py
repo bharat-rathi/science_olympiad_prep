@@ -65,8 +65,8 @@ HABITABILITY_MATH = {
                 "Habitable Zone chapter: flux = L / (4 pi d^2), so twice as far means 1/4 the flux.\n\n"
                 "ALBEDO is the fraction of that light a planet REFLECTS back to space (0 = perfectly black, 1 = perfect "
                 "mirror). Reflected light doesn't heat the planet. Rough values: the Moon ~0.1 (dark rock), Earth ~0.3, "
-                "Venus ~0.75 (bright clouds), fresh ice like Enceladus' surface ~0.8-0.9 -- one of the shiniest objects in "
-                "the Solar System.\n\n"
+                "Venus ~0.75 (bright clouds), and Enceladus' fresh ice reflects over 90% of sunlight -- NASA calls it the "
+                "most reflective body in the Solar System.\n\n"
                 "EQUILIBRIUM TEMPERATURE (T_eq) is the temperature a planet would settle at if the energy it absorbs "
                 "equals the energy it radiates away, with NO greenhouse effect:\n"
                 "T_eq = T_star x sqrt(R_star / 2d) x (1 - A)^(1/4)\n"
@@ -166,7 +166,7 @@ HABITABILITY_MATH = {
         "No calculator in 2027: scale with ratios, round to powers of ten, check units, rearrange equations.",
         "Stefan-Boltzmann: power/m^2 = sigma T^4 (2x T = 16x); L = 4 pi R^2 sigma T^4.",
         "Wien: peak = 2,900 µm·K / T. Sun 0.5 µm (visible); TRAPPIST-1 ~1.1 µm (IR); Earth ~10 µm.",
-        "Albedo: Moon ~0.1, Earth ~0.3, Venus ~0.75, Enceladus ice ~0.8-0.9.",
+        "Albedo: Moon ~0.1, Earth ~0.3, Venus ~0.75, Enceladus > 0.9 (most reflective body in the Solar System).",
         "T_eq = T_star sqrt(R_star/2d) (1-A)^(1/4). Earth T_eq ~255 K vs. actual ~288 K (greenhouse +33). Same star: T_eq ~ 1/sqrt(d).",
         "Doppler: delta-lambda/lambda = v/c. Tidal stretch ~ M/r^3 (2x farther = 1/8).",
         "Gas speed ~ sqrt(T/m); H2 is 4x faster than O2. Keep a gas if escape velocity > ~6x its speed.",
@@ -200,7 +200,7 @@ HABITABILITY_MATH = {
             "term": "Albedo",
             "badge": ("A", "reflect", ICE),
             "analogy": "A white T-shirt stays cooler in the sun than a black one.",
-            "explanation": "Fraction of light reflected. Moon ~0.1, Earth ~0.3, Venus ~0.75, Enceladus' fresh ice ~0.8-0.9. Reflected light doesn't heat the planet.",
+            "explanation": "Fraction of light reflected. Moon ~0.1, Earth ~0.3, Venus ~0.75, Enceladus' fresh ice > 0.9 (most reflective in the Solar System). Reflected light doesn't heat the planet.",
             "why": "One of the three inputs to equilibrium temperature.",
         },
         {
@@ -266,7 +266,7 @@ WATER_AND_EXTREMOPHILES = {
                 "Titan, water squeezes into denser crystal forms (like ice VI) that sink, so an ocean can be sandwiched "
                 "between ice layers.\n"
                 "• AMORPHOUS ICE: water frozen so cold and fast (below about 130 K) that the molecules never line up -- "
-                "like glass instead of a crystal. It is the most common form of water ice in the universe: it coats "
+                "like glass instead of a crystal. It is thought to be the most common form of water ice in the universe: it coats "
                 "interstellar dust grains and is found in comets, and it can trap other gases inside.\n"
                 "• BRINES: salty water. Dissolved salt LOWERS the freezing point, so brines stay liquid far below 0 C. "
                 "Perchlorate salts on Mars can keep water liquid down to about -70 C; the oceans of Europa and Enceladus "
@@ -339,8 +339,8 @@ WATER_AND_EXTREMOPHILES = {
                 "• HALOPHILES love salt, living in water about 10 times saltier than the ocean.\n"
                 "• ACIDOPHILES live at pH near 0; ALKALIPHILES at pH 11 or higher.\n"
                 "• PIEZOPHILES (BAROPHILES) thrive under crushing pressure at the bottom of the Mariana Trench.\n"
-                "• RADIATION-RESISTANT microbes like Deinococcus radiodurans survive about 1,000 times a dose that would "
-                "kill a human.\n\n"
+                "• RADIATION-RESISTANT microbes like Deinococcus radiodurans survive radiation doses thousands of "
+                "times higher than would kill a human.\n\n"
                 "CHEMOLITHOAUTOTROPHS break into three parts: CHEMO (energy from chemical reactions, not sunlight) + "
                 "LITHO ('rock' -- inorganic chemicals like hydrogen, sulfur or iron) + AUTOTROPH ('self-feeder' -- builds "
                 "its own food from CO2). They power whole ecosystems at hydrothermal vents in total darkness. METHANOGENS "
@@ -392,7 +392,7 @@ WATER_AND_EXTREMOPHILES = {
     "key_facts": [
         "Triple point of water: 0.01 C, 611 Pa -- about Mars' surface pressure, so liquid water there is barely possible.",
         "Ice Ih = ordinary hexagonal crystalline ice; high-pressure ices (e.g. ice VI) inside Ganymede/Titan.",
-        "Amorphous ice: forms below ~130 K, no crystal; most common ice in the universe (dust grains, comets).",
+        "Amorphous ice: forms below ~130 K, no crystal; thought to be the most common ice in the universe (dust grains, comets).",
         "Brines stay liquid far below 0 C (Mars perchlorates ~-70 C); Ceres' bright spots = salt.",
         "Clathrates: ice cages trapping CH4/CO2 ('fire ice'); may resupply Titan's methane.",
         "Rosetta: comet 67P water D/H ~3x Earth's -> not the main source of our oceans; glycine + phosphorus found.",
@@ -498,7 +498,7 @@ EXTRASOLAR_SYSTEMS = {
                 "In 2016 the TRAPPIST telescope in Chile (TRAnsiting Planets and PlanetesImals Small Telescope) found "
                 "three planets transiting the star; in 2017 NASA's Spitzer Space Telescope and ground telescopes revealed "
                 "SEVEN, named b through h in order from the star. All seven are ROCKY and roughly EARTH-SIZED (about 0.76 "
-                "to 1.13 Earth radii). Their 'years' last only 1.5 to 19 days -- the whole system would fit inside "
+                "to 1.13 Earth radii, from 2021 measurements). Their 'years' last only 1.5 to 19 days -- the whole system would fit inside "
                 "Mercury's orbit.\n\n"
                 "• MASSES from TRANSIT TIMING: the planets tug on each other, so their transits come a little early or "
                 "late. Measuring those shifts gave each planet's mass, and with the transit sizes, their densities: all "
@@ -521,8 +521,10 @@ EXTRASOLAR_SYSTEMS = {
                 "especially when young. That radiation can strip away atmospheres and water.\n"
                 "3. KEEPING AN ATMOSPHERE. This is what JWST is testing. In 2023 it measured the infrared heat glowing "
                 "from TRAPPIST-1 b's dayside (about 500 K) and from TRAPPIST-1 c: both look like bare or nearly bare rock "
-                "with NO thick carbon-dioxide atmosphere like Venus'. Planets e, f and g, farther out, are the next big "
-                "targets.\n\n"
+                "with NO thick carbon-dioxide atmosphere like Venus' (later JWST heat maps agreed). Planets e, f and g, farther "
+                "out, are the next big targets: in 2025 JWST's first spectra of TRAPPIST-1 e ruled out a thick, "
+                "hydrogen-rich atmosphere, but an Earth-like, nitrogen-rich atmosphere is still possible -- more "
+                "observations are underway.\n\n"
                 "The upside: red dwarfs live for TRILLIONS of years (the Sun gets about 10 billion), so a planet that "
                 "does keep its air would have an enormously long time for life to develop. And red dwarfs are the most "
                 "common stars in the galaxy, so the answer for TRAPPIST-1 tells us about most planets everywhere."
@@ -553,7 +555,7 @@ EXTRASOLAR_SYSTEMS = {
         {
             "heading": "LHS 1140 b: a water world next door?",
             "body": (
-                "LHS 1140 is a red dwarf about 49 light-years away in the constellation Cetus -- bigger and warmer than "
+                "LHS 1140 is a red dwarf about 48 light-years away in the constellation Cetus -- bigger and warmer than "
                 "TRAPPIST-1 (about 18% of the Sun's mass, about 3,100 K) and calmer, with fewer flares. Its planet LHS 1140 b "
                 "was discovered in 2017 by the MEarth project, a set of small ground telescopes watching red dwarfs for "
                 "transits.\n\n"
@@ -561,11 +563,14 @@ EXTRASOLAR_SYSTEMS = {
                 "density and composition can be estimated. It orbits every 24.7 days in the habitable zone, receiving "
                 "about 40% of the sunlight Earth gets. Its equilibrium temperature is roughly 225 K.\n"
                 "• It is TOO LIGHT FOR ITS SIZE to be pure rock like Earth. Two possibilities: a WATER WORLD whose mass may "
-                "be 10-20% water, or a MINI-NEPTUNE wrapped in hydrogen gas.\n"
+                "be roughly 10-20% water, or a MINI-NEPTUNE wrapped in hydrogen gas.\n"
                 "• JWST observations in 2024 showed no puffy hydrogen atmosphere, which favors the water world, and gave "
                 "tentative hints of a NITROGEN-rich atmosphere like Earth's -- still to be confirmed. Models suggest a "
-                "frozen 'snowball' surface, possibly with a patch of liquid ocean (a 'bullseye') where the star shines "
-                "straight down on the tidally locked day side.\n"
+                "frozen 'snowball' surface, possibly with a liquid 'bullseye' ocean about 4,000 km across where the star "
+                "shines straight down on the tidally locked day side.\n"
+                "• STILL DEBATED (2026): a July 2026 study using a ground telescope reported HELIUM escaping from the "
+                "planet -- evidence of an atmosphere. But four JWST transits analyzed in August 2026 found no helium, so "
+                "the signal may be false or may come and go. Watch for updates; a test may treat this as uncertain.\n"
                 "• A second planet, LHS 1140 c (about 1.3 Earth radii, 3.8-day orbit), is too hot to be habitable.\n\n"
                 "Because LHS 1140 is close, small and quiet, and b transits, it is one of the BEST targets anywhere for "
                 "studying a habitable-zone planet's atmosphere."
@@ -578,7 +583,7 @@ EXTRASOLAR_SYSTEMS = {
                 "• STARS: two red dwarfs (TRAPPIST-1, LHS 1140) and one Sun-like star (Kepler-452). Red dwarfs make "
                 "small planets easier to find (deeper transits, bigger wobbles) and their habitable zones close in, but "
                 "they flare and tidally lock their planets.\n"
-                "• DISTANCE: TRAPPIST-1 (~40 ly) and LHS 1140 (~49 ly) are near enough for JWST to study their planets' "
+                "• DISTANCE: TRAPPIST-1 (~40 ly) and LHS 1140 (~48 ly) are near enough for JWST to study their planets' "
                 "atmospheres. Kepler-452 (~1,800 ly) is far too faint.\n"
                 "• WHAT WE KNOW: TRAPPIST-1's planets have measured sizes AND masses (transit timing). LHS 1140 b has both "
                 "(transit + Doppler). Kepler-452 b has only a size -- and an uncertain one.\n"
@@ -609,8 +614,8 @@ EXTRASOLAR_SYSTEMS = {
         "TRAPPIST-1 e, f, g in the habitable zone; masses from transit timing; resonant chain; likely tidally locked; flaring star.",
         "JWST 2023: TRAPPIST-1 b (~500 K dayside) and c -- no thick CO2 atmosphere.",
         "Kepler-452 b (2015): Sun-like G2 star ~1.5 Gyr older, ~1,800 ly (Cygnus); 385-day orbit; ~1.6 Earth radii; ~10% more energy than Earth; no mass; 2018 re-analysis doubts it's confirmed.",
-        "LHS 1140 b (2017, MEarth): red dwarf ~49 ly (Cetus); 1.7 Earth radii, 5.6 Earth masses, 24.7 days, ~40% Earth's sunlight; too light for rock -> water world or mini-Neptune.",
-        "JWST 2024: no hydrogen-rich air on LHS 1140 b; tentative nitrogen; maybe icy with a liquid 'bullseye' ocean. LHS 1140 c is too hot.",
+        "LHS 1140 b (2017, MEarth): red dwarf ~48 ly (Cetus); 1.7 Earth radii, 5.6 Earth masses, 24.7 days, ~40% Earth's sunlight; too light for rock -> water world or mini-Neptune.",
+        "JWST 2024: no hydrogen-rich air on LHS 1140 b; tentative nitrogen; maybe icy with a ~4,000 km liquid 'bullseye' ocean. 2026: ground-based helium detection disputed by JWST. LHS 1140 c is too hot.",
     ],
     "quick_check": [
         ("How were the masses of TRAPPIST-1's planets measured?", "Transit timing variations: the planets tug on each other, shifting when their transits happen."),
@@ -618,7 +623,7 @@ EXTRASOLAR_SYSTEMS = {
         ("Give two reasons a TRAPPIST-1 planet in the habitable zone might still not be habitable.", "Any two: tidal locking, frequent flares stripping the atmosphere, no atmosphere found (JWST on b and c)."),
         ("Why don't we know Kepler-452 b's density?", "Its star is too faint and far for the Doppler method, so its mass was never measured."),
         ("Why is LHS 1140 b thought to be water-rich?", "Its density is too low for pure rock like Earth's, and JWST found no puffy hydrogen atmosphere, favoring a water world over a mini-Neptune."),
-        ("Why are TRAPPIST-1 and LHS 1140 better JWST targets than Kepler-452?", "They are close (~40-49 ly), and small stars make their planets' signals larger; Kepler-452 is ~1,800 ly away and faint."),
+        ("Why are TRAPPIST-1 and LHS 1140 better JWST targets than Kepler-452?", "They are close (~40-48 ly), and small stars make their planets' signals larger; Kepler-452 is ~1,800 ly away and faint."),
     ],
     "cards": [
         {
@@ -653,7 +658,7 @@ EXTRASOLAR_SYSTEMS = {
             "term": "LHS 1140 b",
             "badge": ("H₂O?", "1140 b", "#ff9a5a"),
             "analogy": "A bowling-ball-sized planet that turns out to weigh like a snowball -- it must hold lots of water.",
-            "explanation": "Red dwarf ~49 ly away. 1.7 Earth radii, 5.6 Earth masses, 24.7-day orbit in the habitable zone. Too light for rock: likely a water world; JWST found no hydrogen-rich air.",
+            "explanation": "Red dwarf ~48 ly away. 1.7 Earth radii, 5.6 Earth masses, 24.7-day orbit in the habitable zone. Too light for rock: likely a water world; JWST found no hydrogen-rich air.",
             "why": "One of the best habitable-zone planets for atmosphere studies.",
         },
         {
@@ -733,16 +738,18 @@ MISSIONS_2027 = {
                 "the planet's 243-day spin), lightning, and hydrogen and oxygen escaping to space in a 2-to-1 ratio -- "
                 "water being lost. Infrared maps of hot, fresh-looking lava flows hinted that Venus may still be "
                 "volcanically active.\n"
-                "• DAVINCI (NASA; planned for the early 2030s): 'Deep Atmosphere Venus Investigation of Noble gases, "
+                "• DAVINCI (NASA; launch targeted for about December 2030): 'Deep Atmosphere Venus Investigation of Noble gases, "
                 "Chemistry, and Imaging'. After flybys, a probe will DESCEND through the atmosphere for about an hour, "
                 "measuring noble gases (like argon and xenon), the D/H ratio of water and other chemistry layer by layer, "
                 "and photographing the rugged Alpha Regio highlands on the way down. Main question: did Venus once have "
                 "an OCEAN, and how did it lose it?\n"
-                "• VERITAS (NASA; planned for the 2030s): 'Venus Emissivity, Radio Science, InSAR, Topography, And "
+                "• VERITAS (NASA; launch targeted for about 2031): 'Venus Emissivity, Radio Science, InSAR, Topography, And "
                 "Spectroscopy'. An orbiter with interferometric radar to map the surface's heights in detail through "
                 "the clouds, plus an infrared EMISSIVITY mapper that peeks through narrow 'windows' in the clouds to tell "
                 "rock types apart. Goals: find active volcanoes and signs of plate tectonics, and look for rocks like "
-                "granite that on Earth form only with water."
+                "granite that on Earth usually need water to form.\n"
+                "Note: the 2026 White House budget request proposed cancelling both Venus missions; Congress kept funding "
+                "them, but their dates could still slip."
             ),
         },
         {
@@ -752,16 +759,16 @@ MISSIONS_2027 = {
                 "camera ever sent to another planet; CRISM, a spectrometer that mapped clays and other minerals that "
                 "form in water; SHARAD radar that found buried ice. It also scouts landing sites and RELAYS data from "
                 "rovers to Earth.\n"
-                "• MAVEN (NASA; 'Mars Atmosphere and Volatile EvolutioN', launched November 2013, at Mars since "
-                "September 2014). It measures how the SOLAR WIND and solar storms strip gas from Mars' upper atmosphere. "
+                "• MAVEN (NASA; 'Mars Atmosphere and Volatile EvolutioN', launched November 2013, orbited Mars from "
+                "September 2014 until contact was lost in December 2025; NASA declared it lost in June 2026). It measures how the SOLAR WIND and solar storms strip gas from Mars' upper atmosphere. "
                 "Its results show Mars has lost most of its original atmosphere to space -- possible because Mars lost "
                 "its global magnetic field long ago -- turning a once wetter, thicker-aired world into a cold desert.\n"
                 "• PERSEVERANCE (NASA rover; launched July 2020, landed February 18, 2021 in JEZERO CRATER, an ancient "
                 "lake with a river delta). Its job: look for signs of ancient life and COLLECT rock samples in sealed "
                 "tubes for a future return to Earth. It carried the Ingenuity helicopter (first powered flight on another "
-                "planet) and MOXIE, which made oxygen from Mars' CO2 air. In 2024 it found a rock nicknamed 'Cheyava "
-                "Falls' with 'leopard spot' patterns that are a POTENTIAL biosignature -- only lab study on Earth could "
-                "tell for sure. Nuclear-powered (RTG)."
+                "planet) and MOXIE, which made oxygen from Mars' CO2 air. In July 2024 it sampled a rock nicknamed 'Cheyava "
+                "Falls' with 'leopard spot' patterns; a peer-reviewed study (Nature, September 2025) called them a "
+                "POTENTIAL biosignature -- only further study, ideally in labs on Earth, could tell for sure. Nuclear-powered (RTG)."
             ),
         },
         {
@@ -792,7 +799,7 @@ MISSIONS_2027 = {
                 "surface on January 14, 2005. Cassini ended by diving into Saturn in 2017.\n"
                 "• DRAGONFLY (NASA; launch planned for July 2028, arrival at Titan in 2034). A car-sized, nuclear-powered "
                 "ROTORCRAFT with eight rotors that will fly from place to place across Titan -- easy, because Titan's air "
-                "is thick and its gravity weak. It will start in the Shangri-La dune fields and visit Selk crater, where "
+                "is thick and its gravity weak. It will land in the Shangri-La dune fields (the landing dune field was named Ahmakiq Undae in 2026) and work its way to Selk crater, where "
                 "an impact may have mixed liquid water with organic material, to study PREBIOTIC chemistry (the chemistry "
                 "before life)."
             ),
@@ -826,9 +833,9 @@ MISSIONS_2027 = {
                 "orbiting near the Sun-Earth L2 point about 1.5 million km away. It sees INFRARED, so it must be very "
                 "cold: a five-layer sunshield the size of a tennis court blocks the Sun's heat. It reads exoplanet "
                 "atmospheres (CO2 on WASP-39 b, TRAPPIST-1 b and c, LHS 1140 b) and studies icy moons and comets.\n"
-                "• NANCY GRACE ROMAN SPACE TELESCOPE (NASA; launch targeted between late 2026 and May 2027). Its 2.4-meter "
-                "mirror is the same size as Hubble's, but its view is about 100 times WIDER. Its Galactic Bulge survey "
-                "will use MICROLENSING to find over a thousand planets, including cold planets far from their stars and "
+                "• NANCY GRACE ROMAN SPACE TELESCOPE (NASA; launched August 30, 2026 on a Falcon Heavy, nine months ahead of "
+                "schedule, heading to the Sun-Earth L2 point like JWST). Its 2.4-meter mirror is the same size as "
+                "Hubble's, but its view is at least 100 times WIDER. Its Galactic Bulge survey will use MICROLENSING to find over a thousand planets, including cold planets far from their stars and "
                 "free-floating 'rogue' planets, and its CORONAGRAPH will test technology for directly imaging planets "
                 "around nearby stars."
             ),
@@ -860,12 +867,12 @@ MISSIONS_2027 = {
     "key_facts": [
         "Power: sunlight ~1/d^2 (Jupiter ~1/27 of Earth's) -> big solar arrays (Clipper, JUICE) or RTGs (Cassini, Perseverance, Dragonfly).",
         "Galileo & Cassini crashed on purpose (2003, 2017) for planetary protection. Galileo's magnetometer -> Europa's ocean.",
-        "Venus Express (ESA, 2006-2014): polar vortex, super-rotation, H:O escaping 2:1, hints of fresh lava. DAVINCI = descent probe; VERITAS = radar + emissivity orbiter (both 2030s).",
-        "MRO (2006-): HiRISE, CRISM clays, SHARAD ice, relay. MAVEN (2014-): solar wind stripped Mars' air. Perseverance (Jezero, Feb 2021): sample caching, MOXIE, Ingenuity, 'Cheyava Falls'.",
+        "Venus Express (ESA, 2006-2014): polar vortex, super-rotation, H:O escaping 2:1, hints of fresh lava. DAVINCI = descent probe (target ~Dec 2030); VERITAS = radar + emissivity orbiter (target ~2031).",
+        "MRO (2006-): HiRISE, CRISM clays, SHARAD ice, relay. MAVEN (2014-2025, contact lost Dec 2025): solar wind stripped Mars' air. Perseverance (Jezero, Feb 2021): sample caching, MOXIE, Ingenuity, 'Cheyava Falls'.",
         "Europa Clipper: launched Oct 14, 2024, arrives 2030, ~49 Europa flybys, radiation vault. JUICE (ESA): launched Apr 14, 2023, arrives 2031, orbits Ganymede 2034 (first moon orbiter besides ours).",
         "Cassini at Saturn 2004-2017; Enceladus plume: water, salts, organics, H2. Huygens on Titan Jan 14, 2005. Dragonfly: rotorcraft, launch July 2028, Titan 2034.",
         "OSIRIS-REx: Bennu (rubble pile), TAG Oct 20, 2020, ~121 g landed Sept 24, 2023 -> OSIRIS-APEX to Apophis. Rosetta: 67P 2014-2016, Philae landed Nov 12, 2014.",
-        "Kepler 0.95 m, 2009-2018, 2,600+ planets. JWST 6.5 m, infrared, L2, launched Dec 25, 2021. Roman 2.4 m, ~100x Hubble's view, microlensing survey + coronagraph.",
+        "Kepler 0.95 m, 2009-2018, 2,600+ planets. JWST 6.5 m, infrared, L2, launched Dec 25, 2021. Roman 2.4 m, launched Aug 30, 2026, 100x+ Hubble's view, microlensing survey + coronagraph.",
     ],
     "quick_check": [
         ("Why do Europa Clipper and JUICE need such large solar arrays?", "Sunlight at Jupiter is only about 1/27 as strong as at Earth (inverse-square law)."),
@@ -917,7 +924,7 @@ MISSIONS_2027 = {
             "term": "MRO & MAVEN",
             "badge": ("MARS", "orbiters", RED),
             "analogy": "MRO is Mars' photographer; MAVEN is the detective asking where its air went.",
-            "explanation": "MRO (2006-): HiRISE camera, CRISM found water-formed clays, SHARAD radar found ice, relays rover data. MAVEN (2014-): measured solar-wind stripping of Mars' atmosphere.",
+            "explanation": "MRO (2006-): HiRISE camera, CRISM found water-formed clays, SHARAD radar found ice, relays rover data. MAVEN (2014 to Dec 2025, when contact was lost): measured solar-wind stripping of Mars' atmosphere.",
             "why": "Mars' past water and lost atmosphere are core habitability topics.",
         },
         {
@@ -959,7 +966,7 @@ MISSIONS_2027 = {
             "term": "Kepler, JWST & Roman",
             "badge": ("6.5 m", "JWST", BLUE),
             "analogy": "Kepler counted fireflies, JWST sniffs their glow, Roman will sweep the whole field.",
-            "explanation": "Kepler (0.95 m, 2009-2018): transits, 2,600+ planets. JWST (6.5 m, infrared, L2, Dec 25, 2021): exoplanet atmospheres. Roman (2.4 m, 100x Hubble's view): microlensing survey + coronagraph.",
+            "explanation": "Kepler (0.95 m, 2009-2018): transits, 2,600+ planets. JWST (6.5 m, infrared, L2, Dec 25, 2021): exoplanet atmospheres. Roman (2.4 m, launched Aug 30, 2026, 100x+ Hubble's view): microlensing survey + coronagraph.",
             "why": "Telescope design and exoplanet results are both on the 2027 list.",
         },
     ],
