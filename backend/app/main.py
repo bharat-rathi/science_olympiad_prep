@@ -11,6 +11,14 @@ from app import auth, models
 from app.config import settings
 from app.content.deterministic import publish_deterministic_content
 from app.content.official_rules import RULES_2027, apply_official_rules
+from app.content.study_notes_2027 import (
+    BOTANY_CHAPTERS,
+    HOVERCRAFT_CHAPTERS,
+    METEOROLOGY_SEVERE_WEATHER,
+    RULES_URL,
+    THERMODYNAMICS_CHAPTERS,
+)
+from app.content.sync import sync_chapter, sync_resource
 from app.content.solar_system.seed import seed_solar_system_learning_content
 from app.db import SessionLocal, engine
 from app.routers import assessment, attempts, auth as auth_router, explain, ingestion, lessons, students, topic_chat, topics, tutor
@@ -398,12 +406,12 @@ def seed_official_topics() -> None:
 
 @app.on_event("startup")
 def seed_thermodynamics_deep_dive() -> None:
-    """One-time content correction + deep-dive setup for Thermodynamics,
-    from the actual scioly.org wiki page (coach-supplied PDF): idempotently
-    seeds a grounding resource plus 4 deep-dive chapters. The event's
-    rules (including the new 2027 heat-collection device) live in
-    content/official_rules.py; the chapters cover the written test, which
-    the device change doesn't affect.
+    """Deep-dive setup for Thermodynamics: a grounding resource and 4
+    written-test chapters from the scioly.org wiki page (coach-supplied
+    PDF), plus 2027 chapters from content/study_notes_2027.py for the new
+    heat-collection device and the 2027 test checklist. Synced on every
+    startup (content/sync.py), so text changes here reach existing
+    databases. The rules overview lives in content/official_rules.py.
     """
     db = SessionLocal()
     try:
@@ -417,115 +425,110 @@ def seed_thermodynamics_deep_dive() -> None:
 
         # Rules (description + overview_*) come from content/official_rules.py.
 
-        if not db.query(models.Resource).filter(
-            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Thermodynamics (event page)"
-        ).first():
-            db.add(
-                models.Resource(
-                    topic_id=topic.id,
-                    type="text",
-                    title="scioly.org wiki: Thermodynamics (event page)",
-                    source_url="https://scioly.org/wiki/Thermodynamics",
-                    raw_text=(
-                        "EVENT INFO: Division B & C, 2 participants, eye protection required, "
-                        "device impounded, ~50 minutes. Allowed resources: one hole-punched 3-ring "
-                        "binder of any size (sheets removable), tools, supplies, writing utensils, "
-                        "two Class III calculators. First run 2012, returned 2018/2019/2027; topic "
-                        "rotates in the sense that the DEVICE task has changed over the event's "
-                        "history (see below), though the written-test content is stable.\n\n"
-                        "WRITTEN TEST STRUCTURE (2027 rules): 3 questions from each of 5 areas -- "
-                        "(1) thermodynamic systems, zeroth law, definition of temperature, "
-                        "temperature scales/conversions, heat units; (2) phases of matter, phase "
-                        "transitions, phase diagrams, latent and sensible heat, ideal gas law; "
-                        "(3) heat transfer, thermal conductivity, heat capacity, specific heat; "
-                        "(4) thermodynamic laws and processes (Carnot cycle and efficiency, "
-                        "adiabatic, isothermal), the first and second laws; (5) history of "
-                        "thermodynamics -- Kelvin, Joseph Black, Joule, Carnot, Planck, Clausius, "
-                        "Boltzmann, Maxwell. State/National only: radiant exitance, blackbody "
-                        "radiation, Stefan-Boltzmann law, third law. Division C State/National "
-                        "only: entropy and enthalpy.\n\n"
-                        "THE FOUR LAWS OF THERMODYNAMICS: Zeroth Law -- if two systems are each in "
-                        "thermal equilibrium with a third, they're in thermal equilibrium with each "
-                        "other (defines temperature without invoking entropy). First Law -- a "
-                        "closed system's change in internal energy equals heat added minus work "
-                        "done by the system (dU = Q - W); conservation of energy. Second Law -- "
-                        "heat cannot spontaneously flow from colder to hotter; entropy of an "
-                        "isolated system tends to increase. Third Law -- the entropy of a perfect "
-                        "crystal approaches zero as temperature approaches absolute zero, and "
-                        "absolute zero itself can never actually be reached.\n\n"
-                        "GAS LAWS: Gay-Lussac's Law (P/T = constant at fixed volume); Boyle's Law "
-                        "(PV = constant at fixed temperature); Charles's Law (V/T = constant at "
-                        "fixed pressure); Avogadro's Law (relates volume and amount of gas at fixed "
-                        "P and T); the Combined Gas Law (P1V1/T1 = P2V2/T2); the Ideal Gas Law "
-                        "(PV = nRT); van der Waals' equation (a real-gas correction to the ideal "
-                        "gas law accounting for intermolecular attraction and molecular volume). "
-                        "Also: Hess' Law (heat of a chemical process is the same whether it happens "
-                        "in one step or several) and Le Chatelier's Principle (a system reacts to "
-                        "absorb an imposed change).\n\n"
-                        "HEAT THEORIES: the obsolete caloric theory held that heat is a weightless "
-                        "fluid ('caloric') that flows from hot to cold substances (proposed by "
-                        "Antoine Lavoisier, 1770s). The valid kinetic theory holds that matter is "
-                        "made of molecules in constant random motion, with average kinetic energy "
-                        "proportional to temperature; all gas laws are derivable from it. James "
-                        "Clerk Maxwell is considered its father.\n\n"
-                        "CARNOT CYCLE: a theoretical, maximally-efficient (but not physically "
-                        "achievable) heat engine cycle with 4 steps: (1) isothermal expansion "
-                        "against a hot reservoir, (2) reversible adiabatic expansion, (3) isothermal "
-                        "compression against a cold reservoir, (4) adiabatic compression back to "
-                        "the start. Efficiency: eta = 1 - Tc/Th = 1 - Q2/Q1. The cycle's entropy "
-                        "change is zero overall (the two adiabatic steps are isentropic); Carnot's "
-                        "Principle states no engine between two fixed-temperature reservoirs can "
-                        "exceed the efficiency of this reversible cycle.\n\n"
-                        "JOULE'S LAWS: First Law -- heat dissipated by a resistive component is "
-                        "Q = I^2*R*t (links electrical engineering to thermodynamics via P = I^2*R "
-                        "and P = VI). Second Law -- the internal energy of an ideal gas depends "
-                        "only on its temperature, not its volume or pressure.\n\n"
-                        "THERMODYNAMIC SYSTEMS & PROCESSES: Open (matter, heat, and work can cross "
-                        "the boundary); Closed (heat and work can cross, matter can't); Isolated "
-                        "(nothing crosses); Diathermic (only heat crosses); Adiabatic-boundary "
-                        "system (heat can't cross, everything else can). Processes: isobaric "
-                        "(constant pressure), isochoric/isometric (constant volume, no work done), "
-                        "isothermal (constant temperature), adiabatic (no heat added/removed), "
-                        "isentropic (constant entropy).\n\n"
-                        "KEY CONSTANTS & CONVERSIONS: gas constant R = 8.314 J/(mol*K); Boltzmann's "
-                        "constant = 1.38x10^-23 J/K; Avogadro's constant = 6.02x10^23; absolute "
-                        "zero = 0 K = -273.15 C = -459.67 F. Temperature conversions: "
-                        "K = C + 273.15; F = (9/5)C + 32; C = (5/9)(F-32). Energy conversions: "
-                        "1 BTU ~ 1,055 J; 1 small calorie ~ 4.2 J; 1 large Calorie (kcal) ~ 4,200 J "
-                        "= 1,000 small calories.\n\n"
-                        "VOCABULARY: Entropy -- a measure of a system's randomness / energy "
-                        "unavailable to do work. Enthalpy -- total energy content of a system. "
-                        "Gibbs' Free Energy (deltaG = deltaH - T*deltaS) -- the energy available to "
-                        "do useful work; positive deltaG means a non-spontaneous (endergonic) "
-                        "reaction, negative means spontaneous (exergonic). Latent heat -- heat that "
-                        "changes a substance's phase without changing its temperature. Sensible "
-                        "heat -- heat that changes temperature without changing phase. Specific "
-                        "heat / heat capacity -- energy needed to raise 1 kg of a substance by 1 C. "
-                        "Thermal equilibrium -- two objects/systems at the same temperature "
-                        "exchanging no net heat.\n\n"
-                        "HISTORY: James Prescott Joule (1818-1889) linked electrical and thermal "
-                        "energy, leading to the first law. Sadi Carnot (1796-1832), \"Father of "
-                        "Thermodynamics,\" first analyzed heat engines (the Carnot Cycle). Rudolf "
-                        "Clausius (1822-1888) first stated the second law and introduced entropy "
-                        "(1865). Walther Nernst (1864-1941) developed the third law (Nobel Prize "
-                        "1920). James Clerk Maxwell (1831-1879) formulated the kinetic theory and "
-                        "devised the \"Maxwell's Demon\" thought experiment. William Thomson/Lord "
-                        "Kelvin (1824-1907) determined absolute zero and coined the word "
-                        "\"thermodynamics.\" Daniel Fahrenheit (1686-1736) invented the mercury "
-                        "thermometer and his namesake scale. Anders Celsius (1701-1744) proposed "
-                        "the Celsius scale. Galileo (1564-1642) built the first open thermometer.\n\n"
-                        "DEVICE (pre-2027 classic version -- confirm against the current rules): "
-                        "teams built a device to insulate a 250 mL glass/plastic beaker filled with "
-                        "75-125 mL of hot water (60-75 C start), aiming to lose the least heat over "
-                        "a set time (25 min for Division B). The device had to fit a 20 cm cube "
-                        "(Division B) / 15 cm cube (Division C) and allow beaker insertion/removal "
-                        "and a temperature-probe access hole. Scoring combined a plot-completeness "
-                        "score, a heat-retention score (internal vs. external control-beaker "
-                        "temperature ratio), a prediction-accuracy score, and an optional ice-water "
-                        "bonus."
-                    ),
-                )
-            )
+        sync_resource(
+            db,
+            topic.id,
+            "scioly.org wiki: Thermodynamics (event page)",
+            "https://scioly.org/wiki/Thermodynamics",
+            (
+                "EVENT INFO: Division B & C, teams of 2, ~50 minutes, device impounded. "
+                "First run 2012, returned 2018/2019/2027; the DEVICE task has changed over the "
+                "event's history (see below), though the written-test content is stable. For "
+                "2027 allowed resources (any notes on paper, two Class III calculators), device "
+                "rules and scoring, see this event's rules overview and the 2027 device chapter.\n\n"
+                "WRITTEN TEST STRUCTURE (2027 rules): at least 3 questions from each of 5 areas "
+                "-- (1) thermodynamic systems, intensive and extensive properties, definition of "
+                "temperature, zeroth law, temperature scales/conversions, heat units; (2) phases "
+                "of matter, phase transitions, phase diagrams, latent and sensible heat, ideal "
+                "gas law; (3) kinds of heat transfer, thermal conductivity, heat capacity, "
+                "specific heat; (4) processes (adiabatic, isothermal, isochoric, isobaric), "
+                "thermodynamic cycles, engines, efficiency, the first and second laws; (5) "
+                "history of thermodynamics -- Kelvin, Joseph Black, Joule, Carnot, Planck, "
+                "Clausius, Boltzmann, Maxwell. State/National only: radiant exitance, blackbody "
+                "radiation, Stefan-Boltzmann law, third law.\n\n"
+                "THE FOUR LAWS OF THERMODYNAMICS: Zeroth Law -- if two systems are each in "
+                "thermal equilibrium with a third, they're in thermal equilibrium with each "
+                "other (defines temperature without invoking entropy). First Law -- a "
+                "closed system's change in internal energy equals heat added minus work "
+                "done by the system (dU = Q - W); conservation of energy. Second Law -- "
+                "heat cannot spontaneously flow from colder to hotter; entropy of an "
+                "isolated system tends to increase. Third Law -- the entropy of a perfect "
+                "crystal approaches zero as temperature approaches absolute zero, and "
+                "absolute zero itself can never actually be reached.\n\n"
+                "GAS LAWS: Gay-Lussac's Law (P/T = constant at fixed volume); Boyle's Law "
+                "(PV = constant at fixed temperature); Charles's Law (V/T = constant at "
+                "fixed pressure); Avogadro's Law (relates volume and amount of gas at fixed "
+                "P and T); the Combined Gas Law (P1V1/T1 = P2V2/T2); the Ideal Gas Law "
+                "(PV = nRT); van der Waals' equation (a real-gas correction to the ideal "
+                "gas law accounting for intermolecular attraction and molecular volume). "
+                "Also: Hess' Law (heat of a chemical process is the same whether it happens "
+                "in one step or several) and Le Chatelier's Principle (a system reacts to "
+                "absorb an imposed change).\n\n"
+                "HEAT THEORIES: the obsolete caloric theory held that heat is a weightless "
+                "fluid ('caloric') that flows from hot to cold substances (proposed by "
+                "Antoine Lavoisier, 1770s). The valid kinetic theory holds that matter is "
+                "made of molecules in constant random motion, with average kinetic energy "
+                "proportional to temperature; all gas laws are derivable from it. James "
+                "Clerk Maxwell is considered its father.\n\n"
+                "CARNOT CYCLE: a theoretical, maximally-efficient (but not physically "
+                "achievable) heat engine cycle with 4 steps: (1) isothermal expansion "
+                "against a hot reservoir, (2) reversible adiabatic expansion, (3) isothermal "
+                "compression against a cold reservoir, (4) adiabatic compression back to "
+                "the start. Efficiency: eta = 1 - Tc/Th = 1 - Q2/Q1. The cycle's entropy "
+                "change is zero overall (the two adiabatic steps are isentropic); Carnot's "
+                "Principle states no engine between two fixed-temperature reservoirs can "
+                "exceed the efficiency of this reversible cycle.\n\n"
+                "JOULE'S LAWS: First Law -- heat dissipated by a resistive component is "
+                "Q = I^2*R*t (links electrical engineering to thermodynamics via P = I^2*R "
+                "and P = VI). Second Law -- the internal energy of an ideal gas depends "
+                "only on its temperature, not its volume or pressure.\n\n"
+                "THERMODYNAMIC SYSTEMS & PROCESSES: Open (matter, heat, and work can cross "
+                "the boundary); Closed (heat and work can cross, matter can't); Isolated "
+                "(nothing crosses); Diathermic (only heat crosses); Adiabatic-boundary "
+                "system (heat can't cross, everything else can). Processes: isobaric "
+                "(constant pressure), isochoric/isometric (constant volume, no work done), "
+                "isothermal (constant temperature), adiabatic (no heat added/removed), "
+                "isentropic (constant entropy).\n\n"
+                "KEY CONSTANTS & CONVERSIONS: gas constant R = 8.314 J/(mol*K); Boltzmann's "
+                "constant = 1.38x10^-23 J/K; Avogadro's constant = 6.02x10^23; absolute "
+                "zero = 0 K = -273.15 C = -459.67 F. Temperature conversions: "
+                "K = C + 273.15; F = (9/5)C + 32; C = (5/9)(F-32). Energy conversions: "
+                "1 BTU ~ 1,055 J; 1 small calorie ~ 4.2 J; 1 large Calorie (kcal) ~ 4,200 J "
+                "= 1,000 small calories.\n\n"
+                "VOCABULARY: Entropy -- a measure of a system's randomness / energy "
+                "unavailable to do work. Enthalpy -- total energy content of a system. "
+                "Gibbs' Free Energy (deltaG = deltaH - T*deltaS) -- the energy available to "
+                "do useful work; positive deltaG means a non-spontaneous (endergonic) "
+                "reaction, negative means spontaneous (exergonic). Latent heat -- heat that "
+                "changes a substance's phase without changing its temperature. Sensible "
+                "heat -- heat that changes temperature without changing phase. Specific "
+                "heat / heat capacity -- energy needed to raise 1 kg of a substance by 1 C. "
+                "Thermal equilibrium -- two objects/systems at the same temperature "
+                "exchanging no net heat.\n\n"
+                "HISTORY: James Prescott Joule (1818-1889) linked electrical and thermal "
+                "energy, leading to the first law. Sadi Carnot (1796-1832), \"Father of "
+                "Thermodynamics,\" first analyzed heat engines (the Carnot Cycle). Rudolf "
+                "Clausius (1822-1888) first stated the second law and introduced entropy "
+                "(1865). Walther Nernst (1864-1941) developed the third law (Nobel Prize "
+                "1920). James Clerk Maxwell (1831-1879) formulated the kinetic theory and "
+                "devised the \"Maxwell's Demon\" thought experiment. William Thomson/Lord "
+                "Kelvin (1824-1907) determined absolute zero and coined the word "
+                "\"thermodynamics.\" Daniel Fahrenheit (1686-1736) invented the mercury "
+                "thermometer and his namesake scale. Anders Celsius (1701-1744) proposed "
+                "the Celsius scale. Galileo (1564-1642) built the first open thermometer.\n\n"
+                "OLD DEVICE (through 2019 -- NOT the 2027 task): "
+                "teams built a device to insulate a 250 mL glass/plastic beaker filled with "
+                "75-125 mL of hot water (60-75 C start), aiming to lose the least heat over "
+                "a set time (25 min for Division B). The device had to fit a 20 cm cube "
+                "(Division B) / 15 cm cube (Division C) and allow beaker insertion/removal "
+                "and a temperature-probe access hole. Scoring combined a plot-completeness "
+                "score, a heat-retention score (internal vs. external control-beaker "
+                "temperature ratio), a prediction-accuracy score, and an optional ice-water "
+                "bonus. The 2027 device instead COLLECTS heat from a heat lamp to warm 100 mL "
+                "of room-temperature water -- see the 'Thermodynamics: 2027 Device -- Heat "
+                "Collection' chapter."
+            ),
+        )
 
         chapters = [
             (
@@ -672,30 +675,17 @@ def seed_thermodynamics_deep_dive() -> None:
         ]
 
         for chapter_name, chapter_description, chapter_text in chapters:
-            existing = (
-                db.query(models.Topic)
-                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
-                .first()
+            sync_chapter(
+                db,
+                topic,
+                chapter_name,
+                chapter_description,
+                "scioly.org wiki: Thermodynamics (excerpt for this chapter)",
+                "https://scioly.org/wiki/Thermodynamics",
+                chapter_text,
             )
-            if existing is None:
-                sub_topic = models.Topic(
-                    event_name=topic.event_name,
-                    name=chapter_name,
-                    description=chapter_description,
-                    assessment_type=topic.assessment_type,
-                    parent_topic_id=topic.id,
-                )
-                db.add(sub_topic)
-                db.flush()
-                db.add(
-                    models.Resource(
-                        topic_id=sub_topic.id,
-                        type="text",
-                        title="scioly.org wiki: Thermodynamics (excerpt for this chapter)",
-                        source_url="https://scioly.org/wiki/Thermodynamics",
-                        raw_text=chapter_text,
-                    )
-                )
+        for chapter_name, chapter_description, resource_title, chapter_text in THERMODYNAMICS_CHAPTERS:
+            sync_chapter(db, topic, chapter_name, chapter_description, resource_title, RULES_URL, chapter_text)
 
         db.commit()
     finally:
@@ -704,24 +694,11 @@ def seed_thermodynamics_deep_dive() -> None:
 
 @app.on_event("startup")
 def seed_hovercraft_content() -> None:
-    """One-time content correction for Hovercraft (Division B), from the
-    actual scioly.org wiki page (coach-supplied PDF, same source as the
-    Solar System / Thermodynamics corrections).
-
-    Deliberately does NOT seed deep-dive chapters like those two did: this
-    wiki page is largely unfilled for the 2027 season -- its construction/
-    competition-parameters, design-tips, and scoring sections are still
-    literal community placeholders ("Add current construction parameters
-    here!"), not real numbers. Inventing specific build dimensions or
-    scoring formulas not actually on the page would violate the same
-    "deterministic, sourced content only" instruction this whole feature is
-    built around. What IS confirmed and worth correcting: the written-exam
-    portion no longer exists (pure build/run event now), participants,
-    eye protection, impound, allowed resources, and time. A coach with the
-    actual 2027 rules PDF (soinc.org/hovercraft-b) can prompt a follow-up
-    to add real deep-dive chapters once those specifics exist. The rules
-    themselves (dimensions, Target Time scoring, nickel loads) now come
-    from the 2027 Rules Manual via content/official_rules.py.
+    """Hovercraft (Division B) study material: a grounding resource from the
+    scioly.org wiki page (coach-supplied PDF), which had no 2027 build or
+    scoring details, plus two chapters written from the 2027 Rules Manual
+    (content/study_notes_2027.py) covering the build specs and the Target
+    Time / nickel scoring. Synced on every startup (content/sync.py).
     """
     db = SessionLocal()
     try:
@@ -735,38 +712,32 @@ def seed_hovercraft_content() -> None:
 
         # Rules (description + overview_*) come from content/official_rules.py.
 
-        if not db.query(models.Resource).filter(
-            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Hovercraft (event page)"
-        ).first():
-            db.add(
-                models.Resource(
-                    topic_id=topic.id,
-                    type="text",
-                    title="scioly.org wiki: Hovercraft (event page)",
-                    source_url="https://scioly.org/wiki/Hovercraft",
-                    raw_text=(
-                        "EVENT INFO: Division B & C, Physics/Build category, 2 participants, eye "
-                        "protection Category B, device and notes both impounded, ~8 minutes. "
-                        "Allowed at competition: one vehicle (impounded), papers/notes (impounded), "
-                        "tools/supplies, spare parts, two Class III calculators. First appearance "
-                        "2017, returned for 2027; the wiki lists this event as rotating.\n\n"
-                        "FORMAT: Hovercraft is a build event for the 2026-2027 season -- design, "
-                        "build, and calibrate a self-propelled, air-levitated vehicle ahead of the "
-                        "tournament, then run it down a track without it stopping along the way. "
-                        "The device MUST actually levitate; if it doesn't, it's considered a "
-                        "regular (non-hovering) vehicle instead, and this may be checked by event "
-                        "supervisors if there's any suspicion. Formerly (prior seasons) this event "
-                        "was a dual lab with both a written-test portion and a build portion -- for "
-                        "the current rules, the written exam does not exist anymore; it's build/run "
-                        "only.\n\n"
-                        "NOT YET DOCUMENTED ON THIS WIKI SNAPSHOT (community placeholders as of "
-                        "this page's last edit): specific construction parameters (size/weight/"
-                        "power limits, allowed materials), competition parameters (track "
-                        "dimensions/layout), design tips & strategy, and the scoring formula. Get "
-                        "these from the official Division B rules at soinc.org/hovercraft-b."
-                    ),
-                )
-            )
+        sync_resource(
+            db,
+            topic.id,
+            "scioly.org wiki: Hovercraft (event page)",
+            "https://scioly.org/wiki/Hovercraft",
+            (
+                "EVENT INFO: Division B & C, Physics/Build category, teams of 2, Eye "
+                "Protection B, ~10 minutes, impound (vehicle, spare parts, and notes; batteries "
+                "stored separately). First appearance 2017, returned for 2027; the wiki lists this "
+                "event as rotating.\n\n"
+                "FORMAT: Hovercraft is a build event for the 2026-2027 season -- design, "
+                "build, and calibrate a self-propelled, air-levitated vehicle ahead of the "
+                "tournament, then run it down a track. The device MUST actually levitate on a "
+                "cushion of air, and event supervisors may check this. Formerly this event was a "
+                "dual lab with a written-test portion -- under the current rules there is no "
+                "written exam; it's build/run only.\n\n"
+                "2027 SPECIFICS: the wiki snapshot this came from had no construction or scoring "
+                "details yet. The 2027 Rules Manual fills them in -- a 40 cm cube size limit, a "
+                "Target Time of 6-18 s, a nickel load you choose, and Distance + Time + Mass "
+                "scoring. See this event's rules overview and the 'Hovercraft: 2027 Build "
+                "Specs' and 'Hovercraft: Runs, Target Time & Scoring' chapters."
+            ),
+        )
+
+        for chapter_name, chapter_description, resource_title, chapter_text in HOVERCRAFT_CHAPTERS:
+            sync_chapter(db, topic, chapter_name, chapter_description, resource_title, RULES_URL, chapter_text)
 
         db.commit()
     finally:
@@ -775,22 +746,14 @@ def seed_hovercraft_content() -> None:
 
 @app.on_event("startup")
 def seed_meteorology_deep_dive() -> None:
-    """One-time content correction + deep-dive setup for Meteorology
-    (Division B only -- no Division C equivalent exists), from the actual
-    scioly.org wiki page (coach-supplied PDF, same pattern as the Solar
-    System / Thermodynamics corrections).
-
-    Confirms the 2027 focus topic is Severe Storms (the wiki's topic-
-    rotation table shows 2026 Everyday Weather / 2027 Severe Storms /
-    Climate next) -- matching the event description's own wording. The main
-    wiki page only covers foundational atmosphere/pressure/wind/water-vapor
-    content in depth and *links out* to separate sub-pages for each
-    rotating topic's specifics (e.g. Severe Storms' Thunderstorms,
-    Hurricanes, Winter Storms, Mid-Latitude Cyclones, Atmospheric Rivers)
-    without their content inline -- those sub-pages weren't fetched, so the
-    Severe Storms chapter below is a sourced checklist of what to study,
-    not fabricated storm-specific facts, consistent with keeping every
-    chapter's content traceable to what was actually on the page.
+    """Deep-dive setup for Meteorology (Division B only -- no Division C
+    equivalent): a grounding resource and 3 foundational chapters
+    (atmosphere, pressure and wind, water vapor) from the scioly.org wiki
+    page (coach-supplied PDF), plus the 2027 Severe Weather & Storms
+    chapter written from the 2027 Rules Manual topic list
+    (content/study_notes_2027.py). It replaces the older wiki-based
+    "Severe Storms" checklist chapter in place. Synced on every startup
+    (content/sync.py).
     """
     db = SessionLocal()
     try:
@@ -804,59 +767,55 @@ def seed_meteorology_deep_dive() -> None:
 
         # Rules (description + overview_*) come from content/official_rules.py.
 
-        if not db.query(models.Resource).filter(
-            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Meteorology (event page)"
-        ).first():
-            db.add(
-                models.Resource(
-                    topic_id=topic.id,
-                    type="text",
-                    title="scioly.org wiki: Meteorology (event page)",
-                    source_url="https://scioly.org/wiki/Meteorology",
-                    raw_text=(
-                        "EVENT INFO: Division B only (no Division C equivalent), 2 participants, "
-                        "~50 minutes. Allowed resources (2023-24 rules onward): one binder of any "
-                        "size with information in any form, two stand-alone Class II calculators, "
-                        "writing utensils. First run 2003; the EVENT doesn't rotate in/out, but its "
-                        "focus TOPIC rotates yearly among Everyday Weather, Severe Storms, and "
-                        "Climate.\n\n"
-                        "TOPIC ROTATION (from the wiki's table): 2010 Everyday Weather / 2011 "
-                        "Severe Storms / 2012 Climate. 2013/2014/2015 same pattern. 2016/2017/2018 "
-                        "same pattern. 2019/2020-21/2022 same pattern. 2023/2024/2025 same "
-                        "pattern. 2026 Everyday Weather / 2027 Severe Storms / (Climate next).\n\n"
-                        "TEST FORMAT: usually a written test or a slideshow-based test; "
-                        "occasionally rotating stations. Question types: multiple choice, true/"
-                        "false, matching, diagram labeling, short answer, free response. Tip from "
-                        "the wiki: split the binder-lookup work between partners to save time; "
-                        "there's typically no penalty for wrong answers, so attempt every "
-                        "question.\n\n"
-                        "BASIC METEOROLOGICAL INFORMATION (applies across all 3 rotating topics):\n"
-                        "- Atmosphere: mostly nitrogen and oxygen gas; key variables are "
-                        "temperature, pressure, and humidity. Layers bottom to top: Troposphere "
-                        "(where most weather occurs), Stratosphere, Mesosphere, Thermosphere, "
-                        "Exosphere.\n"
-                        "- Pressure: the weight of the atmosphere over an area; greatest at the "
-                        "surface, decreases exponentially with altitude. Low-pressure areas are "
-                        "cyclones; high-pressure areas are anticyclones.\n"
-                        "- Wind: driven by pressure differences (pressure gradient force), flowing "
-                        "from high to low pressure. The Coriolis effect (from Earth's rotation) "
-                        "deflects wind right in the Northern Hemisphere, left in the Southern "
-                        "Hemisphere. Surface friction can reduce wind speed.\n"
-                        "- Water vapor & clouds: water vapor enters the atmosphere via evaporation, "
-                        "then condenses (to liquid droplets) or deposits (to ice crystals) to form "
-                        "clouds; large enough droplets/crystals fall as precipitation. Air is "
-                        "'saturated' when it holds the maximum water vapor possible at its "
-                        "temperature (warmer air holds more). Rising air expands and cools; the "
-                        "temperature at which it becomes saturated is the dew point.\n"
-                        "- Instruments: historically thermometers, barometers (pressure), and rain "
-                        "gauges; modern methods include satellites, radar, and weather balloons/"
-                        "radiosondes, with data plotted on maps and specialized charts.\n\n"
-                        "2027 TOPIC (SEVERE STORMS) SUB-PAGES NAMED BY THE WIKI (content not "
-                        "included in this source -- study checklist only): Thunderstorms, "
-                        "Hurricanes, Winter Storms, Mid-Latitude Cyclones, Atmospheric Rivers."
-                    ),
-                )
-            )
+        sync_resource(
+            db,
+            topic.id,
+            "scioly.org wiki: Meteorology (event page)",
+            "https://scioly.org/wiki/Meteorology",
+            (
+                "EVENT INFO: Division B only (no Division C equivalent), 2 participants, "
+                "~50 minutes. Allowed resources (2027 rules): one three-ring binder of any size "
+                "(contents on the rings; nothing removed during stations) that should include a "
+                "U.S. map with state names, two Class II calculators, writing utensils. First "
+                "run 2003; the EVENT doesn't rotate in/out, but its "
+                "focus TOPIC rotates yearly among Everyday Weather, Severe Storms, and "
+                "Climate.\n\n"
+                "TOPIC ROTATION (from the wiki's table): 2010 Everyday Weather / 2011 "
+                "Severe Storms / 2012 Climate. 2013/2014/2015 same pattern. 2016/2017/2018 "
+                "same pattern. 2019/2020-21/2022 same pattern. 2023/2024/2025 same "
+                "pattern. 2026 Everyday Weather / 2027 Severe Storms / (Climate next).\n\n"
+                "TEST FORMAT: usually a written test or a slideshow-based test; "
+                "occasionally rotating stations. Question types: multiple choice, true/"
+                "false, matching, diagram labeling, short answer, free response. Tip from "
+                "the wiki: split the binder-lookup work between partners to save time; "
+                "there's typically no penalty for wrong answers, so attempt every "
+                "question.\n\n"
+                "BASIC METEOROLOGICAL INFORMATION (applies across all 3 rotating topics):\n"
+                "- Atmosphere: mostly nitrogen and oxygen gas; key variables are "
+                "temperature, pressure, and humidity. Layers bottom to top: Troposphere "
+                "(where most weather occurs), Stratosphere, Mesosphere, Thermosphere, "
+                "Exosphere.\n"
+                "- Pressure: the weight of the atmosphere over an area; greatest at the "
+                "surface, decreases exponentially with altitude. Low-pressure areas are "
+                "cyclones; high-pressure areas are anticyclones.\n"
+                "- Wind: driven by pressure differences (pressure gradient force), flowing "
+                "from high to low pressure. The Coriolis effect (from Earth's rotation) "
+                "deflects wind right in the Northern Hemisphere, left in the Southern "
+                "Hemisphere. Surface friction can reduce wind speed.\n"
+                "- Water vapor & clouds: water vapor enters the atmosphere via evaporation, "
+                "then condenses (to liquid droplets) or deposits (to ice crystals) to form "
+                "clouds; large enough droplets/crystals fall as precipitation. Air is "
+                "'saturated' when it holds the maximum water vapor possible at its "
+                "temperature (warmer air holds more). Rising air expands and cools; the "
+                "temperature at which it becomes saturated is the dew point.\n"
+                "- Instruments: historically thermometers, barometers (pressure), and rain "
+                "gauges; modern methods include satellites, radar, and weather balloons/"
+                "radiosondes, with data plotted on maps and specialized charts.\n\n"
+                "2027 TOPIC: Severe Weather & Storms -- the full 2027 topic list, with scales, "
+                "thresholds, and radar features, is in the 'Meteorology: 2027 Topic -- Severe "
+                "Weather & Storms' chapter."
+            ),
+        )
 
         chapters = [
             (
@@ -912,53 +871,30 @@ def seed_meteorology_deep_dive() -> None:
                     "specialized charts."
                 ),
             ),
-            (
-                "Meteorology: 2027 Topic -- Severe Storms",
-                "This year's rotating focus topic. The wiki names these sub-topics but their "
-                "detailed content lives on separate pages not included in this source -- treat "
-                "this as a study checklist, not a complete reference.",
-                (
-                    "CONFIRMED 2027 FOCUS: Severe Storms (per both the event's own description and "
-                    "the wiki's topic-rotation table: 2026 Everyday Weather, 2027 Severe Storms, "
-                    "Climate next in the 3-year cycle).\n\n"
-                    "NAMED SUB-TOPICS (per the wiki's own Severe Storms page list -- study these "
-                    "specifically, using a meteorology textbook, the linked scioly.org sub-pages, "
-                    "or soinc.org/meteorology-b for the actual content, since it wasn't included in "
-                    "this source): Thunderstorms. Hurricanes. Winter Storms. Mid-Latitude Cyclones. "
-                    "Atmospheric Rivers.\n\n"
-                    "All of this builds on the foundational atmosphere/pressure/wind/water-vapor "
-                    "material in the other three chapters -- severe storms are, at their core, "
-                    "extreme expressions of those same underlying processes (pressure gradients, "
-                    "moisture, instability)."
-                ),
-            ),
         ]
 
         for chapter_name, chapter_description, chapter_text in chapters:
-            existing = (
-                db.query(models.Topic)
-                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
-                .first()
+            sync_chapter(
+                db,
+                topic,
+                chapter_name,
+                chapter_description,
+                "scioly.org wiki: Meteorology (excerpt for this chapter)",
+                "https://scioly.org/wiki/Meteorology",
+                chapter_text,
             )
-            if existing is None:
-                sub_topic = models.Topic(
-                    event_name=topic.event_name,
-                    name=chapter_name,
-                    description=chapter_description,
-                    assessment_type=topic.assessment_type,
-                    parent_topic_id=topic.id,
-                )
-                db.add(sub_topic)
-                db.flush()
-                db.add(
-                    models.Resource(
-                        topic_id=sub_topic.id,
-                        type="text",
-                        title="scioly.org wiki: Meteorology (excerpt for this chapter)",
-                        source_url="https://scioly.org/wiki/Meteorology",
-                        raw_text=chapter_text,
-                    )
-                )
+        name, description, resource_title, text_ = METEOROLOGY_SEVERE_WEATHER
+        sync_chapter(
+            db,
+            topic,
+            name,
+            description,
+            resource_title,
+            RULES_URL,
+            text_,
+            old_names=("Meteorology: 2027 Topic -- Severe Storms",),
+            old_resource_titles=("scioly.org wiki: Meteorology (excerpt for this chapter)",),
+        )
 
         db.commit()
     finally:
@@ -979,9 +915,10 @@ def seed_botany_deep_dive() -> None:
     deep-dive chapters below. Only content before that marker (plant
     groups/classification, anatomy/reproduction, photosynthesis/ecology,
     human uses, history) is shared between B and C and included here.
-    Note the 2027 Division B Rules Manual does list plant diseases and
-    nutrient deficiencies for Division B; the event's rules overview
-    (content/official_rules.py) says so, but these wiki chapters predate it.
+    The 2027 Division B Rules Manual does list plant diseases and nutrient
+    deficiencies (plus GMOs, paleobotany, and food production) for Division
+    B, so two extra chapters from content/study_notes_2027.py cover them.
+    Synced on every startup (content/sync.py).
 
     Also confirms Botany is brand new as an official national event for
     2027 -- it ran as a trial event since 2020 and replaces Entomology on
@@ -1000,146 +937,141 @@ def seed_botany_deep_dive() -> None:
 
         # Rules (description + overview_*) come from content/official_rules.py.
 
-        if not db.query(models.Resource).filter(
-            models.Resource.topic_id == topic.id, models.Resource.title == "scioly.org wiki: Botany (event page, Division B scope)"
-        ).first():
-            db.add(
-                models.Resource(
-                    topic_id=topic.id,
-                    type="text",
-                    title="scioly.org wiki: Botany (event page, Division B scope)",
-                    source_url="https://scioly.org/wiki/Botany",
-                    raw_text=(
-                        "EVENT INFO: Division B & C, 2 participants, ~50 minutes, written exam "
-                        "only. Allowed resources: one 8.5x11 note sheet (both sides), a calculator "
-                        "(the page's summary box says two Class II calculators; its body text says "
-                        "one -- verify current rules), writing utensils. Trial event since 2020 "
-                        "(first run at New Jersey regionals); becomes an official national event "
-                        "for the first time in 2027, replacing Entomology. NOTE: this excerpt "
-                        "excludes everything the wiki marks as \"Division C Concepts\" (nutrient "
-                        "deficiencies and plant diseases) -- Division B is not tested on that "
-                        "material.\n\n"
-                        "ALGAE VS. MULTICELLULAR PLANTS: algae can be unicellular or multicellular "
-                        "and typically live underwater; plants are multicellular and thrive on "
-                        "land. Algae are nonvascular and lack connective tissues, leaves, stems, "
-                        "and roots, unlike plants.\n\n"
-                        "MONOCOTS VS. DICOTS: seed-bearing plants are classified by cotyledon "
-                        "count -- monocots have one, dicots have two. Leaf venation: monocots have "
-                        "parallel veins, dicots have branching veins. Stem structure: monocots' "
-                        "vascular bundles are scattered around the stem; dicots' form a ring near "
-                        "the edge. Root systems: monocots typically have a fibrous root system "
-                        "(many small branching roots); dicots typically have a taproot (one thick "
-                        "central root with smaller branches). Floral patterns: monocot flower parts "
-                        "usually come in multiples of 3; dicot flower parts usually come in "
-                        "multiples of 4 or 5.\n\n"
-                        "EMBRYOPHYTES VS. CRYPTOGAMS: Embryophytes are land plants that nurture "
-                        "the young sporophyte inside the gametophyte's tissue -- nonvascular plants "
-                        "(mosses, liverworts, hornworts), seedless vascular plants (ferns, "
-                        "lycophytes), gymnosperms (conifers, cycads), and angiosperms (flowering "
-                        "plants). Cryptogams reproduce via spores rather than seeds/flowers -- "
-                        "thallophytes (fungi, bacteria, algae), bryophytes (nonvascular plants), "
-                        "and pteridophytes (seedless vascular plants).\n\n"
-                        "WOODY VS. HERBACEOUS PLANTS: woody plants are generally long-lived "
-                        "perennials with secondary growth and a lignin-reinforced woody stem; they "
-                        "go dormant (growth slows/stops) in winter rather than dying back, and "
-                        "practice self-pruning of unneeded branches/leaves. Herbaceous plants "
-                        "(herbs) lack a permanent woody stem, grow mostly via primary (lengthwise) "
-                        "growth, and are annuals (1-year life cycle), biennials (2-year), or "
-                        "perennials (2+ years, dying back to a small underground portion each "
-                        "year); fast-growing annual herbs are often pioneer species in ecological "
-                        "succession.\n\n"
-                        "VASCULAR PLANT ANATOMY: two key systems -- the shoot system (stem and "
-                        "leaves, above ground) and the root system (below ground) -- are "
-                        "interdependent (shoot needs roots for water/minerals, roots need the "
-                        "shoot for food/energy). Four main organ systems: stem (connects leaves to "
-                        "roots via the xylem and phloem), roots (anchor the plant, absorb water/"
-                        "nutrients), leaves (photosynthesize), and reproductive organs (enable "
-                        "sexual or asexual reproduction).\n\n"
-                        "REPRODUCTION -- ALTERNATION OF GENERATIONS: plants alternate between a "
-                        "diploid sporophyte stage and a haploid gametophyte stage, which can look "
-                        "identical (isomorphic, e.g. some algae) or different (heteromorphic, e.g. "
-                        "angiosperms). In most nonvascular plants the gametophyte dominates; in "
-                        "seed plants the sporophyte dominates and the gametophyte is reduced (in "
-                        "most angiosperms, to just a few cells). Sporophytes produce sporangia, "
-                        "which produce haploid spores that develop into gametophytes; gametophytes "
-                        "produce gametangia (archegonia = female gametes, antheridia = male "
-                        "gametes -- not present in all plants, e.g. angiosperms have neither). Two "
-                        "gametes fuse into a zygote, which develops into a new sporophyte. "
-                        "Homosporous plants produce one spore type (hermaphroditic gametophytes); "
-                        "heterosporous plants (e.g. pines) produce two types -- larger female "
-                        "megaspores and smaller male microspores.\n\n"
-                        "LIFE CYCLES: Moss (bryophyte) -- spores disperse to favorable spots and "
-                        "germinate into protonemata (branched filaments anchored by rhizoids, not "
-                        "roots), which bud into male and female gametophytes; flagellated sperm "
-                        "swim through water to fertilize eggs, forming a zygote that grows into a "
-                        "sporophyte (seta + capsule) still attached to and dependent on the female "
-                        "gametophyte; meiosis inside the capsule produces new spores, released when "
-                        "the capsule matures. Fern (pterophyte) -- similar dispersal/protonemata "
-                        "steps, but most ferns are homosporous with a single bisexual gametophyte "
-                        "producing antheridia and archegonia at different times; the resulting "
-                        "sporophyte grows true leaves, with sori (spore clusters) on their "
-                        "undersides. Gymnosperms (non-flowering seed plants, e.g. conifers) -- "
-                        "microspores and megaspores form on cone structures called strobili; wind "
-                        "carries pollen to the megasporangiate strobili, and roughly a year after "
-                        "pollination fertilization occurs, followed by wind-dispersed seed release. "
-                        "Angiosperms (flowering plants) -- microsporogenesis (anther) and "
-                        "megasporogenesis (ovule) produce spores; pollination (via wind, insects, "
-                        "etc.) leads to double fertilization unique to angiosperms, where one sperm "
-                        "fertilizes the egg and the other fuses with polar nuclei to form the "
-                        "triploid endosperm; the ovary wall then develops into fruit (exocarp/"
-                        "mesocarp/endocarp).\n\n"
-                        "PHOTOSYNTHESIS: occurs in chloroplasts (outer/inner membranes, thylakoids, "
-                        "stroma). Light-dependent reactions happen in the thylakoid membranes, "
-                        "converting sunlight and water into ATP, NADPH, and oxygen. Light-"
-                        "independent reactions (the Calvin cycle) happen in the stroma, converting "
-                        "CO2, ATP, and NADPH into G3P (using the enzyme RuBisCO).\n\n"
-                        "ENERGY & NUTRIENT CYCLES: plants are primary producers -- Gross Primary "
-                        "Productivity (GPP) is the total energy they generate; Net Primary "
-                        "Productivity (NPP) is what's left after their own respiration, available "
-                        "to herbivores/decomposers. The 10% Rule (Lindeman's Efficiency): on "
-                        "average only ~10% of stored energy passes to the next trophic level, the "
-                        "rest lost as heat/movement/waste. Carbon cycle: plants fix atmospheric CO2 "
-                        "via RuBisCO in the Calvin Cycle, release some back via respiration, and "
-                        "buried undecayed matter can become peat/coal over geologic time. Nitrogen "
-                        "cycle: bacteria fix N2 into usable ammonium/nitrate for plant roots to "
-                        "assimilate; decomposers recycle it, and denitrifying bacteria return excess "
-                        "back to atmospheric N2. Water cycle: transpiration moves water up through "
-                        "the xylem and out through leaf stomata. Phosphorus cycle: plants absorb "
-                        "soil phosphate directly, or via mycorrhizal fungal symbiosis (fungi trade "
-                        "phosphate for photosynthetic carbohydrates).\n\n"
-                        "HUMAN & ANIMAL USES OF PLANTS: fibers (cotton seed hairs, phloem stem "
-                        "fibers, monocot leaf fibers) and wood (from the vascular cambium) for "
-                        "textiles/construction/paper. Endosperm (triploid, nutrient-rich tissue in "
-                        "seeds) is the main starch source in cereal grains. Bulbs (short stem + "
-                        "fleshy modified leaves) and corms (solid swollen stem tissue, e.g. taro) "
-                        "and storage roots (e.g. sweet potatoes, carrots, cassava, sugar beets) "
-                        "store nutrients and feed both animals and humans. Medicines: aspirin "
-                        "(from willow bark), quinine (from cinchona tree bark, treats malaria), and "
-                        "digitalis (from foxglove, treats heart failure) are all plant-derived.\n\n"
-                        "PLANT COMPETITION: plants compete for light (canopy height, leaf area/"
-                        "orientation), water (deep taproots vs. wide fibrous roots), and nutrients "
-                        "(root absorption speed, mycorrhizal associations). Exploitation competition "
-                        "(indirect) is consuming a resource before neighbors can access it; "
-                        "interference competition (direct) is physically or chemically inhibiting a "
-                        "neighbor's growth -- allelopathy (releasing toxic allelochemicals to "
-                        "suppress nearby germination/growth) is a specific form of interference "
-                        "competition.\n\n"
-                        "HISTORY: Theophrastus (371-286 BCE, student of Aristotle, \"father of "
-                        "botany,\" wrote Historia Plantarum). Pedanius Dioscorides (40-90 CE, wrote "
-                        "De Materia Medica, foundational to pharmacology). Pliny the Elder (23-79 "
-                        "CE, wrote Naturalis Historia, died in the Vesuvius eruption). Al-Dinawari "
-                        "(828-896 CE, founder of Arab botany). Leonhart Fuchs (1501-1556, the genus "
-                        "Fuchsia is named for him). Jan Ingenhousz (1730-1799, proved plants need "
-                        "sunlight to produce oxygen). Carl Linnaeus (1707-1778, \"father of "
-                        "taxonomy,\" established binomial nomenclature). Gregor Mendel (1822-1884, "
-                        "pea plant genetics, dominant/recessive genes). George Washington Carver "
-                        "(1864-1943, promoted crop rotation, found many uses for peanuts/sweet "
-                        "potatoes). Melvin Calvin (1911-1997, mapped the Calvin Cycle using "
-                        "carbon-14 tracing). Katherine Esau (1898-1997, pioneering plant anatomist, "
-                        "definitive textbooks on plant structure)."
-                    ),
-                )
-            )
+        sync_resource(
+            db,
+            topic.id,
+            "scioly.org wiki: Botany (event page, Division B scope)",
+            "https://scioly.org/wiki/Botany",
+            (
+                "EVENT INFO: Division B & C, 2 participants, ~50 minutes, paper test or "
+                "stations. Allowed resources (2027 rules): one 8.5x11 note sheet per team (both "
+                "sides), two Class II calculators, writing utensils. Trial event since 2020 "
+                "(first run at New Jersey regionals); becomes an official national event "
+                "for the first time in 2027, replacing Entomology. NOTE: this excerpt leaves "
+                "out the section the wiki marks as \"Division C Concepts\" (nutrient "
+                "deficiencies and plant diseases), but the 2027 Division B rules DO include "
+                "plant diseases, nutrient deficiencies, and infections -- see the 'Botany: Plant "
+                "Diseases & Nutrient Deficiencies' chapter.\n\n"
+                "ALGAE VS. MULTICELLULAR PLANTS: algae can be unicellular or multicellular "
+                "and typically live underwater; plants are multicellular and thrive on "
+                "land. Algae are nonvascular and lack connective tissues, leaves, stems, "
+                "and roots, unlike plants.\n\n"
+                "MONOCOTS VS. DICOTS: seed-bearing plants are classified by cotyledon "
+                "count -- monocots have one, dicots have two. Leaf venation: monocots have "
+                "parallel veins, dicots have branching veins. Stem structure: monocots' "
+                "vascular bundles are scattered around the stem; dicots' form a ring near "
+                "the edge. Root systems: monocots typically have a fibrous root system "
+                "(many small branching roots); dicots typically have a taproot (one thick "
+                "central root with smaller branches). Floral patterns: monocot flower parts "
+                "usually come in multiples of 3; dicot flower parts usually come in "
+                "multiples of 4 or 5.\n\n"
+                "EMBRYOPHYTES VS. CRYPTOGAMS: Embryophytes are land plants that nurture "
+                "the young sporophyte inside the gametophyte's tissue -- nonvascular plants "
+                "(mosses, liverworts, hornworts), seedless vascular plants (ferns, "
+                "lycophytes), gymnosperms (conifers, cycads), and angiosperms (flowering "
+                "plants). Cryptogams reproduce via spores rather than seeds/flowers -- "
+                "thallophytes (fungi, bacteria, algae), bryophytes (nonvascular plants), "
+                "and pteridophytes (seedless vascular plants).\n\n"
+                "WOODY VS. HERBACEOUS PLANTS: woody plants are generally long-lived "
+                "perennials with secondary growth and a lignin-reinforced woody stem; they "
+                "go dormant (growth slows/stops) in winter rather than dying back, and "
+                "practice self-pruning of unneeded branches/leaves. Herbaceous plants "
+                "(herbs) lack a permanent woody stem, grow mostly via primary (lengthwise) "
+                "growth, and are annuals (1-year life cycle), biennials (2-year), or "
+                "perennials (2+ years, dying back to a small underground portion each "
+                "year); fast-growing annual herbs are often pioneer species in ecological "
+                "succession.\n\n"
+                "VASCULAR PLANT ANATOMY: two key systems -- the shoot system (stem and "
+                "leaves, above ground) and the root system (below ground) -- are "
+                "interdependent (shoot needs roots for water/minerals, roots need the "
+                "shoot for food/energy). Four main organ systems: stem (connects leaves to "
+                "roots via the xylem and phloem), roots (anchor the plant, absorb water/"
+                "nutrients), leaves (photosynthesize), and reproductive organs (enable "
+                "sexual or asexual reproduction).\n\n"
+                "REPRODUCTION -- ALTERNATION OF GENERATIONS: plants alternate between a "
+                "diploid sporophyte stage and a haploid gametophyte stage, which can look "
+                "identical (isomorphic, e.g. some algae) or different (heteromorphic, e.g. "
+                "angiosperms). In most nonvascular plants the gametophyte dominates; in "
+                "seed plants the sporophyte dominates and the gametophyte is reduced (in "
+                "most angiosperms, to just a few cells). Sporophytes produce sporangia, "
+                "which produce haploid spores that develop into gametophytes; gametophytes "
+                "produce gametangia (archegonia = female gametes, antheridia = male "
+                "gametes -- not present in all plants, e.g. angiosperms have neither). Two "
+                "gametes fuse into a zygote, which develops into a new sporophyte. "
+                "Homosporous plants produce one spore type (hermaphroditic gametophytes); "
+                "heterosporous plants (e.g. pines) produce two types -- larger female "
+                "megaspores and smaller male microspores.\n\n"
+                "LIFE CYCLES: Moss (bryophyte) -- spores disperse to favorable spots and "
+                "germinate into protonemata (branched filaments anchored by rhizoids, not "
+                "roots), which bud into male and female gametophytes; flagellated sperm "
+                "swim through water to fertilize eggs, forming a zygote that grows into a "
+                "sporophyte (seta + capsule) still attached to and dependent on the female "
+                "gametophyte; meiosis inside the capsule produces new spores, released when "
+                "the capsule matures. Fern (pterophyte) -- similar dispersal/protonemata "
+                "steps, but most ferns are homosporous with a single bisexual gametophyte "
+                "producing antheridia and archegonia at different times; the resulting "
+                "sporophyte grows true leaves, with sori (spore clusters) on their "
+                "undersides. Gymnosperms (non-flowering seed plants, e.g. conifers) -- "
+                "microspores and megaspores form on cone structures called strobili; wind "
+                "carries pollen to the megasporangiate strobili, and roughly a year after "
+                "pollination fertilization occurs, followed by wind-dispersed seed release. "
+                "Angiosperms (flowering plants) -- microsporogenesis (anther) and "
+                "megasporogenesis (ovule) produce spores; pollination (via wind, insects, "
+                "etc.) leads to double fertilization unique to angiosperms, where one sperm "
+                "fertilizes the egg and the other fuses with polar nuclei to form the "
+                "triploid endosperm; the ovary wall then develops into fruit (exocarp/"
+                "mesocarp/endocarp).\n\n"
+                "PHOTOSYNTHESIS: occurs in chloroplasts (outer/inner membranes, thylakoids, "
+                "stroma). Light-dependent reactions happen in the thylakoid membranes, "
+                "converting sunlight and water into ATP, NADPH, and oxygen. Light-"
+                "independent reactions (the Calvin cycle) happen in the stroma, converting "
+                "CO2, ATP, and NADPH into G3P (using the enzyme RuBisCO).\n\n"
+                "ENERGY & NUTRIENT CYCLES: plants are primary producers -- Gross Primary "
+                "Productivity (GPP) is the total energy they generate; Net Primary "
+                "Productivity (NPP) is what's left after their own respiration, available "
+                "to herbivores/decomposers. The 10% Rule (Lindeman's Efficiency): on "
+                "average only ~10% of stored energy passes to the next trophic level, the "
+                "rest lost as heat/movement/waste. Carbon cycle: plants fix atmospheric CO2 "
+                "via RuBisCO in the Calvin Cycle, release some back via respiration, and "
+                "buried undecayed matter can become peat/coal over geologic time. Nitrogen "
+                "cycle: bacteria fix N2 into usable ammonium/nitrate for plant roots to "
+                "assimilate; decomposers recycle it, and denitrifying bacteria return excess "
+                "back to atmospheric N2. Water cycle: transpiration moves water up through "
+                "the xylem and out through leaf stomata. Phosphorus cycle: plants absorb "
+                "soil phosphate directly, or via mycorrhizal fungal symbiosis (fungi trade "
+                "phosphate for photosynthetic carbohydrates).\n\n"
+                "HUMAN & ANIMAL USES OF PLANTS: fibers (cotton seed hairs, phloem stem "
+                "fibers, monocot leaf fibers) and wood (from the vascular cambium) for "
+                "textiles/construction/paper. Endosperm (triploid, nutrient-rich tissue in "
+                "seeds) is the main starch source in cereal grains. Bulbs (short stem + "
+                "fleshy modified leaves) and corms (solid swollen stem tissue, e.g. taro) "
+                "and storage roots (e.g. sweet potatoes, carrots, cassava, sugar beets) "
+                "store nutrients and feed both animals and humans. Medicines: aspirin "
+                "(from willow bark), quinine (from cinchona tree bark, treats malaria), and "
+                "digitalis (from foxglove, treats heart failure) are all plant-derived.\n\n"
+                "PLANT COMPETITION: plants compete for light (canopy height, leaf area/"
+                "orientation), water (deep taproots vs. wide fibrous roots), and nutrients "
+                "(root absorption speed, mycorrhizal associations). Exploitation competition "
+                "(indirect) is consuming a resource before neighbors can access it; "
+                "interference competition (direct) is physically or chemically inhibiting a "
+                "neighbor's growth -- allelopathy (releasing toxic allelochemicals to "
+                "suppress nearby germination/growth) is a specific form of interference "
+                "competition.\n\n"
+                "HISTORY: Theophrastus (371-286 BCE, student of Aristotle, \"father of "
+                "botany,\" wrote Historia Plantarum). Pedanius Dioscorides (40-90 CE, wrote "
+                "De Materia Medica, foundational to pharmacology). Pliny the Elder (23-79 "
+                "CE, wrote Naturalis Historia, died in the Vesuvius eruption). Al-Dinawari "
+                "(828-896 CE, founder of Arab botany). Leonhart Fuchs (1501-1556, the genus "
+                "Fuchsia is named for him). Jan Ingenhousz (1730-1799, proved plants need "
+                "sunlight to produce oxygen). Carl Linnaeus (1707-1778, \"father of "
+                "taxonomy,\" established binomial nomenclature). Gregor Mendel (1822-1884, "
+                "pea plant genetics, dominant/recessive genes). George Washington Carver "
+                "(1864-1943, promoted crop rotation, found many uses for peanuts/sweet "
+                "potatoes). Melvin Calvin (1911-1997, mapped the Calvin Cycle using "
+                "carbon-14 tracing). Katherine Esau (1898-1997, pioneering plant anatomist, "
+                "definitive textbooks on plant structure)."
+            ),
+        )
 
         chapters = [
             (
@@ -1270,30 +1202,17 @@ def seed_botany_deep_dive() -> None:
         ]
 
         for chapter_name, chapter_description, chapter_text in chapters:
-            existing = (
-                db.query(models.Topic)
-                .filter(models.Topic.name == chapter_name, models.Topic.parent_topic_id == topic.id)
-                .first()
+            sync_chapter(
+                db,
+                topic,
+                chapter_name,
+                chapter_description,
+                "scioly.org wiki: Botany (excerpt for this chapter, Division B scope)",
+                "https://scioly.org/wiki/Botany",
+                chapter_text,
             )
-            if existing is None:
-                sub_topic = models.Topic(
-                    event_name=topic.event_name,
-                    name=chapter_name,
-                    description=chapter_description,
-                    assessment_type=topic.assessment_type,
-                    parent_topic_id=topic.id,
-                )
-                db.add(sub_topic)
-                db.flush()
-                db.add(
-                    models.Resource(
-                        topic_id=sub_topic.id,
-                        type="text",
-                        title="scioly.org wiki: Botany (excerpt for this chapter, Division B scope)",
-                        source_url="https://scioly.org/wiki/Botany",
-                        raw_text=chapter_text,
-                    )
-                )
+        for chapter_name, chapter_description, resource_title, chapter_text in BOTANY_CHAPTERS:
+            sync_chapter(db, topic, chapter_name, chapter_description, resource_title, RULES_URL, chapter_text)
 
         db.commit()
     finally:
