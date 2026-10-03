@@ -135,8 +135,8 @@ def moon_census() -> str:
         ("Mercury & Venus", "0 moons", ["No moons at all -- the only", "planets without any."], PLANET_COLORS["Venus"]),
         ("Earth", "1 moon", ["The Moon: 384,400 km away,", "3,476 km across,", "orbits in 27.322 days.", "Tidally locked."], PLANET_COLORS["Earth"]),
         ("Mars", "2 moons", ["Phobos and Deimos,", "found 1877 by Asaph Hall.", "Tiny, lumpy -- probably", "captured asteroids."], PLANET_COLORS["Mars"]),
-        ("Jupiter", "97 known (wiki: 79)", ["Galilean moons, found by", "Galileo in 1610:", "Io, Europa, Ganymede,", "Callisto. Most others are", "small captured asteroids."], PLANET_COLORS["Jupiter"]),
-        ("Saturn", "274+ known (wiki: 60+)", ["Titan -- Huygens, 1655", "Iapetus, Rhea, Tethys,", "Dione -- G. Cassini 1671-84", "Mimas, Enceladus --", "Herschel, 1789", "Phoebe orbits backward"], PLANET_COLORS["Saturn"]),
+        ("Jupiter", "115 known in 2026 (wiki: 79)", ["Galilean moons, found by", "Galileo in 1610:", "Io, Europa, Ganymede,", "Callisto. Most others are", "small captured asteroids."], PLANET_COLORS["Jupiter"]),
+        ("Saturn", "293 known in 2026 (wiki: 60+)", ["Titan -- Huygens, 1655", "Iapetus, Rhea, Tethys,", "Dione -- G. Cassini 1671-84", "Mimas, Enceladus --", "Herschel, 1789", "Phoebe orbits backward"], PLANET_COLORS["Saturn"]),
         ("Uranus", "29 known (wiki: 27)", ["Titania, Oberon --", "Herschel, 1787", "Ariel, Umbriel --", "Lassell, 1851", "Miranda -- Kuiper, 1948"], PLANET_COLORS["Uranus"]),
         ("Neptune", "16 known", ["Triton -- Lassell, 1846", "(orbits BACKWARD)", "Nereid -- Kuiper, 1949", "6 more found by", "Voyager 2 in 1989"], PLANET_COLORS["Neptune"]),
         ("Pluto (dwarf)", "5 moons", ["Charon -- Christy, 1978", "(Pluto and Charon are", "tidally locked together)", "Nix, Hydra 2005;", "Kerberos 2011; Styx 2012"], "#c9b79c"),
@@ -248,7 +248,7 @@ def dwarf_planets() -> str:
     body += text(156, sy + 98, "perihelion: outer Kuiper Belt", 13, TEXT, "bold")
     body += line(1050, sy + 10, 1050, sy + 78, MUTED, 1)
     body += text(1044, sy + 98, "aphelion: maybe the inner Oort Cloud", 13, TEXT, "bold", "end")
-    body += para(330, sy - 10, "One orbit takes about 11,518 years. About 1,600 km (995 miles) across, no known moons -- found by luck near perihelion.", 64, 15, TEXT)
+    body += para(330, sy - 10, "One orbit takes roughly 11,000 years. About 1,000 km (~600 miles) across, no known moons -- found by luck near perihelion.", 64, 15, TEXT)
     return canvas(w, h, "Dwarf Planets and Plutoids", "The 2006 rules, the five dwarf planets, and Sedna", body, WIKI_SOURCE)
 
 

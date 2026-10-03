@@ -99,7 +99,8 @@ UNIT6 = [
                     "Records with sounds and pictures of Earth. (Pioneer 10 and 11 went before them.)\n"
                     "• GALILEO (Oct 18, 1989 - Sept 21, 2003): orbited Jupiter, studying its atmosphere and its moons Io, Europa, "
                     "Ganymede and Callisto; it flew past the asteroids Gaspra and Ida on the way.\n"
-                    "• JUNO (launched Aug 5, 2011; until at least 2028): studies Jupiter's core, magnetic field, atmosphere and "
+                    "• JUNO (launched Aug 5, 2011; orbiting Jupiter since 2016; its funded mission ended Sept 30, 2025, and "
+                    "NASA has not confirmed whether it is still operating): studies Jupiter's core, magnetic field, atmosphere and "
                     "polar regions to learn how Jupiter formed; extended to visit the Galilean moons.\n"
                     "• CASSINI (Oct 15, 1997 - Sept 15, 2017): orbited Saturn, studying its rings, magnetic field and moons -- "
                     "Titan, Enceladus (where it found the geysers), Iapetus, Rhea, Dione, Tethys, Mimas and Pandora. It carried "
@@ -114,13 +115,14 @@ UNIT6 = [
             {
                 "heading": "Missions to the inner Solar System and small bodies",
                 "body": (
-                    "• MERCURY: Mariner 10 and MESSENGER studied it; BEPICOLOMBO (launched Oct 20, 2018; still going), a "
+                    "• MERCURY: Mariner 10 and MESSENGER studied it; BEPICOLOMBO (launched Oct 20, 2018; scheduled to enter "
+                    "Mercury orbit Nov 21, 2026), a "
                     "European-Japanese mission, will study Mercury's makeup, magnetic field, thin atmosphere and history, and "
                     "test Einstein's theory of general relativity.\n"
                     "• VENUS: Mariner 2 (1962, first flyby), Venera 7 (1970, first landing that sent data), Pioneer Venus, and "
                     "Magellan (radar map).\n"
                     "• THE MOON: Apollo astronauts walked on it and brought back rocks; the LUNAR RECONNAISSANCE ORBITER (launched "
-                    "Jun 28, 2009; still going) is making a detailed, high-resolution atlas of the Moon's surface, environment "
+                    "June 18, 2009; still going) is making a detailed, high-resolution atlas of the Moon's surface, environment "
                     "and resources to prepare for future human visits.\n"
                     "• MARS: Viking orbiters and landers; Pathfinder; Mars Global Surveyor; rovers Spirit and Opportunity (2004), "
                     "Curiosity (2012) and Perseverance with the Ingenuity helicopter; the Phoenix lander (2008, polar ice); the "
@@ -139,13 +141,13 @@ UNIT6 = [
                     "• HUBBLE SPACE TELESCOPE (launched Apr 24, 1990; still going): a general-purpose observatory taking sharp "
                     "pictures of galaxies, stars, star clusters, nebulae and our own Solar System -- including planet-forming "
                     "disks in the Orion Nebula. Telescopes in space avoid the blurring of Earth's air.\n"
-                    "• JAMES WEBB SPACE TELESCOPE (JWST; launched Dec 21, 2021 per the wiki -- NASA lists Dec 25; still going): "
+                    "• JAMES WEBB SPACE TELESCOPE (JWST; launched Dec 25, 2021; still going): "
                     "sees in infrared to study everything from the early universe to forming stars and planets and exoplanet "
                     "atmospheres. It found organic molecules in planet-forming disks and imaged Fomalhaut's three dust belts.\n"
                     "• ALMA (Atacama Large Millimeter/submillimeter Array; operating since Mar 13, 2013): 66 large radio "
                     "antennas in Chile that capture millimeter and submillimeter light to make extremely detailed images of "
                     "planet and star formation -- like the rings and gaps around HL Tau.\n"
-                    "• Planet hunters: CoRoT (2007-2012), Kepler (2009-2018) and TESS (now surveying the whole sky)."
+                    "• Planet hunters: CoRoT (2006-2013), Kepler (2009-2018) and TESS (now surveying the whole sky)."
                 ),
             },
         ],
@@ -173,10 +175,10 @@ UNIT6 = [
             "Huygens: Titan 1655. Halley (1656-1742): first comet orbit; 1705 book; comet returned 1758. Herschel: Uranus March 13, 1781.",
             "Neptune: Sept 23, 1846 (Le Verrier predicted, Galle found). Tombaugh (1906-1997): Pluto 1930 at Lowell Observatory.",
             "Voyager 1: Sept 5, 1977. Voyager 2: Aug 20, 1977 (only visitor to Uranus and Neptune).",
-            "Galileo: Oct 18, 1989 - Sept 21, 2003. Juno: Aug 5, 2011 - at least 2028. Cassini: Oct 15, 1997 - Sept 15, 2017 (Huygens on Titan Jan 14, 2005).",
+            "Galileo: Oct 18, 1989 - Sept 21, 2003. Juno: Aug 5, 2011 - funded through Sept 30, 2025 (status unconfirmed). Cassini: Oct 15, 1997 - Sept 15, 2017 (Huygens on Titan Jan 14, 2005).",
             "New Horizons: Jan 19, 2006 (Pluto July 2015, Arrokoth Jan 1, 2019). Dawn: Sept 27, 2007 - Nov 1, 2018 (Vesta, Ceres).",
             "Hayabusa: May 9, 2003 - Jun 13, 2010 (Itokawa sample). Deep Impact: Jan 12, 2005 - Sept 20, 2013 (Tempel 1).",
-            "LRO: Jun 28, 2009. BepiColombo: Oct 20, 2018. Hubble: Apr 24, 1990. JWST: Dec 2021. ALMA: Mar 13, 2013 (66 antennas).",
+            "LRO: June 18, 2009. BepiColombo: Oct 20, 2018 (Mercury orbit Nov 2026). Hubble: Apr 24, 1990. JWST: Dec 25, 2021. ALMA: Mar 13, 2013 (66 antennas).",
         ],
         "quick_check": [
             ("Who first suggested a Sun-centered system, and who developed it into a full model?", "Aristarchus first suggested it; Copernicus developed the heliocentric model."),
@@ -233,7 +235,7 @@ UNIT6 = [
                 "term": "Galileo, Juno & Cassini",
                 "badge": ("ORBIT", "giants", GAS),
                 "analogy": "Long-term houseguests studying the giant planets up close.",
-                "explanation": "Galileo (1989-2003): Jupiter and moons. Juno (2011-): Jupiter's core and magnetic field. Cassini (1997-2017): Saturn, rings, Titan, Enceladus; Huygens landed on Titan (2005).",
+                "explanation": "Galileo (1989-2003): Jupiter and moons. Juno (2011-2025+): Jupiter's core and magnetic field. Cassini (1997-2017): Saturn, rings, Titan, Enceladus; Huygens landed on Titan (2005).",
                 "why": "Mission-and-target matching is a standard test section.",
             },
             {
@@ -247,7 +249,7 @@ UNIT6 = [
                 "term": "Space telescopes & ALMA",
                 "badge": ("JWST", "2021", BLUE),
                 "analogy": "Going above the clouds of a foggy city to see the stars clearly.",
-                "explanation": "Hubble (Apr 24, 1990): general observatory. JWST (Dec 2021): infrared, exoplanet air, disks. ALMA (2013): 66 antennas, millimeter waves, HL Tau. Kepler, CoRoT, TESS: planet hunters.",
+                "explanation": "Hubble (Apr 24, 1990): general observatory. JWST (Dec 25, 2021): infrared, exoplanet air, disks. ALMA (2013): 66 antennas, millimeter waves, HL Tau. Kepler, CoRoT, TESS: planet hunters.",
                 "why": "Central to 'habitability beyond the Solar System'.",
             },
         ],

@@ -307,17 +307,17 @@ UNIT1 = [
             {
                 "heading": "A trip from the core to the corona",
                 "body": (
-                    "The Sun is built in layers, like an onion. Starting at the center and moving out (temperatures from the "
-                    "scioly.org wiki):\n\n"
+                    "The Sun is built in layers, like an onion. Starting at the center and moving out (temperatures from NASA; "
+                    "the radiative zone value is from the scioly.org wiki):\n\n"
                     "• CORE (about 15,000,000 C): where fusion makes the energy.\n"
                     "• RADIATIVE ZONE (about 2,000,000 C): energy creeps outward as light, bouncing around for a very long "
                     "time.\n"
                     "• CONVECTION ZONE: hot gas rises, cools and sinks again, like boiling soup, carrying the heat up. "
                     "(Moving heat by moving hot material is called CONVECTION.)\n"
-                    "• PHOTOSPHERE (about 6,000 C): the visible 'surface' -- the part we see shining.\n"
+                    "• PHOTOSPHERE (about 5,500 C): the visible 'surface' -- the part we see shining.\n"
                     "• CHROMOSPHERE: a thin, reddish layer above the surface.\n"
                     "• TRANSITION REGION: a thin zone where the temperature shoots up.\n"
-                    "• CORONA (about 1,000,000 C): the Sun's wispy outer atmosphere, seen as a glowing crown during a total "
+                    "• CORONA (about 1-2 million C): the Sun's wispy outer atmosphere, seen as a glowing crown during a total "
                     "solar eclipse. Strangely, it is far hotter than the surface below it!\n\n"
                     "From the photosphere and corona, the energy flies out into space as light and heat -- the rays that warm "
                     "every planet. A memory trick from the center out: 'Cows Run Cautiously, Peacefully Chewing The Corn' "
@@ -382,10 +382,10 @@ UNIT1 = [
             ("Radiative zone", "The Sun layer where energy slowly moves outward as light."),
             ("Convection", "Moving heat by moving the hot material itself -- hot stuff rises, cool stuff sinks, like boiling soup."),
             ("Convection zone", "The Sun layer where boiling, rising gas carries heat toward the surface."),
-            ("Photosphere", "The Sun's visible surface, about 6,000 C."),
+            ("Photosphere", "The Sun's visible surface, about 5,500 C."),
             ("Chromosphere", "A thin reddish layer of the Sun's atmosphere just above the photosphere."),
             ("Transition region", "A thin layer between the chromosphere and corona where the temperature jumps upward."),
-            ("Corona", "The Sun's thin, super-hot outer atmosphere (about 1,000,000 C), seen during total solar eclipses."),
+            ("Corona", "The Sun's thin, super-hot outer atmosphere (about 1-2 million C), seen during total solar eclipses."),
             ("Nebula", "A giant cloud of gas and dust in space where stars can be born (plural: nebulae)."),
             ("Protostar", "A baby star still collapsing and heating up, before fusion starts."),
             ("Main sequence", "The long, steady adult stage of a star's life when it fuses hydrogen in its core. The Sun is here now."),
@@ -402,14 +402,14 @@ UNIT1 = [
             "Sun: diameter 1,392,000 km (109 Earths); mass 1.989 x 10^30 kg; 74% H, 25% He.",
             "Luminosity 3.846 x 10^26 W = 3.846 x 10^33 erg/s. Age about 4.6 billion years (halfway through life).",
             "Rotation: about 25 days at the equator, about 35 days near the poles.",
-            "Layers (in to out): core 15,000,000 C, radiative zone 2,000,000 C, convection zone, photosphere 6,000 C, chromosphere, transition region, corona 1,000,000 C.",
+            "Layers (in to out): core 15,000,000 C, radiative zone 2,000,000 C, convection zone, photosphere 5,500 C, chromosphere, transition region, corona 1-2 million C.",
             "The Sun is at least 30% brighter than 4 billion years ago.",
             "Sun-like star: nebula -> protostar -> main sequence -> red giant -> planetary nebula + white dwarf -> black dwarf.",
             "Massive star: ... -> red supergiant -> supernova -> neutron star or black hole.",
         ],
         "quick_check": [
             ("What process makes the Sun shine?", "Nuclear fusion of hydrogen into helium in its core."),
-            ("Which is hotter, the photosphere or the corona?", "The corona (about 1,000,000 C) is far hotter than the photosphere (about 6,000 C)."),
+            ("Which is hotter, the photosphere or the corona?", "The corona (about 1-2 million C) is far hotter than the photosphere (about 5,500 C)."),
             ("Why does the Sun's equator rotate faster than its poles?", "The Sun is a ball of gas, not a solid, so different parts can spin at different speeds (about 25 vs 35 days)."),
             ("What will be left when the Sun dies?", "A white dwarf (after a red giant stage and a planetary nebula), which slowly cools into a black dwarf."),
             ("What decides whether a star becomes a white dwarf or a black hole?", "Its mass: Sun-like stars become white dwarfs; very massive stars explode as supernovas and leave neutron stars or black holes."),
@@ -426,7 +426,7 @@ UNIT1 = [
                 "term": "Layers of the Sun",
                 "badge": ("7", "layers", SUN),
                 "analogy": "Like an onion with a nuclear furnace in the middle.",
-                "explanation": "Core (15M C) -> radiative zone (2M C) -> convection zone -> photosphere (6,000 C, the visible surface) -> chromosphere -> transition region -> corona (1M C, hotter than the surface!).",
+                "explanation": "Core (15M C) -> radiative zone (2M C) -> convection zone -> photosphere (5,500 C, the visible surface) -> chromosphere -> transition region -> corona (1-2M C, hotter than the surface!).",
                 "why": "Layer order and temperatures are classic short-answer questions.",
             },
             {

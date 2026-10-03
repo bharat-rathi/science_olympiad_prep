@@ -232,7 +232,7 @@ def atmosphere_layers() -> str:
         body += rect(x, y, 340, 18, fill=PANEL, stroke=PANEL_EDGE, rx=6)
         body += rect(x, y, max(6, 340 * pct / 100), 18, fill=color, stroke="none", rx=6)
     body += para(x, 278, "+ traces of water vapor, CO2 and other gases, plus dust and droplets.", 44, 13, MUTED)
-    body += card(x, 320, 340, 250, "If Earth got hotter...", "Boil the oceans (100 C) and they'd add ~300 bars of water vapor (10 m of water presses like 1 bar; the oceans average ~300 m deep spread over Earth). Bake the carbonate rocks and they'd release ~70 bars of CO2. A hot Earth's air would be ~400 bars of steam + CO2 -- like Venus! Today's CO2 is only 0.0005 bar.", RED, body_size=13)
+    body += card(x, 320, 340, 250, "If Earth got hotter...", "Boil the oceans (100 C) and they'd add ~300 bars of water vapor (10 m of water presses like 1 bar; the oceans would be ~2.6 km deep spread over Earth). Bake the carbonate rocks and they'd release ~70 bars of CO2. A hot Earth's air would be ~400 bars of steam + CO2 -- like Venus! Today's CO2 is only ~0.0004 bar.", RED, body_size=13)
     return canvas(w, h, "Earth's Atmosphere, Layer by Layer", "Structure and composition (Figure 8.12)", body)
 
 
@@ -257,7 +257,7 @@ def greenhouse() -> str:
     x = 660
     body += card(x, 100, 320, 170, "Like a car in the sun", "Glass lets sunlight in but slows heat getting out, so the car gets much hotter than sunlight alone would make it. Greenhouse gases are the 'glass' of a planet.", GOLD, body_size=13)
     body += card(x, 282, 320, 140, "Good news", "Earth's natural greenhouse effect keeps us warm. Without it Earth would be well below freezing -- a global ice age. (The text gives ~23 C in one chapter and ~33 C in another.)", GREEN, body_size=13)
-    body += card(x, 434, 320, 140, "Bad news", "Burning fossil fuels adds CO2: up ~30% in a century, rising >0.5%/yr, heading for double pre-industrial levels this century. That is global warming.", RED, body_size=13)
+    body += card(x, 434, 320, 140, "Bad news", "Burning fossil fuels adds CO2: up ~50% since pre-industrial times (280 -> ~427 ppm), rising ~0.5%/yr, heading for double pre-industrial levels this century. That is global warming.", RED, body_size=13)
     return canvas(w, h, "The Greenhouse Effect", "Why gases like CO2 make a planet warmer (Figure 8.17)", body)
 
 
@@ -281,7 +281,7 @@ def earth_life_timeline() -> str:
         (3.4, "Photosynthesis at work", "strong fossil evidence", True),
         (2.4, "Oxygen builds up in the air", "~2.4 bya (some data say ~2 bya); ozone forms", False),
         (0.6, "Abundant fossils", "last 600 million yrs (<15% of history)", True),
-        (0.065, "Dinosaur-killing impact", "65 million yrs ago", False),
+        (0.065, "Dinosaur-killing impact", "66 million yrs ago", False),
     ]
     # Markers sit at their true dates; labels are spread evenly and joined by
     # leader lines, alternating above/below, so crowded early events stay readable.
@@ -379,7 +379,7 @@ def runaway_greenhouse() -> str:
     body += text(cx, cy + 20, "loop", 16, RED, anchor="middle")
     x = 640
     body += card(x, 100, 330, 170, "The point of no return", "Sunlight's UV splits water vapor. Light hydrogen escapes to space; oxygen bonds with rocks. Once the water is gone it can't come back -- the loss is irreversible.", GOLD, body_size=13)
-    body += card(x, 282, 330, 150, "Venus today", "~1 million times more CO2 than Earth -> surface over 700 K, hotter than an oven's self-clean cycle. Strong greenhouse warming of about 510 C.", RED, body_size=13)
+    body += card(x, 282, 330, 150, "Venus today", "~150,000 times the CO2 in Earth's air -> surface over 700 K, hotter than an oven's self-clean cycle. Strong greenhouse warming of about 510 C.", RED, body_size=13)
     body += card(x, 444, 330, 140, "Lesson for Earth", "Earth's CO2 is safely locked in rocks and oceans. A runaway effect is an evolution, not just a big greenhouse -- and nobody knows exactly where the tipping point is.", GREEN, body_size=13)
     return canvas(w, h, "The Runaway Greenhouse Effect", "How Venus may have turned from Earthlike to scorching (Section 10.3)", body)
 
@@ -422,7 +422,7 @@ def mars_ice() -> str:
     x = 520
     body += card(x, 100, 450, 140, "Seasonal caps = dry ice", "Thin frozen CO2 that condenses from the air below ~150 K each winter and spreads down to ~50 degrees latitude by spring.", ICE, body_size=14)
     body += card(x, 252, 450, 140, "South permanent cap", "350 km across; frozen CO2 mixed with lots of water ice. Stays at 150 K all summer.", ICE, body_size=14)
-    body += card(x, 404, 450, 162, "North permanent cap", "Water ice, never smaller than 1,000 km across, ~3 km thick, ~10 million km3 (like the Mediterranean Sea). Sits in a basin as big as the Arctic Ocean -- maybe an old sea. Phoenix (2008) dug up ice that sublimated.", ICE, body_size=14)
+    body += card(x, 404, 450, 162, "North permanent cap", "Water ice, never smaller than 1,000 km across, ~3 km thick, ~1.6 million km3 (about half of Greenland's ice). Sits in a basin as big as the Arctic Ocean -- maybe an old sea. Phoenix (2008) dug up ice that sublimated.", ICE, body_size=14)
     return canvas(w, h, "Mars: Air, Ice and Polar Caps", "Where the water on Mars is hiding today (Section 10.5)", body)
 
 
@@ -524,7 +524,7 @@ def titan_cycle() -> str:
         body += path(f"M {x + 400} 300 C {x + 360} 340, {x + 300} 350, {x + 240} 350", MUTED, 2, arrow=True)
         body += text(x + 330, 384, f"flows down valleys -- {temp}", 12, MUTED, anchor="middle")
     body += card(30, 420, 320, 170, "Thick orange air", "The only moon with a substantial atmosphere: mostly nitrogen + ~5% methane. Sunlight builds organic molecules (tholins, HCN...) that make an orange haze.", GOLD, body_size=13)
-    body += card(366, 420, 320, 170, "Huygens landed!", "Jan 14, 2005: the only landing in the outer Solar System. Found ice 'boulders' hard as rock, an orange sky, sunlight 1,000x dimmer than on Earth. Lasted ~90 minutes.", ICE, body_size=13)
+    body += card(366, 420, 320, 170, "Huygens landed!", "Jan 14, 2005: the only landing in the outer Solar System. Found ice 'boulders' hard as rock, an orange sky, sunlight 1,000x dimmer than on Earth. Sent 72 min of surface data via Cassini.", ICE, body_size=13)
     body += card(702, 420, 308, 170, "Life as we don't know it?", "Too cold for liquid water, but liquid hydrocarbons might play water's role. NASA's Dragonfly drone launches in July 2028 to study pre-biotic chemistry.", GREEN, body_size=13)
     return canvas(w, h, "Titan: A Weird Twin of Earth", "Saturn's giant moon has rain, rivers and lakes -- of methane (Section 12.3)", body)
 
@@ -541,7 +541,7 @@ def mountain_heights() -> str:
         ("Mauna Loa", "Earth", 9, 140, PLANET_COLORS["Earth"], "volcano"),
         ("Mt. Everest", "Earth", 9, 300, "#9fb4c8", "crust squeezed up"),
         ("Maxwell Mts", "Venus", 11, 460, PLANET_COLORS["Venus"], "crust squeezed up"),
-        ("Olympus Mons", "Mars", 21, 700, PLANET_COLORS["Mars"], "volcano, 500 km wide"),
+        ("Olympus Mons", "Mars", 21, 700, PLANET_COLORS["Mars"], "volcano, ~600 km wide"),
     ]
     for name, planet, km, x, color, kind in peaks:
         top = base - km * scale
@@ -561,7 +561,7 @@ def baked_potato() -> str:
     w, h = 1040, 640
     body = ""
     worlds = [
-        ("Moon", 3476, "#bdbdbd", "Volcanism stopped ~3.3 billion yrs ago. Geologically dead."),
+        ("Moon", 3476, "#bdbdbd", "Main lava floods over ~3 billion yrs ago (some ~2 billion). Dead now."),
         ("Mercury", 4878, PLANET_COLORS["Mercury"], "Probably went quiet about when the Moon did."),
         ("Mars", 6787, PLANET_COLORS["Mars"], "In between: Tharsis volcanoes active on and off to the present era."),
         ("Venus", 12120, PLANET_COLORS["Venus"], "Very active, but no plate tectonics. 'Blob tectonics'; surface <= ~500 million yrs."),
@@ -849,9 +849,9 @@ def sun_layers() -> str:
     cx, cy = 300, 360
     body = ""
     layers = [
-        (250, "#ffe7a8", 0.35, "Corona ~1,000,000 C"),
+        (250, "#ffe7a8", 0.35, "Corona ~1-2 million C"),
         (215, "#ffcf6b", 0.6, "Chromosphere + transition region"),
-        (198, "#ffb347", 1, "Photosphere (surface) ~6,000 C"),
+        (198, "#ffb347", 1, "Photosphere (surface) ~5,500 C"),
         (180, "#ff9a3c", 1, "Convection zone"),
         (130, "#ff7b2e", 1, "Radiative zone ~2,000,000 C"),
         (62, "#fff1a8", 1, "Core ~15,000,000 C"),
@@ -863,9 +863,9 @@ def sun_layers() -> str:
         body += path(f"M {cx + 140 * math.cos(a):.0f} {cy + 140 * math.sin(a):.0f} q 12 -10 22 0 q 10 10 22 0", "#c75c1e", 2)
     body += text(cx, cy + 6, "CORE", 16, "#5a2a00", "bold", "middle")
     labels = [
-        (cy - 236, "CORONA", "thin outer atmosphere, ~1,000,000 C (hotter than the surface!)"),
+        (cy - 236, "CORONA", "thin outer atmosphere, ~1-2 million C (hotter than the surface!)"),
         (cy - 196, "CHROMOSPHERE + TRANSITION REGION", "thin layers above the surface"),
-        (cy - 150, "PHOTOSPHERE", "the visible surface, ~6,000 C"),
+        (cy - 150, "PHOTOSPHERE", "the visible surface, ~5,500 C"),
         (cy - 104, "CONVECTION ZONE", "hot gas rises and sinks like boiling soup"),
         (cy - 50, "RADIATIVE ZONE", "energy creeps out as light, ~2,000,000 C"),
         (cy + 4, "CORE", "hydrogen fuses into helium, ~15,000,000 C"),
@@ -909,7 +909,7 @@ def small_bodies() -> str:
     cards = [
         ("ASTEROIDS", "Rocky leftovers, mostly between Mars and Jupiter. Types: C (dark, carbon-rich, most common), S (stony silicate), M (metal-rich).", ROCK),
         ("COMETS", "'Dirty snowballs' of ice + dust. Nucleus -> coma -> tails pointing away from the Sun. Periodic: < ~200 yrs; long-period: thousands to millions.", ICE),
-        ("DWARF PLANETS", "Round, but haven't cleared their orbits: Ceres, Pluto, Eris, Haumea, Makemake. Plutoids = the ones beyond Neptune. Candidate: Sedna (11,518-yr orbit).", PURPLE),
+        ("DWARF PLANETS", "Round, but haven't cleared their orbits: Ceres, Pluto, Eris, Haumea, Makemake. Plutoids = the ones beyond Neptune. Candidate: Sedna (~11,000-yr orbit).", PURPLE),
         ("METEORS + METEORITES", "Dust burning up in our air = meteor. A piece that lands = meteorite (irons, stony-irons, stones).", GOLD),
     ]
     for i, (head, desc, color) in enumerate(cards):

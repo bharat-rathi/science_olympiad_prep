@@ -265,9 +265,9 @@ UNIT5 = [
                     "• It works best for BIG planets CLOSE to their stars. It has found hundreds of planets, including one "
                     "around Proxima Centauri, the nearest star.\n\n"
                     "THE FIRST ONE: 51 PEGASI b (1995). Michel Mayor and Didier Queloz of the Geneva Observatory used the "
-                    "Doppler method on 51 Pegasi, a Sun-like star about 40 light-years away near the Great Square of Pegasus. "
-                    "Surprise: its planet orbits in just 4.2 days (Mercury takes 88), only about 7 million km from its star, "
-                    "heated to a few thousand degrees, with at least half Jupiter's mass. It was the first 'hot Jupiter', and "
+                    "Doppler method on 51 Pegasi, a Sun-like star about 50 light-years away near the Great Square of Pegasus. "
+                    "Surprise: its planet orbits in just 4.2 days (Mercury takes 88), only about 8 million km from its star, "
+                    "heated to roughly 1,000 C, with at least half Jupiter's mass. It was the first 'hot Jupiter', and "
                     "it won them the 2019 Nobel Prize in physics."
                 ),
                 "infographic": "doppler_method",
@@ -310,16 +310,17 @@ UNIT5 = [
                 "heading": "Space telescopes on the hunt",
                 "body": (
                     "From space (above the blurring of Earth's air), transits as small as a Mars-size planet can be detected.\n\n"
-                    "• CoRoT (French and European space agencies, launched 2007): found 32 transiting planets, including the "
-                    "first with an Earth-like size and density; a computer failure ended it in 2012.\n"
+                    "• CoRoT (French and European space agencies, launched December 27, 2006): found about 30 transiting "
+                    "planets, including the first rocky planet with a measured size and density (CoRoT-7b); a computer "
+                    "failure in late 2012 ended its observations, and it was retired in 2013.\n"
                     "• KEPLER (NASA, launched 2009): stared at more than 150,000 stars in one patch of sky near the "
                     "constellation Cygnus to find out how common planets of different sizes are. It needed three spinning "
-                    "REACTION WHEELS to point steadily (it carried four). By May 2013 two had failed -- exactly 4 years and 1 "
-                    "day after it started its 4-year mission! It kept working for two more years in other directions, then ran "
-                    "out of fuel in 2018. It found thousands of planets.\n"
+                    "REACTION WHEELS to point steadily (it carried four). By May 2013 two had failed -- about four years after it began "
+                    "observing. Engineers then used sunlight pressure to steady it, and as the 'K2' mission it kept working "
+                    "for about four more years in other directions (2014-2018), then ran out of fuel in October 2018. It found thousands of planets.\n"
                     "• TESS (Transiting Exoplanet Survey Satellite): now surveys nearer, brighter stars all over the sky -- "
                     "almost 600 planets and about 7,400 candidates by the end of 2024.\n"
-                    "• JWST (launched December 21, 2021 per the wiki; NASA lists December 25) studies exoplanet atmospheres in "
+                    "• JWST (launched December 25, 2021) studies exoplanet atmospheres in "
                     "infrared."
                 ),
                 "infographic": "detection_compare",
@@ -412,7 +413,7 @@ UNIT5 = [
             "Astrometry: Sun's loop seen from Alpha Centauri = 0.010 arcsec (Jupiter's orbit = 10 arcsec).",
             "Transit depth = (Rp/Rs)^2. Jupiter/Sun ~1%; Earth/half-Sun ~0.03%. Need 3 equal, evenly spaced dips.",
             "Mass (Doppler) + size (transit) = density. HD 209458 b (1999): first transit; sodium in its air.",
-            "CoRoT 2007-2012 (32 planets); Kepler 2009-2018 (150,000+ stars near Cygnus; 2 reaction wheels failed 2013); TESS: ~600 planets + ~7,400 candidates by end of 2024.",
+            "CoRoT Dec 2006-2013 (~30 planets); Kepler 2009-2018 (150,000+ stars near Cygnus; 2 reaction wheels failed 2013, then K2 2014-2018); TESS: ~600 planets + ~7,400 candidates by end of 2024.",
             "Direct imaging: HR 8799 (3 planets 2008, 4th 2010) -- young, hot giants far from their star; infrared best.",
             "Microlensing: lens star's gravity magnifies a source star; planet = short blip. Best for cold planets 1-10 AU out, far away, even rogue planets; one-time, can't repeat. First 2004 (OGLE); Roman will find 1,000+.",
             "2027 rules limit detection methods to: transits, radial velocity, microlensing and direct imaging.",
@@ -453,7 +454,7 @@ UNIT5 = [
                 "term": "51 Pegasi b",
                 "badge": ("1995", "first!", SUN),
                 "analogy": "A gas giant racing around its star in under a week.",
-                "explanation": "Mayor and Queloz (1995): ~40 ly away, 4.2-day orbit, ~7 million km from its star, at least half Jupiter's mass. The first hot Jupiter; Nobel Prize 2019.",
+                "explanation": "Mayor and Queloz (1995): ~50 ly away, 4.2-day orbit, ~8 million km from its star, at least half Jupiter's mass. The first hot Jupiter; Nobel Prize 2019.",
                 "why": "Classic 'first exoplanet' question.",
             },
             {
@@ -481,7 +482,7 @@ UNIT5 = [
                 "term": "Kepler, CoRoT & TESS",
                 "badge": ("150K", "stars", BLUE),
                 "analogy": "Kepler was a lifeguard watching one pool of stars for years.",
-                "explanation": "CoRoT (2007-2012, 32 planets). Kepler (2009-2018, 150,000+ stars near Cygnus; reaction wheels failed 2013). TESS (bright nearby stars, ~600 planets by 2024).",
+                "explanation": "CoRoT (2006-2013, ~30 planets). Kepler (2009-2018, 150,000+ stars near Cygnus; reaction wheels failed 2013). TESS (bright nearby stars, ~600 planets by 2024).",
                 "why": "Mission names, dates and goals are quick-answer questions.",
             },
             {
@@ -599,8 +600,8 @@ UNIT5 = [
                     "a very stretched orbit that dips close to the star; then tides and friction shrink and round out its orbit "
                     "near the star.\n\n"
                     "Clues: many exoplanets have very ECCENTRIC (oval) orbits, and some giants orbit at right angles to their "
-                    "star's spin -- or even backward -- which suggests planet-planet kicks or a passing star. Only a few percent "
-                    "of planetary systems have hot Jupiters.\n\n"
+                    "star's spin -- or even backward -- which suggests planet-planet kicks or a passing star. Hot Jupiters are "
+                    "actually rare: only about 1 in 100 Sun-like stars (about 1%) has one.\n\n"
                     "Our own planets may have moved too: Uranus and Neptune probably formed closer in and were pushed outward "
                     "(the Nice Model), and an early Jupiter might have migrated inward and swept away close-in rocky planets "
                     "that other systems still have."
@@ -642,7 +643,7 @@ UNIT5 = [
             "Cold Jupiters: gas giants beyond the frost line.",
             "Above ~1,000 Earth masses, more mass -> smaller radius. Jupiter ~320 Earth masses.",
             "First multi-planet system: Upsilon Andromedae (1999). >1,000 systems by end of 2025; one with 8 planets.",
-            "Migration: disk drag or planet-planet scattering. A few percent of systems have hot Jupiters.",
+            "Migration: disk drag or planet-planet scattering. Only ~1% of Sun-like stars have a hot Jupiter.",
         ],
         "quick_check": [
             ("What mass range defines a hot Jupiter?", "About 0.36 to 13.6 Jupiter masses."),
@@ -800,7 +801,8 @@ UNIT5 = [
                     "matter a lot -- though they have some downsides for life (they can blast their planets with flares, and "
                     "their close-in planets are probably tidally locked).\n\n"
                     "EXAMPLE: PROXIMA CENTAURI, the nearest star to the Sun (an M dwarf 4.2 light-years away), has a planet at "
-                    "least 1.3 times Earth's mass (announced in 2016, found by the Doppler method). It orbits in about 11 days "
+                    "least about 1.07 times Earth's mass (announced in 2016 by the Doppler method; the mass was refined with "
+                    "the ESPRESSO spectrograph in 2020-2022). It orbits in about 11.2 days "
                     "at just 0.05 AU, which may place it in its star's habitable zone -- but whether it is actually friendly to "
                     "life is hotly debated."
                 ),
@@ -873,7 +875,7 @@ UNIT5 = [
             "Inverse-square: light = 1/d^2. Venus gets 1.92x, Mars 0.43x Earth's sunlight per square meter.",
             "Greenhouse warming: Earth ~33 C, Mars ~2 C, Venus ~510 C.",
             "M-dwarf HZ is 3-30x closer than for G-type stars; M dwarfs are the most common, longest-lived stars.",
-            "Proxima Centauri b: >=1.3 Earth masses, 11-day orbit, 0.05 AU, announced 2016; star 4.2 ly away.",
+            "Proxima Centauri b: >=~1.07 Earth masses (first estimate 1.3), 11.2-day orbit, 0.05 AU, announced 2016; star 4.2 ly away.",
             "Sun 30%+ brighter than 4 billion years ago -> HZ moves outward; continuously habitable zone is narrower.",
             "~300 HZ planets/candidates, >10% Earth-size; >40% of stars may have an Earth-size HZ planet.",
         ],
@@ -932,7 +934,7 @@ UNIT5 = [
                 "term": "Proxima Centauri b",
                 "badge": ("4.2", "light-yrs", "#ff6b4a"),
                 "analogy": "Our nearest neighbor star has a planet huddled close, like hands warming at a tiny heater.",
-                "explanation": "At least 1.3 Earth masses, 11-day orbit at 0.05 AU, around the nearest star (M dwarf, 4.2 ly). Announced 2016. Maybe in the HZ; habitability debated.",
+                "explanation": "At least ~1.07 Earth masses (first estimated 1.3), 11.2-day orbit at 0.05 AU, around the nearest star (M dwarf, 4.2 ly). Announced 2016. Maybe in the HZ; habitability debated.",
                 "why": "The nearest potentially habitable exoplanet.",
             },
             {
@@ -981,7 +983,7 @@ UNIT5 = [
                     "then forged the heavier elements -- iron, silicon, magnesium and oxygen for planets, and carbon, nitrogen "
                     "and oxygen for life. In space, these elements combined into compounds, including ORGANIC MOLECULES "
                     "(molecules containing carbon) and HYDROCARBONS (only hydrogen and carbon), the basis of our biochemistry.\n\n"
-                    "About 5 billion years ago a cloud collapsed into the Sun, planets and comets. The third planet cooled "
+                    "About 4.6 billion years ago a cloud collapsed into the Sun, planets and comets. The third planet cooled "
                     "enough to collect liquid water, and comets (like Hyakutake, seen in 1996) can deliver water and organic "
                     "chemicals. Eventually, molecules formed that could COPY THEMSELVES (REPLICATE) -- the key first step for "
                     "life. Billions of years of evolution followed, sometimes reset by impacts, producing creatures who can "
@@ -1017,7 +1019,7 @@ UNIT5 = [
                     "• METEORITES contain AMINO ACIDS (the building blocks of PROTEINS, which build our tissues and do the "
                     "cell's work) and SUGARS whose structure shows they came from space.\n"
                     "• COMETS' gas and dust contain organic molecules.\n"
-                    "• Radio astronomers have found more than 100 kinds of molecules in giant gas-and-dust clouds between the "
+                    "• Astronomers have found about 350 kinds of molecules in giant gas-and-dust clouds between the "
                     "stars, including formaldehyde and alcohol -- mostly in dusty regions where new stars and planets form.\n"
                     "• JWST has found benzene and acetic acid in planet-forming disks."
                 ),
@@ -1108,7 +1110,7 @@ UNIT5 = [
             "Astrobiology = exobiology = bioastronomy: origin, evolution, distribution and future of life in the universe.",
             "Big Bang ~14 billion years ago: only H and He (and a little Li); stars made the rest.",
             "Copernican principle: Earth's place isn't special. Fermi paradox: 'where is everybody?'",
-            "Meteorites contain amino acids and sugars; >100 molecules found in interstellar clouds (formaldehyde, alcohol).",
+            "Meteorites contain amino acids and sugars; ~350 molecules found in space (interstellar clouds and around stars) (formaldehyde, alcohol).",
             "Miller-Urey (early 1950s, University of Chicago): sparks + gases -> building blocks; but needed reducing gases.",
             "Hydrothermal vents: organics without a special atmosphere; ecosystems without sunlight.",
             "RNA world solves the DNA/protein chicken-and-egg problem.",
@@ -1152,9 +1154,9 @@ UNIT5 = [
             },
             {
                 "term": "Building blocks in space",
-                "badge": ("100+", "molecules", ICE),
+                "badge": ("~350", "molecules", ICE),
                 "analogy": "Space is a giant pantry already stocked with life's basic ingredients.",
-                "explanation": "Meteorites carry amino acids and sugars; comets carry organics; 100+ molecules found in interstellar clouds; JWST sees organics in disks.",
+                "explanation": "Meteorites carry amino acids and sugars; comets carry organics; ~350 molecules found in space; JWST sees organics in disks.",
                 "why": "The ingredients for life are likely everywhere.",
             },
             {

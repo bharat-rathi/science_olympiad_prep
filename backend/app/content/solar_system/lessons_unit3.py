@@ -52,10 +52,11 @@ UNIT3 = [
                     "• IRREGULAR moons (the majority) orbit BACKWARD (retrograde), or on very stretched (ECCENTRIC) or tilted "
                     "(INCLINED) orbits, usually far from the planet. They were probably wandering objects that the planet's "
                     "gravity captured.\n\n"
-                    "Moon counts keep climbing as telescopes find tiny new ones, so different sources disagree. The reader's "
-                    "newest numbers: Jupiter 97, Saturn at least 274 (128 small ones announced in early 2025!), Uranus 29, "
-                    "Neptune 16. The older scioly.org wiki lists Jupiter 79, Saturn 60 and Uranus 27. Know both -- and that "
-                    "the number keeps growing. In all, about 430 moons are known around planets and dwarf planets. Only "
+                    "Moon counts keep climbing as telescopes find tiny new ones, so different sources disagree. NASA's counts "
+                    "as of mid-2026: Jupiter 115, Saturn 293 (128 small ones were announced at once in March 2025!), Uranus "
+                    "29, Neptune 16. The reader used earlier counts (Jupiter 97, Saturn 274) and the older scioly.org wiki "
+                    "lists Jupiter 79, Saturn 60 and Uranus 27 -- a test may use any of these, so know that the number keeps "
+                    "growing. Nearly all the new ones are tiny irregular moons only a few km across. Only "
                     "Mercury and Venus have none."
                 ),
             },
@@ -90,7 +91,7 @@ UNIT3 = [
                     "• SATURN'S rings are by far the brightest: broad and flat, with gaps, made mostly of water-ice chunks the "
                     "size of ping-pong balls, tennis balls and basketballs, swirling around like a traffic jam. They are huge "
                     "but extremely thin.\n"
-                    "• URANUS' 11 rings (discovered in 1977) are narrow ribbons of dark material with wide gaps between them.\n"
+                    "• URANUS' 13 known rings (the first ones discovered in 1977) are narrow ribbons of dark material with wide gaps between them.\n"
                     "• JUPITER has a faint ring, and NEPTUNE has narrow, faint, dark rings.\n\n"
                     "Small SHEPHERD MOONS use their gravity to keep ring particles in tight bands, like sheepdogs herding a "
                     "flock (see 'Orbit Tricks & Eclipses')."
@@ -143,7 +144,8 @@ UNIT3 = [
                     "is.\n\n"
                     "IO is our Moon's near-twin in size and density, yet it is the most volcanic world in the Solar System. "
                     "Voyager 1 saw 8 volcanoes erupting in March 1979, and 6 were still going when Voyager 2 passed four months "
-                    "later. Galileo found more than 50 eruptions in 1997 alone, more than 100 recently active volcanoes, and "
+                    "later. Galileo found more than 50 eruptions in 1997 alone, more than 100 recently active volcanoes (NASA now counts about 400 "
+                    "volcanoes in all), and "
                     "PLUMES (fountains of gas and dust) hundreds of km high. The lava is hot molten rock like Earth's, but when "
                     "it hits frozen sulfur and sulfur dioxide, giant plumes shoot up and colorful sulfur 'snow' falls up to "
                     "1,000 km away -- orange is sulfur, white is sulfur dioxide. (Carl Sagan joked that Io looks like it needs "
@@ -184,11 +186,11 @@ UNIT3 = [
         "key_facts": [
             "Jupiter: 5.2 AU, 142,984 km, ~10-hour day, Great Red Spot. Saturn: 9.54 AU, density 0.7 (would float).",
             "Uranus: 19.18 AU, tilted 98 degrees, discovered March 13, 1781 (Herschel). Neptune: 30.06 AU, discovered Sept 23, 1846.",
-            "Moon counts (reader): Jupiter 97, Saturn 274+, Uranus 29, Neptune 16. Older wiki: 79, 60, 27.",
+            "Moon counts (NASA, mid-2026): Jupiter 115, Saturn 293, Uranus 29, Neptune 16. Reader: 97, 274. Older wiki: 79, 60, 27.",
             "Phobos and Deimos: 1877, A. Hall. Galilean moons: 1610, Galileo. Titan: 1655, Huygens. Triton: 1846, Lassell (retrograde).",
             "Uranus' 5 major moons: Miranda, Ariel, Umbriel, Titania, Oberon. Charon: 1978, J. Christy.",
             "Galilean moons (in to out): Io 3,640 km/3.5; Europa 3,130/3.0; Ganymede 5,270/1.9 (largest moon); Callisto 4,820/1.8.",
-            "Io: >100 active volcanoes; Io-Europa-Ganymede 1:2:4 resonance keeps its orbit oval -> tidal heating.",
+            "Io: ~400 volcanoes (Galileo saw 100+ recently active); Io-Europa-Ganymede 1:2:4 resonance keeps its orbit oval -> tidal heating.",
         ],
         "quick_check": [
             ("What is the difference between a regular and an irregular moon?", "Regular moons orbit close in, forward, near the equator (formed with the planet); irregular moons are far out on backward, stretched or tilted orbits (captured)."),
@@ -224,7 +226,7 @@ UNIT3 = [
                 "term": "Rings",
                 "badge": ("RINGS", "all 4", ICE),
                 "analogy": "A highway jammed with ice cubes from ping-pong-ball to basketball size.",
-                "explanation": "All four giants have rings of countless orbiting pieces. Saturn's are bright water ice; Uranus' 11 rings (found 1977) are narrow and dark; Jupiter's and Neptune's are faint. Shepherd moons keep edges sharp.",
+                "explanation": "All four giants have rings of countless orbiting pieces. Saturn's are bright water ice; Uranus' 13 rings (first found 1977) are narrow and dark; Jupiter's and Neptune's are faint. Shepherd moons keep edges sharp.",
                 "why": "Rings and shepherd moons show how gravity sculpts disks -- like planet-forming disks.",
             },
             {
@@ -252,7 +254,7 @@ UNIT3 = [
                 "term": "Tidal heating & Io",
                 "badge": ("FLEX", "= heat", RED),
                 "analogy": "Bend a paper clip back and forth fast and it gets warm.",
-                "explanation": "Jupiter's gravity flexes its moons; Europa and Ganymede keep Io's orbit oval (1:2:4 resonance), so Io is constantly kneaded: 100+ volcanoes, sulfur plumes hundreds of km high. Activity increases from Callisto inward to Io.",
+                "explanation": "Jupiter's gravity flexes its moons; Europa and Ganymede keep Io's orbit oval (1:2:4 resonance), so Io is constantly kneaded: ~400 volcanoes, sulfur plumes hundreds of km high. Activity increases from Callisto inward to Io.",
                 "why": "Tidal heating lets oceans exist far from the Sun's warmth.",
             },
         ],
@@ -295,8 +297,8 @@ UNIT3 = [
                     "More evidence: as Europa moves through Jupiter's magnetic field, it creates a small magnetic field of its "
                     "own (an INDUCED magnetic field), and its 'signature' matches a SALTY LIQUID OCEAN -- salty water conducts "
                     "electricity. The ocean may be tens of kilometers to perhaps 100 km deep, holding more water than all of "
-                    "Earth's oceans. The ice shell might be about 1 to 20 km thick (2024 Juno data suggest it could be twice "
-                    "that). Tidal heating keeps the ocean liquid, and there could even be warm springs on the seafloor.\n\n"
+                    "Earth's oceans. Estimates of the ice shell's thickness used to range from about 1 km to tens of km; in "
+                    "December 2025 NASA's Juno team reported it averages about 29 km (18 miles) thick where Juno measured. Tidal heating keeps the ocean liquid, and there could even be warm springs on the seafloor.\n\n"
                     "NASA's EUROPA CLIPPER launched in October 2024 and arrives at Jupiter in 2030. It will not orbit Europa, "
                     "because Jupiter's intense radiation would fry its electronics; instead it makes many quick, close "
                     "flybys. Its job: study the ocean and ice shell, and find places where ocean material has reached the "
@@ -361,8 +363,9 @@ UNIT3 = [
                     "landed -- the first and only landing on a moon in the outer Solar System. It found a flat plain strewn "
                     "with 'boulders' of water ice, as hard as rock at 94 K. The sky was deep orange and sunlight 1,000 times "
                     "dimmer than on Earth (but still 100 times brighter than full moonlight). Photos from its descent showed "
-                    "drainage channels, so Huygens seemed to sit on the shore of an old lake. It sent data for about 90 "
-                    "minutes before the cold won.\n\n"
+                    "drainage channels, so Huygens seemed to sit on the shore of an old lake. Cassini relayed 72 minutes of data from the "
+                    "surface before it passed over the horizon; radio telescopes on Earth kept hearing Huygens' signal for "
+                    "more than 3 hours.\n\n"
                     "DRAGONFLY. NASA's Dragonfly, a nuclear-powered drone with rotors, is planned to launch in July 2028 and arrive in 2034. It will fly "
                     "from place to place in Titan's thick air and low gravity, studying the PREBIOTIC CHEMISTRY -- the chemistry "
                     "that might come before life. Balloons and even a boat for Titan's lakes have also been proposed."
@@ -385,7 +388,8 @@ UNIT3 = [
                 "body": (
                     "Don't mix up TITAN (Saturn) with TRITON (Neptune)! Triton is Neptune's largest moon: 2,720 km across "
                     "with a density of 2.1 g/cm3, so it is roughly 75% rock and 25% water ice. It reflects about 80% of "
-                    "sunlight and has the coldest surface of any world our spacecraft have visited. It orbits Neptune "
+                    "sunlight and has one of the coldest surfaces ever measured "
+                    "(about 38 K, or -235 C). It orbits Neptune "
                     "BACKWARD (retrograde) -- very unusual for a big moon -- and has a thin atmosphere. Voyager 2 saw active "
                     "eruptions there in 1989. Triton was probably a dwarf planet, like Pluto, that Neptune captured.\n\n"
                     "Outer Solar System worlds show CRYOVOLCANISM ('cold volcanoes'): instead of melted rock, they erupt water "
@@ -415,12 +419,12 @@ UNIT3 = [
         ],
         "key_facts": [
             "Six or more icy moons may have liquid oceans, kept warm by tidal heating.",
-            "Europa: few craters (surface a few million years old), induced magnetic field = salty ocean; ice shell ~1-20 km; Europa Clipper launched Oct 2024, arrives 2030 (flybys).",
+            "Europa: few craters (surface a few million years old), induced magnetic field = salty ocean; ice shell ~29 km thick (Juno, 2025; older estimates 1-20+ km); Europa Clipper launched Oct 2024, arrives 2030 (flybys).",
             "Enceladus: ~500 km; Cassini (2005) found south-polar plumes ~250 kg/s with salts -> ocean.",
             "Titan: 5,150 km; nitrogen + ~5% methane; tholin haze; methane/ethane lakes and rain; 94 K (-179 C).",
-            "Huygens landed on Titan January 14, 2005 -- the only landing in the outer Solar System; worked ~90 minutes.",
+            "Huygens landed on Titan January 14, 2005 -- the only landing in the outer Solar System; Cassini got 72 minutes of surface data; radio telescopes heard it for 3+ hours.",
             "Dragonfly: drone to Titan, launch July 2028, arrive 2034, prebiotic chemistry.",
-            "Triton: 2,720 km, density 2.1, retrograde orbit, coldest surface visited, Voyager 2 eruptions 1989, probably captured.",
+            "Triton: 2,720 km, density 2.1, retrograde orbit, one of the coldest surfaces measured (~38 K), Voyager 2 eruptions 1989, probably captured.",
         ],
         "quick_check": [
             ("How can moons so far from the Sun have liquid water?", "Tidal heating: the giant planet's gravity keeps flexing them, making heat inside."),
@@ -442,7 +446,7 @@ UNIT3 = [
                 "term": "Europa's ocean",
                 "badge": ("OCEAN", "under ice", "#e8e2d0"),
                 "analogy": "A frozen pond with a thick lid -- but the pond is a whole global ocean.",
-                "explanation": "Few craters, long cracks and ridges, Conamara Chaos 'icebergs', and an induced magnetic field all point to a salty ocean under ~1-20 km of ice. Europa Clipper arrives 2030.",
+                "explanation": "Few craters, long cracks and ridges, Conamara Chaos 'icebergs', and an induced magnetic field all point to a salty ocean under an ice shell about 29 km thick (Juno, 2025). Europa Clipper arrives 2030.",
                 "why": "Many scientists' #1 place to find life beyond Earth.",
             },
             {
@@ -477,7 +481,7 @@ UNIT3 = [
                 "term": "Triton",
                 "badge": ("2,720", "km", "#9fd6e8"),
                 "analogy": "A runaway that Neptune caught -- it still orbits the 'wrong way'.",
-                "explanation": "Neptune's largest moon: retrograde orbit, coldest surface visited, thin air, eruptions seen by Voyager 2 in 1989; probably a captured dwarf planet. Don't confuse it with Titan!",
+                "explanation": "Neptune's largest moon: retrograde orbit, one of the coldest surfaces measured (~38 K), thin air, eruptions seen by Voyager 2 in 1989; probably a captured dwarf planet. Don't confuse it with Titan!",
                 "why": "The classic Titan-vs-Triton mix-up question.",
             },
         ],
@@ -510,7 +514,7 @@ UNIT3 = [
                     "SEMI-MAJOR AXIS, is bigger than Neptune's). The four official Plutoids are Pluto, Haumea, Makemake and "
                     "Eris. Ceres lives in the asteroid belt, so it is a dwarf planet but NOT a Plutoid.\n\n"
                     "Objects beyond Neptune are called TRANS-NEPTUNIAN OBJECTS (TNOs). Pluto was the first one found (by Clyde "
-                    "Tombaugh in 1930); more than 3,900 are known now. Pluto was called the ninth planet until 2006."
+                    "Tombaugh in 1930); thousands are known now. Pluto was called the ninth planet until 2006."
                 ),
                 "infographic": "dwarf_planets",
             },
@@ -529,7 +533,8 @@ UNIT3 = [
                     "the inner Solar System. The Dawn spacecraft orbited it (and the big asteroid Vesta) between 2011 and "
                     "2018.\n"
                     "• SEDNA is a PLUTOID CANDIDATE -- big enough to be a dwarf planet, but not yet officially one. It is about "
-                    "1,600 km (995 miles) across and has an extremely stretched orbit that takes about 11,518 years! Its "
+                    "1,000 km (roughly 600 miles) across and has an extremely stretched orbit that takes roughly 11,000 "
+                    "years (published estimates range from about 10,500 to 11,500)! Its "
                     "closest point to the Sun (PERIHELION) is in the outer Kuiper Belt; its farthest point (APHELION) may reach "
                     "the inner Oort Cloud. We found it partly by luck: it was near perihelion and just barely bright enough to "
                     "see. Near aphelion it would have stayed hidden for thousands of years. No moons have been found -- at that "
@@ -653,7 +658,7 @@ UNIT3 = [
         "key_facts": [
             "Planet: orbits Sun + round + cleared its neighborhood. Dwarf planet: fails 'cleared', not a moon.",
             "Dwarf planets: Ceres, Pluto, Eris, Haumea, Makemake. Plutoids (beyond Neptune): Pluto, Haumea, Makemake, Eris.",
-            "Sedna: Plutoid candidate, ~1,600 km (995 mi), ~11,518-year orbit, no known moons.",
+            "Sedna: Plutoid candidate, ~1,000 km (~600 mi), ~11,000-year orbit (estimates ~10,500-11,500), no known moons.",
             "Pluto: found 1930 (Tombaugh); 5 moons; Charon mutually tidally locked; New Horizons flyby July 2015; Arrokoth Jan 1, 2019.",
             "Kuiper Belt: 30-50 AU. Oort Cloud: vast shell, ~40 Earth masses, source of long-period comets.",
             "Asteroid types: C (dark, carbon, most common), S (silicate, brighter), M (metal) + E, P, D, V, Q, A, B, G, F, R, T, L, K, X, I.",
@@ -680,7 +685,7 @@ UNIT3 = [
                 "term": "Plutoids & Sedna",
                 "badge": ("TNO", "past Neptune", PURPLE),
                 "analogy": "Plutoids are the dwarf planets who live in the far-out suburbs past Neptune.",
-                "explanation": "Plutoid = dwarf planet orbiting beyond Neptune: Pluto, Haumea, Makemake, Eris. Sedna is a candidate (~1,600 km) with an ~11,518-year, very stretched orbit.",
+                "explanation": "Plutoid = dwarf planet orbiting beyond Neptune: Pluto, Haumea, Makemake, Eris. Sedna is a candidate (~1,000 km) with an ~11,000-year, very stretched orbit.",
                 "why": "Know which dwarf planets are Plutoids (not Ceres!).",
             },
             {
