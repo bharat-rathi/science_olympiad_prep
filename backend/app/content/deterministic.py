@@ -4,8 +4,9 @@ Every topic has two kinds of material:
 
 - Deterministic: shipped with the app and sourced verbatim (or hand-written
   from a cited source) -- each official event's rules overview, the seeded
-  scioly.org wiki excerpts, and the Solar System source-reader chapters
-  (flashcards, story, infographics). It never needs an LLM, so it goes
+  scioly.org wiki excerpts, the 2027-rules study notes, and the Solar
+  System source-reader chapters (flashcards, story, infographics). It
+  never needs an LLM, so it goes
   straight to students: every student can see it, no coach clicks and no
   roster assignment.
 - Generative: whatever a coach chooses to add with the AI tools (draft
@@ -22,7 +23,7 @@ from app import models
 from app.db import SessionLocal
 
 # Titles of the resources the startup seeds create from cited sources.
-DETERMINISTIC_TITLE_PREFIXES = ("scioly.org wiki:", "Source reader:")
+DETERMINISTIC_TITLE_PREFIXES = ("scioly.org wiki:", "Source reader:", "Study notes:")
 
 
 def publish_deterministic_content() -> None:

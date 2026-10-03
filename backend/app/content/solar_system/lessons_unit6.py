@@ -107,7 +107,7 @@ UNIT6 = [
                     "• NEW HORIZONS (launched Jan 19, 2006; still going): the first close-up visit to Pluto and its moons "
                     "(Charon, Styx, Nix, Kerberos, Hydra) in July 2015, then the Kuiper Belt object Arrokoth (Jan 1, 2019).\n"
                     "• EUROPA CLIPPER (launched October 2024, arrives 2030) will study Europa's ocean, and DRAGONFLY (launch "
-                    "2027) will fly a drone on Titan."
+                    "July 2028) will fly a drone on Titan."
                 ),
                 "infographic": "mission_timeline",
             },

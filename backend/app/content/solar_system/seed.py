@@ -1,7 +1,8 @@
 """Deterministic seed for the Solar System study material.
 
-The event's material is a structured study plan (plan.py) of 19 lesson
-chapters (lessons_unit1..6.py), built from the coach-supplied source reader
+The event's material is a structured study plan (plan.py) of lesson
+chapters (lessons_unit1..6.py, plus lessons_2027.py for the rest of the 2027
+rules), built from the coach-supplied source reader
 and scioly.org wiki with duplicates removed. Each chapter becomes a
 sub-topic of the "Solar System" event with:
 
