@@ -97,9 +97,9 @@ UNIT2 = [
                     "3. Comets and asteroids from the cold outer Solar System crashed in and delivered water and gases.\n\n"
                     "A THOUGHT EXPERIMENT: what if Earth got really hot? VOLATILE materials evaporate at fairly low "
                     "temperatures. Heat Earth above 100 C and the oceans would boil. There is enough water to cover the whole "
-                    "Earth about 300 m deep, and every 10 m of water presses down like 1 bar of air -- so the steam would make "
-                    "a 300-bar atmosphere! Heating carbonate rocks would add about 70 bars of CO2 (today Earth has only "
-                    "0.0005 bar of CO2). A hot Earth would have a crushing ~400-bar atmosphere of steam and CO2. Keep this in "
+                    "Earth about 2.6 km deep, and every 10 m of water presses down like 1 bar of air -- so the steam would make "
+                    "a roughly 300-bar atmosphere! Heating carbonate rocks would add about 70 bars of CO2 (today Earth has only "
+                    "about 0.0004 bar of CO2). A hot Earth would have a crushing ~400-bar atmosphere of steam and CO2. Keep this in "
                     "mind when you meet Venus.\n\n"
                     "WEATHER is simply the circulation (movement) of a planet's air. It is powered mostly by sunlight heating "
                     "the ground. Earth's spin and the seasons change how much sunlight each place gets, and the air and oceans "
@@ -118,13 +118,13 @@ UNIT2 = [
                     "below freezing in a global ice age. (One chapter of the reader says it warms Earth by about 23 C, another "
                     "by about 33 C -- the 33 C value is the one usually used.)\n\n"
                     "THE BAD NEWS: burning FOSSIL FUELS (coal, oil and gas -- the remains of plants and animals from millions "
-                    "of years ago) releases CO2, and cutting down forests removes the trees that soak it up. CO2 rose about 30% "
-                    "in the past century, keeps rising more than 0.5% a year, and is expected to double its pre-industrial "
-                    "level before 2100. Burning fossil fuels releases about 100 times more CO2 than all volcanoes. The results "
+                    "of years ago) releases CO2, and cutting down forests removes the trees that soak it up. CO2 has risen from "
+                    "about 280 parts per million (ppm) before the Industrial Revolution to about 427 ppm in 2026 -- roughly 50% "
+                    "higher -- and it keeps rising about 0.5% a year (NOAA). Burning fossil fuels releases about 100 times more CO2 than all volcanoes. The results "
                     "of this CLIMATE CHANGE: record heat (nearly all of the hottest years on record came after 2000), "
                     "shrinking glaciers, thinner Arctic ice and rising seas.\n\n"
                     "People have changed Earth before: early hunters wiped out giant animals (mammoths, mastodons, giant "
-                    "sloths, 10-foot kangaroos), and farmers cut down forests. Scientists have suggested naming our time the "
+                    "sloths, giant kangaroos), and farmers cut down forests. Scientists have suggested naming our time the "
                     "ANTHROPOCENE -- the age when humans became a planet-changing force."
                 ),
                 "infographic": "greenhouse",
@@ -162,10 +162,10 @@ UNIT2 = [
             "Earth: 1.00 AU; diameter 12,756 km; radius 6,378 km; density 5.514 g/cm3; escape velocity 11.2 km/s; rotation 23 h 56 m 4 s; 1.00 bar.",
             "Oceanic crust: 55% of surface, ~6 km, basalt. Continental crust: 45%, 20-70 km, granite. Crust = 0.3% of Earth's mass.",
             "Mantle to 2,900 km; liquid outer core; solid inner core.",
-            "Air: 78% N2, 21% O2, 1% Ar, traces of H2O and CO2 (0.0005 bar of CO2).",
+            "Air: 78% N2, 21% O2, 1% Ar, traces of H2O and CO2 (~0.0004 bar; ~427 ppm in 2026).",
             "Ozone (O3) in the stratosphere blocks UV; CFCs banned; Antarctic ozone hole shrinking.",
             "Boiled oceans = ~300 bars; carbonate rocks = ~70 bars CO2; hot Earth ~400 bars.",
-            "Natural greenhouse warming: ~33 C (reader also says ~23 C). CO2 up ~30% in a century.",
+            "Natural greenhouse warming: ~33 C (reader also says ~23 C). CO2 ~280 ppm pre-industrial -> ~427 ppm in 2026 (about +50%).",
             "Fossil fuels release ~100x more CO2 than volcanoes.",
         ],
         "quick_check": [
@@ -221,9 +221,9 @@ UNIT2 = [
             },
             {
                 "term": "Climate change",
-                "badge": ("+30%", "CO₂", RED),
+                "badge": ("+50%", "CO₂", RED),
                 "analogy": "Adding extra blankets on a warm night -- you can't cool off.",
-                "explanation": "Burning fossil fuels (100x more CO2 than volcanoes) and cutting forests raised CO2 ~30% in a century. Result: record heat, melting ice, rising seas.",
+                "explanation": "Burning fossil fuels (100x more CO2 than volcanoes) and cutting forests raised CO2 about 50% above pre-industrial levels (280 -> ~427 ppm). Result: record heat, melting ice, rising seas.",
                 "why": "Links Earth's future to Venus' runaway greenhouse.",
             },
         ],
@@ -244,8 +244,8 @@ UNIT2 = [
                 "heading": "How long has life been here?",
                 "body": (
                     "Earth's restless crust has erased most of its 'baby pictures', but a few clues survive. The oldest "
-                    "surviving rocks are about 3.9 billion years old, and their chemistry shows that life ALREADY existed "
-                    "then. (Some scientists see possible signs as old as 3.8 billion years, but that is debated.)\n\n"
+                    "rocks still in place are about 4 billion years old (the Acasta Gneiss in Canada). Carbon in 3.7-billion-"
+                    "year-old rocks from Greenland may be a chemical sign of life, though scientists still debate it.\n\n"
                     "By 3.5 billion years ago, tiny MICROBES (living things too small to see) were building big colonies "
                     "called STROMATOLITES. A stromatolite forms when a sticky mat of blue-green bacteria traps mud in shallow "
                     "water, grows up on top of it, traps more mud, and so on -- a layer cake baked by microbes. The oldest "
@@ -322,12 +322,13 @@ UNIT2 = [
                 "heading": "Tunguska and the end of the dinosaurs",
                 "body": (
                     "TUNGUSKA, 1908. On June 30, 1908, near the Tunguska River in Siberia, a space rock exploded about 8 km "
-                    "above the ground. The blast flattened more than 1,000 square kilometers of forest, killed herds of "
-                    "reindeer and knocked a man 80 km away out of his chair. Instruments around the world recorded the "
-                    "pressure wave. It was a 5-MEGATON explosion (as strong as 5 million tons of explosives) from a stony "
-                    "object only about 50 m across -- the size of a small office building.\n\n"
-                    "IMPACTS AND EVOLUTION. Big impacts have changed the story of life. About 65 million years ago a massive "
-                    "impact caused a MASS EXTINCTION -- the dinosaurs and most other living things died out. That cleared the "
+                    "above the ground. The blast flattened about 2,150 square kilometers of forest (tens of millions of trees), "
+                    "killed herds of reindeer and knocked a man about 60 km away off his porch. Instruments around the world "
+                    "recorded the pressure wave. It was a MEGATON-class explosion -- most estimates are 3 to 15 megatons "
+                    "(millions of tons of explosives) -- from a stony object only about 40-50 m across, the size of a small "
+                    "office building.\n\n"
+                    "IMPACTS AND EVOLUTION. Big impacts have changed the story of life. About 66 million years ago a massive "
+                    "impact (the Chicxulub impact, in Mexico's Yucatan Peninsula) caused a MASS EXTINCTION -- the dinosaurs and most other living things died out. That cleared the "
                     "way for mammals, and eventually us. Even earlier, during the heavy bombardment (about 4.1 to 3.8 billion "
                     "years ago), giant impacts may have heated Earth's surface enough to sterilize it (kill everything)."
                 ),
@@ -358,13 +359,13 @@ UNIT2 = [
             ("Sterilize", "To kill all living things in a place."),
         ],
         "key_facts": [
-            "Oldest surviving rocks: ~3.9 billion years -- life already existed. Possible (debated) signs: 3.8 billion years.",
+            "Oldest rocks in place: ~4 billion years (Acasta Gneiss). Possible (debated) chemical signs of life: ~3.7 billion years (Greenland).",
             "Stromatolites by 3.5 billion years ago; oldest known 3.47 billion years (Western Australia); still grow in Lake Thetis.",
             "Abundant fossils only for the last 600 million years (<15% of Earth's history).",
             "Tree of life: 3 domains -- bacteria, archaea, eukarya.",
             "Free oxygen built up ~2.4 billion years ago (reader also says ~2 billion) -> ozone layer -> life on land.",
-            "Tunguska: June 30, 1908, Siberia; exploded ~8 km up; >1,000 km2 of forest flattened; 5 megatons; object ~50 m.",
-            "Dinosaur-ending impact: 65 million years ago. Ouarkziz crater, Algeria: 4 km.",
+            "Tunguska: June 30, 1908, Siberia; exploded ~5-10 km up; ~2,150 km2 of forest flattened; ~3-15 megatons; object ~40-50 m.",
+            "Dinosaur-ending impact: 66 million years ago (Chicxulub, Mexico). Ouarkziz crater, Algeria: 4 km.",
         ],
         "quick_check": [
             ("What are stromatolites and why are they important?", "Layered mounds built by mats of microbes trapping mud. They are some of the oldest evidence of life (3.47 billion years) and of photosynthesis."),
@@ -376,9 +377,9 @@ UNIT2 = [
         "cards": [
             {
                 "term": "Earliest life",
-                "badge": ("3.9", "bya rocks", GREEN),
+                "badge": ("3.5", "bya fossils", GREEN),
                 "analogy": "Finding footprints on the oldest page of a diary -- someone was already there.",
-                "explanation": "Rocks ~3.9 billion years old already show chemical signs of life. Abundant fossils only cover the last 600 million years.",
+                "explanation": "Possible chemical signs of life in ~3.7-billion-year-old rocks (debated); stromatolite fossils by ~3.5 billion years ago. Abundant fossils only cover the last 600 million years.",
                 "why": "Life started quickly once Earth calmed down -- a hopeful hint for other worlds.",
             },
             {
@@ -420,14 +421,14 @@ UNIT2 = [
                 "term": "Tunguska (1908)",
                 "badge": ("1908", "Siberia", RED),
                 "analogy": "A space rock the size of an office building exploded like a giant bomb in the sky.",
-                "explanation": "June 30, 1908: a ~50 m stony object exploded ~8 km up with 5 megatons of energy, flattening over 1,000 km2 of forest.",
+                "explanation": "June 30, 1908: a ~40-50 m stony object exploded ~5-10 km up with several megatons of energy, flattening ~2,150 km2 of forest.",
                 "why": "Small bodies are still a hazard to Earth.",
             },
             {
                 "term": "Impacts & extinction",
-                "badge": ("65", "Mya", RED),
+                "badge": ("66", "Mya", RED),
                 "analogy": "One unlucky space rock reshuffled the deck of life.",
-                "explanation": "An impact 65 million years ago wiped out the dinosaurs and most living things, letting mammals take over.",
+                "explanation": "The Chicxulub impact 66 million years ago wiped out the dinosaurs and most living things, letting mammals take over.",
                 "why": "Habitability isn't permanent -- impacts can reset a biosphere.",
             },
         ],
@@ -470,8 +471,10 @@ UNIT2 = [
                     "breaking apart). Bigger worlds hold their heat longer, so they stay active longer. Small worlds cool "
                     "fast and go 'geologically dead'.\n\n"
                     "The activity ladder, from smallest to biggest:\n"
-                    "• THE MOON: big volcanic eruptions stopped about 3.3 billion years ago. Its mantle cooled and hardened; "
-                    "moonquakes are nearly zero. Geologically dead.\n"
+                    "• THE MOON: most of its big lava floods were over by about 3 billion years ago. Samples returned by "
+                    "China's Chang'e-5 (2020) show some lava erupted about 2 billion years ago, and tiny volcanic glass "
+                    "beads as young as about 120 million years. Today its mantle is cold and moonquakes are weak and rare -- "
+                    "geologically dead.\n"
                     "• MERCURY: probably went quiet about the same time.\n"
                     "• MARS (in between): its southern crust formed by 4 billion years ago, its northern volcanic plains are "
                     "about as old as the Moon's dark plains, and its giant Tharsis volcanoes have been active on and off "
@@ -497,7 +500,7 @@ UNIT2 = [
                     "1,500 km across. Surprisingly, there may be water ice hiding in permanently shadowed craters near its "
                     "poles. It has no moons.\n\n"
                     "Mariner 10 and MESSENGER studied Mercury, and the European-Japanese mission BepiColombo (launched "
-                    "October 20, 2018) is on its way to study its makeup, magnetic field and history -- and to test Einstein's "
+                    "October 20, 2018; scheduled to enter orbit around Mercury on November 21, 2026) will study its makeup, magnetic field and history -- and to test Einstein's "
                     "theory of gravity."
                 ),
             },
@@ -516,7 +519,7 @@ UNIT2 = [
                     "perfect record of the heavy bombardment. On the Moon and Mercury, the big mountains are rock thrown up "
                     "by giant impacts.\n\n"
                     "Apollo astronauts walked on the Moon and brought back rocks, and the Lunar Reconnaissance Orbiter "
-                    "(launched June 28, 2009) is mapping it in high detail to prepare for future human visits."
+                    "(launched June 18, 2009) is mapping it in high detail to prepare for future human visits."
                 ),
             },
             {
@@ -527,7 +530,7 @@ UNIT2 = [
                     "Earth's and Venus' highest mountains (Mount Everest, the Maxwell Mountains) were squeezed up when crust "
                     "was pushed together -- on Earth, by continents colliding.\n\n"
                     "Mountains on Earth and Venus top out at about 10 km above their surroundings. Mars' OLYMPUS MONS rises "
-                    "more than 20 km -- nearly 30 km above Mars' lowest areas -- and is nearly 500 km wide: almost three "
+                    "more than 20 km -- nearly 30 km above Mars' lowest areas -- and is about 600 km wide: almost three "
                     "times as tall as Earth's tallest mountain. Two reasons:\n"
                     "1. NO MOVING PLATES. On Earth, a plate slides over a HOT SPOT (a place where hot rock rises from deep "
                     "inside), so instead of one giant volcano you get a chain of islands, like Hawaii. On Mars the crust stays "
@@ -590,10 +593,10 @@ UNIT2 = [
         ],
         "key_facts": [
             "A planet's fate depends on composition, mass and distance from the Sun.",
-            "Activity ladder: Moon (dead ~3.3 billion years) ~ Mercury < Mars < Venus (surface <=500 Myr) < Earth (surface mostly <200 Myr).",
+            "Activity ladder: Moon (main lava floods over by ~3 billion years; Chang'e-5: lava ~2 billion years ago) ~ Mercury < Mars < Venus (surface <=500 Myr) < Earth (surface mostly <200 Myr).",
             "Mercury: 0.39 AU, year 88 days, day 58.6 days, 4,878 km, density 5.4, no moons, >400 C day / < -170 C night.",
             "Moon: 3,476 km, density 3.3, 384,400 km away, 27.3-day orbit, tidally locked.",
-            "Olympus Mons: >20 km high (nearly 30 km above Mars' lowest areas), ~500 km wide -- no moving plates + 1/3 gravity.",
+            "Olympus Mons: >20 km high (nearly 30 km above Mars' lowest areas), ~600 km wide -- no moving plates + 1/3 gravity.",
             "Rocky bodies larger than ~400 km are round; smaller ones can be lumpy (Ida, ~60 km).",
             "Venus and Mars air: ~96% CO2, a few % N2.",
         ],
@@ -630,14 +633,14 @@ UNIT2 = [
                 "term": "The Moon",
                 "badge": ("27.3 d", "orbit", "#bdbdbd"),
                 "analogy": "A dusty old notebook nobody has erased -- every crater is still written there.",
-                "explanation": "3,476 km, density 3.3, 384,400 km away, tidally locked. Probably formed from a giant impact on Earth. Bright cratered highlands and dark lava 'maria'; dead for ~3.3 billion years.",
+                "explanation": "3,476 km, density 3.3, 384,400 km away, tidally locked. Probably formed from a giant impact on Earth. Bright cratered highlands and dark lava 'maria'; mostly volcanically dead for ~3 billion years (Chang'e-5 found some lava ~2 billion years old).",
                 "why": "Its craters record the heavy bombardment.",
             },
             {
                 "term": "Olympus Mons",
                 "badge": ("20+", "km high", MARS),
                 "analogy": "On Mars you can stack a sandcastle much higher because the sand weighs less -- and the table never moves.",
-                "explanation": "Over 20 km high and ~500 km wide, almost 3x Earth's tallest mountain. Reasons: no moving plates (the volcano stays over its hot spot) and only 1/3 of Earth's gravity.",
+                "explanation": "Over 20 km high and ~600 km wide, almost 3x Earth's tallest mountain. Reasons: no moving plates (the volcano stays over its hot spot) and only 1/3 of Earth's gravity.",
                 "why": "A favorite 'explain with two reasons' question.",
             },
             {
@@ -752,7 +755,8 @@ UNIT2 = [
                 "heading": "Why Venus is so hot: the runaway greenhouse",
                 "body": (
                     "Venus is a bit closer to the Sun, but that explains only a little of its heat. The real culprit is the "
-                    "greenhouse effect: Venus' air holds almost a MILLION times more carbon dioxide than Earth's. That thick "
+                    "greenhouse effect: Venus' air holds roughly 150,000 times as much carbon dioxide as Earth's air (Earth "
+                    "keeps a similar amount locked in carbonate rocks instead). That thick "
                     "CO2 blanket traps infrared heat, and the ground has to get extremely hot before it can radiate away as "
                     "much energy as it receives. Its greenhouse effect adds about 510 C (Earth's adds about 33 C).\n\n"
                     "Was Venus always like this? Maybe not. Picture a young Venus with mild temperatures and oceans, its CO2 "
@@ -797,7 +801,7 @@ UNIT2 = [
             "Clouds reflect ~70% of sunlight. Mariner 2 (1962) first flyby; Venera 7 (1970) first landing with data; Magellan radar map.",
             "75% lava plains; continents Aphrodite (Africa-size) and Ishtar (Australia-size) with Maxwell Mountains (11 km).",
             "Surface age 300-600 million years; Mead crater 275 km; Sif Mons ~500 km wide, 3 km high.",
-            "~1 million times Earth's CO2; greenhouse warming ~510 C. Runaway greenhouse; water loss is irreversible.",
+            "~150,000 times the CO2 in Earth's air; greenhouse warming ~510 C. Runaway greenhouse; water loss is irreversible.",
         ],
         "quick_check": [
             ("Why do we call Venus Earth's twin?", "It has almost the same size, mass (0.82 Earth), density and gravity as Earth, and it is geologically active."),
@@ -847,7 +851,7 @@ UNIT2 = [
                 "term": "Runaway greenhouse",
                 "badge": ("LOOP", "runaway", RED),
                 "analogy": "A snowball rolling downhill, getting bigger and faster.",
-                "explanation": "Venus has ~1 million times Earth's CO2 and ~510 C of greenhouse warming. Extra heat -> more evaporation and gas -> more heat... The oceans boiled away; UV split the water and hydrogen escaped, so the loss is permanent.",
+                "explanation": "Venus' air has ~150,000 times the CO2 in Earth's air and ~510 C of greenhouse warming. Extra heat -> more evaporation and gas -> more heat... The oceans boiled away; UV split the water and hydrogen escaped, so the loss is permanent.",
                 "why": "It marks the INNER edge of the habitable zone.",
             },
         ],
@@ -931,8 +935,8 @@ UNIT2 = [
                     "• SEASONAL CAPS: each winter, when it gets colder than about 150 K, carbon dioxide freezes out of the air "
                     "as a thin frost of dry ice, reaching down to about 50 degrees latitude by spring.\n"
                     "• SOUTH PERMANENT CAP: 350 km across -- frozen CO2 plus lots of water ice, staying at 150 K all summer.\n"
-                    "• NORTH PERMANENT CAP: water ice, never smaller than 1,000 km across, about 3 km thick, with about 10 "
-                    "million cubic km of ice (as much water as the Mediterranean Sea). It sits in a basin as big as Earth's "
+                    "• NORTH PERMANENT CAP: water ice, never smaller than 1,000 km across, about 3 km thick, with about 1.6 "
+                    "million cubic km of ice -- a bit more than half of Greenland's ice sheet. It sits in a basin as big as Earth's "
                     "Arctic Ocean basin -- maybe once a shallow sea.\n"
                     "• LAYERED TERRAIN: near both poles, stacks of light and dark layers of dust and ice, each 10 to tens of "
                     "meters thick, record climate cycles every tens of thousands of years -- Martian 'ice ages' caused by "
@@ -961,8 +965,9 @@ UNIT2 = [
                     "steep crater walls at high latitudes and are very young: no craters on them, and some cut across recent "
                     "dunes.\n"
                     "• RECURRING SLOPE LINEAE: dark streaks that grow downhill each warm season. In 2015, measurements found "
-                    "HYDRATED SALTS (salts with water locked inside) in them, so salty water may trickle 100 m or more before "
-                    "it evaporates or soaks in. Where that water comes from is still a mystery.\n\n"
+                    "HYDRATED SALTS (salts with water locked inside) in them, so at first scientists thought salty water "
+                    "might trickle downhill. But a 2017 NASA study found the streaks only form on slopes steep enough for dry "
+                    "sand and dust to slide, so most scientists now think they are mainly DRY GRAIN FLOWS -- still debated.\n\n"
                     "None of these are Lowell's canals -- they are too small to see from Earth, and not straight."
                 ),
                 "infographic": "mars_water",
@@ -1016,7 +1021,7 @@ UNIT2 = [
             ("Runoff channel", "A small winding valley carved by water flowing over the surface, like rain runoff."),
             ("Outflow channel", "A huge channel carved by a sudden, giant flood."),
             ("Gully", "A small channel cut into a steep slope."),
-            ("Recurring slope lineae", "Dark streaks on Mars' slopes that grow each warm season, probably from trickles of salty water."),
+            ("Recurring slope lineae", "Dark streaks on Mars' slopes that grow each warm season -- once thought to be salty water, now thought to be mostly sliding dry sand."),
             ("Hydrated salts", "Salts that have water molecules locked inside them."),
             ("Sedimentary rock", "Rock made from layers of mud, sand or other bits that settled and hardened, often in water."),
             ("Hematite", "An iron mineral that usually forms in water. Opportunity found tiny hematite 'blueberries'."),
@@ -1030,9 +1035,9 @@ UNIT2 = [
             "Mass 0.11 Earth; 6,790 km; density 3.9; gravity 0.38; escape velocity 5.0 km/s.",
             "Air: 0.007 bar; 95% CO2, ~3% N2, ~2% Ar; greenhouse warming ~2 C.",
             "Below ~0.006 bar liquid water can't last -- ice sublimates. Salt helps water stay liquid.",
-            "North cap: water ice, >=1,000 km, ~3 km thick, ~10 million km3. South cap: 350 km, CO2 + water ice.",
+            "North cap: water ice, >=1,000 km, ~3 km thick, ~1.6 million km3 (~half of Greenland's ice). South cap: 350 km, CO2 + water ice.",
             "Rovers: Spirit (Gusev), Opportunity ('blueberries'), Curiosity (Gale, ancient habitable lake), Perseverance (Jezero delta) + Ingenuity.",
-            "Phoenix (2008) found water ice near the north pole. 2015: hydrated salts in recurring slope lineae.",
+            "Phoenix (2008) found water ice near the north pole. 2015: hydrated salts in recurring slope lineae; 2017: they are probably mostly dry sand flows.",
         ],
         "quick_check": [
             ("Why is Mars red?", "Its soil contains iron oxides -- rust."),
@@ -1075,7 +1080,7 @@ UNIT2 = [
                 "term": "Channels & salty streaks",
                 "badge": ("RIVERS", "long ago", BLUE),
                 "analogy": "Runoff channels are creeks after a storm; outflow channels are a dam bursting.",
-                "explanation": "Runoff channels (~4 billion years old, ancient rain), outflow channels (catastrophic floods), young gullies, and recurring slope lineae with hydrated salts (2015).",
+                "explanation": "Runoff channels (~4 billion years old, ancient rain), outflow channels (catastrophic floods), young gullies, and recurring slope lineae (hydrated salts found 2015, but probably mostly dry sand flows, 2017).",
                 "why": "Evidence for water on Mars long ago -- and maybe today.",
             },
             {

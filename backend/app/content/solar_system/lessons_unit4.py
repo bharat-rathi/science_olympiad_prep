@@ -285,7 +285,8 @@ UNIT4 = [
                     "• 1:2:4 -- Jupiter's moons IO, EUROPA and GANYMEDE: for every 1 orbit of Ganymede, Europa makes 2 and Io "
                     "makes 4.\n\n"
                     "When three or more bodies are in resonance together, it is called a LAPLACE RESONANCE. Io, Europa and "
-                    "Ganymede are the only known example. Their regular tugs keep Io's orbit slightly oval, which powers its "
+                    "Ganymede are the only known example in our Solar System (some exoplanet systems, like TRAPPIST-1, "
+                    "have similar chains). Their regular tugs keep Io's orbit slightly oval, which powers its "
                     "tidal heating and volcanoes. In a few hundred million years, Callisto may join in to make a 1:2:4:8 "
                     "resonance (Callisto orbiting once for every 2 Ganymede, 4 Europa and 8 Io orbits)."
                 ),
@@ -298,7 +299,8 @@ UNIT4 = [
                     "collides with it, because it rides 60 degrees ahead of or 60 degrees behind it. Those two spots are "
                     "balance points called the LAGRANGIAN POINTS L4 (ahead) and L5 (behind), where the pulls of the Sun and the "
                     "planet work together to hold small objects in place.\n\n"
-                    "• Mars, Jupiter and Neptune all share their orbits with Trojan asteroids. Jupiter has thousands.\n"
+                    "• Mars, Jupiter and Neptune all share their orbits with Trojan asteroids, and Earth and Uranus each have at "
+                    "least one known Trojan too. Jupiter has thousands.\n"
                     "• Saturn's moons have smaller Trojan moons: Telesto and Calypso share an orbit with Tethys, and Helene and "
                     "Polydeuces share an orbit with Dione."
                 ),
@@ -367,7 +369,7 @@ UNIT4 = [
             ("Moonlet", "A very small moon, often found inside a planet's rings."),
             ("Orbital resonance", "When two bodies' orbit times form a simple whole-number ratio (like 1:2), so they line up and tug each other regularly."),
             ("Ratio", "A comparison of two numbers, like 2:3 (two for every three)."),
-            ("Laplace resonance", "A resonance between three or more bodies -- only Io, Europa and Ganymede (1:2:4) are known."),
+            ("Laplace resonance", "A resonance between three or more bodies -- in our Solar System only Io, Europa and Ganymede (1:2:4) are known."),
             ("Trojan", "A small body sharing a bigger body's orbit, 60 degrees ahead of or behind it."),
             ("Lagrangian points", "Balance points in an orbit (L4 ahead, L5 behind) where small objects can stay put."),
             ("Eclipse", "When one object blocks light from reaching another by moving into its path or shadow."),
@@ -388,7 +390,7 @@ UNIT4 = [
             "Tidal locking: Moon (27.3 d), Callisto, Pluto-Charon (mutual).",
             "Shepherd moons: Jupiter -- Metis, Adrastea, Amalthea, Thebe; Saturn -- Pan, Daphnis, Atlas, Prometheus, Pandora, Aegaeon, moonlets; Uranus -- Cordelia, Ophelia.",
             "Resonances: Neptune:Pluto 2:3; Mimas:Tethys 1:2; Enceladus:Dione 1:2; Titan:Hyperion 3:4; Io:Europa:Ganymede 1:2:4 (Laplace).",
-            "Trojans: 60 degrees ahead/behind at L4/L5. Mars, Jupiter, Neptune; Telesto & Calypso (Tethys), Helene & Polydeuces (Dione).",
+            "Trojans: 60 degrees ahead/behind at L4/L5. Mars, Jupiter, Neptune (plus at least one each for Earth and Uranus); Telesto & Calypso (Tethys), Helene & Polydeuces (Dione).",
             "Lunar eclipse: full moon only. Types: penumbral, total penumbral, partial, total (up to ~107 min), selenehelion.",
             "Solar eclipse: new moon only (Moon's orbit tilted ~5 degrees). Types: total (umbra), annular (antumbra), hybrid, partial (penumbra).",
             "Total solar more likely at perigee / Earth near aphelion; annular more likely at apogee / Earth near perihelion.",
@@ -427,14 +429,14 @@ UNIT4 = [
                 "term": "Laplace resonance",
                 "badge": ("1:2:4", "Io-E-G", GOLD),
                 "analogy": "Three runners who meet at the same spot every lap.",
-                "explanation": "Three or more bodies in resonance. Only known: Io, Europa, Ganymede (1:2:4). It keeps Io's orbit oval and its volcanoes going; Callisto may join (1:2:4:8).",
+                "explanation": "Three or more bodies in resonance. Only known one in our Solar System: Io, Europa, Ganymede (1:2:4). It keeps Io's orbit oval and its volcanoes going; Callisto may join (1:2:4:8).",
                 "why": "Links orbital mechanics to tidal heating and ocean worlds.",
             },
             {
                 "term": "Trojans",
                 "badge": ("60°", "L4 / L5", ROCK),
                 "analogy": "Cars driving in the same lane as a big truck, always the same distance ahead or behind.",
-                "explanation": "A 1:1 resonance: small bodies 60 degrees ahead (L4) or behind (L5) a larger one. Mars, Jupiter, Neptune have Trojan asteroids; Tethys and Dione have Trojan moons.",
+                "explanation": "A 1:1 resonance: small bodies 60 degrees ahead (L4) or behind (L5) a larger one. Mars, Jupiter, Neptune (and Earth, Uranus) have Trojan asteroids; Tethys and Dione have Trojan moons.",
                 "why": "A frequent vocabulary question.",
             },
             {
