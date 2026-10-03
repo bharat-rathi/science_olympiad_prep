@@ -212,13 +212,14 @@ UNIT5 = [
     {
         "unit": 5,
         "name": "Solar System: Finding Exoplanets",
-        "description": "How we find planets we can't see: the center of mass wobble, astrometry, the Doppler (radial velocity) method and 51 Pegasi b, selection effects, transits and the transit-depth formula, Kepler, CoRoT and TESS, transit timing, and direct imaging of HR 8799.",
+        "description": "How we find planets we can't see: the center of mass wobble, astrometry, the Doppler (radial velocity) method and 51 Pegasi b, selection effects, transits and the transit-depth formula, Kepler, CoRoT and TESS, transit timing, gravitational microlensing, and direct imaging of HR 8799.",
         "goals": [
             "Explain why exoplanets are hard to see directly.",
             "Explain the Doppler method and what it measures.",
             "Explain the transit method and calculate a transit depth.",
             "Explain how combining methods gives a planet's density.",
             "Describe the main planet-hunting telescopes and direct imaging.",
+            "Explain how gravitational microlensing finds planets and what kinds it finds best.",
         ],
         "sections": [
             {
@@ -351,6 +352,30 @@ UNIT5 = [
                     "Imaging an Earth-size planet is still extremely hard, even from space."
                 ),
             },
+            {
+                "heading": "Gravitational microlensing: a lens made of gravity",
+                "body": (
+                    "Einstein's theory of gravity (general relativity) says mass BENDS the path of light. If a nearer star "
+                    "drifts almost exactly in front of a much more distant star, the nearer star's gravity acts like a "
+                    "magnifying glass: it bends and focuses the background star's light, so the background star brightens "
+                    "smoothly and then fades over days to weeks. The nearer star is the LENS; the distant one is the SOURCE. "
+                    "This is GRAVITATIONAL MICROLENSING.\n\n"
+                    "If the lens star has a PLANET, the planet's own small gravity adds a short extra BLIP to the light "
+                    "curve -- lasting about a day for a Jupiter-mass planet and only hours for an Earth-mass one. The shape "
+                    "of the blip reveals the planet's mass compared with its star and how far apart they are.\n\n"
+                    "• STRENGTHS: it finds planets thousands of light-years away (toward the crowded center of the galaxy), "
+                    "it works best for planets about 1-10 AU from their stars -- cold planets the transit and Doppler "
+                    "methods struggle with -- it can detect planets as small as Earth, and it can even find ROGUE (free-"
+                    "floating) planets with no star at all.\n"
+                    "• WEAKNESSES: the alignment happens only ONCE and never repeats, so it can't be checked again, and the "
+                    "host star is usually too faint and far to study afterward. Surveys must watch millions of stars "
+                    "every night to catch the rare events.\n\n"
+                    "The first planet found this way was announced in 2004 (OGLE-2003-BLG-235 b), by ground surveys like "
+                    "OGLE, MOA and KMTNet. NASA's Nancy Grace Roman Space Telescope will run a huge microlensing survey "
+                    "toward the galactic center and is expected to find more than a thousand planets this way."
+                ),
+                "infographic": "microlensing",
+            },
         ],
         "word_bank": [
             ("Exoplanet", "A planet orbiting a star other than our Sun."),
@@ -376,6 +401,10 @@ UNIT5 = [
             ("Direct imaging", "Taking an actual picture of an exoplanet by blocking its star's light."),
             ("Coronagraph", "A device in a telescope that blocks a star's light so faint things next to it can be seen."),
             ("Brown dwarf", "A 'failed star' -- bigger than a planet but too small to fuse hydrogen."),
+            ("Gravitational microlensing", "When a nearer star's gravity magnifies a distant star's light; a planet adds a short blip."),
+            ("Lens star", "The nearer star whose gravity bends and focuses light in a microlensing event."),
+            ("Source star", "The distant background star that gets magnified during microlensing."),
+            ("Rogue planet", "A free-floating planet that doesn't orbit any star."),
         ],
         "key_facts": [
             "First exoplanet around a Sun-like star: 51 Pegasi b, 1995, Mayor & Queloz (Doppler); 4.2-day orbit; 2019 Nobel Prize.",
@@ -385,6 +414,8 @@ UNIT5 = [
             "Mass (Doppler) + size (transit) = density. HD 209458 b (1999): first transit; sodium in its air.",
             "CoRoT 2007-2012 (32 planets); Kepler 2009-2018 (150,000+ stars near Cygnus; 2 reaction wheels failed 2013); TESS: ~600 planets + ~7,400 candidates by end of 2024.",
             "Direct imaging: HR 8799 (3 planets 2008, 4th 2010) -- young, hot giants far from their star; infrared best.",
+            "Microlensing: lens star's gravity magnifies a source star; planet = short blip. Best for cold planets 1-10 AU out, far away, even rogue planets; one-time, can't repeat. First 2004 (OGLE); Roman will find 1,000+.",
+            "2027 rules limit detection methods to: transits, radial velocity, microlensing and direct imaging.",
         ],
         "quick_check": [
             ("Why does the Doppler method give only a minimum mass?", "We usually don't know how tilted the orbit is, so part of the star's motion may be hidden from us."),
@@ -393,6 +424,8 @@ UNIT5 = [
             ("Why were most early exoplanets hot Jupiters?", "Selection effect: big planets close to their stars make the biggest, fastest signals, so they are found first."),
             ("Why did Kepler struggle to find planets with 1-year orbits?", "It needed three transits, so a 1-year planet needed 3 years of watching -- they only appeared in its fourth year."),
             ("Which planets are easiest to directly image?", "Young giant planets far from their stars, glowing in infrared with leftover heat."),
+            ("In a microlensing light curve, what does a short extra blip mean?", "The lens star has a planet; the planet's gravity briefly adds extra magnification."),
+            ("Give one strength and one weakness of microlensing.", "Strength: finds cold, distant or even rogue planets, down to Earth mass. Weakness: the event happens once and can't be repeated or followed up easily."),
         ],
         "cards": [
             {
@@ -457,6 +490,13 @@ UNIT5 = [
                 "analogy": "Photographing a firefly next to a lighthouse -- block the lighthouse first.",
                 "explanation": "Works for young, hot giants far from their stars, in infrared, with a coronagraph. HR 8799: 3 planets imaged in 2008, a 4th in 2010.",
                 "why": "Future life searches will need direct images and spectra.",
+            },
+            {
+                "term": "Gravitational microlensing",
+                "badge": ("LENS", "gravity", ICE),
+                "analogy": "A passing star acts like a magnifying glass sliding over a faraway streetlight -- and a planet is a speck of dust that adds a flicker.",
+                "explanation": "A nearer star's gravity bends and brightens a distant star's light for days to weeks; a planet adds an hours-to-a-day blip. Finds cold, far-away and rogue planets, but each event happens only once.",
+                "why": "One of the four detection methods named in the 2027 rules; Roman will use it.",
             },
         ],
     },

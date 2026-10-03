@@ -525,7 +525,7 @@ def titan_cycle() -> str:
         body += text(x + 330, 384, f"flows down valleys -- {temp}", 12, MUTED, anchor="middle")
     body += card(30, 420, 320, 170, "Thick orange air", "The only moon with a substantial atmosphere: mostly nitrogen + ~5% methane. Sunlight builds organic molecules (tholins, HCN...) that make an orange haze.", GOLD, body_size=13)
     body += card(366, 420, 320, 170, "Huygens landed!", "Jan 14, 2005: the only landing in the outer Solar System. Found ice 'boulders' hard as rock, an orange sky, sunlight 1,000x dimmer than on Earth. Lasted ~90 minutes.", ICE, body_size=13)
-    body += card(702, 420, 308, 170, "Life as we don't know it?", "Too cold for liquid water, but liquid hydrocarbons might play water's role. NASA's Dragonfly drone launches in 2027 to study pre-biotic chemistry.", GREEN, body_size=13)
+    body += card(702, 420, 308, 170, "Life as we don't know it?", "Too cold for liquid water, but liquid hydrocarbons might play water's role. NASA's Dragonfly drone launches in July 2028 to study pre-biotic chemistry.", GREEN, body_size=13)
     return canvas(w, h, "Titan: A Weird Twin of Earth", "Saturn's giant moon has rain, rivers and lakes -- of methane (Section 12.3)", body)
 
 
@@ -1140,7 +1140,7 @@ def mission_timeline() -> str:
         ("2024", "Europa Clipper", "launched; arrives 2030"),
     ]
     body = _timeline(events, 1958, 2030, w)
-    body += para(60, 500, "Also: Magellan (Venus radar), Dawn (Vesta + Ceres), Juno (Jupiter), Rosetta (comet 67P), NEAR (Eros), BepiColombo (Mercury), TESS, Perseverance, Dragonfly (Titan, launch 2027).", 150, 14, TEXT)
+    body += para(60, 500, "Also: Magellan (Venus radar), Dawn (Vesta + Ceres), Juno (Jupiter), Rosetta (comet 67P), NEAR (Eros), BepiColombo (Mercury), TESS, Perseverance, Dragonfly (Titan, launch July 2028).", 150, 14, TEXT)
     return canvas(w, h, "Missions That Explored the Solar System", "Year each mission launched or reached its target", body)
 
 
@@ -1188,3 +1188,8 @@ INFOGRAPHICS: dict[str, tuple[str, Callable[[], str]]] = {
 from app.content.solar_system.infographics_extra import EXTRA_INFOGRAPHICS  # noqa: E402
 
 INFOGRAPHICS.update(EXTRA_INFOGRAPHICS)
+
+# Infographics for the chapters covering the rest of the 2027 rules.
+from app.content.solar_system.infographics_2027 import INFOGRAPHICS_2027  # noqa: E402
+
+INFOGRAPHICS.update(INFOGRAPHICS_2027)

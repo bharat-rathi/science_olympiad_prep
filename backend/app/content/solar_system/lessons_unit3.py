@@ -363,7 +363,7 @@ UNIT3 = [
                     "dimmer than on Earth (but still 100 times brighter than full moonlight). Photos from its descent showed "
                     "drainage channels, so Huygens seemed to sit on the shore of an old lake. It sent data for about 90 "
                     "minutes before the cold won.\n\n"
-                    "DRAGONFLY. NASA's Dragonfly, a nuclear-powered drone with rotors, is planned to launch in 2027. It will fly "
+                    "DRAGONFLY. NASA's Dragonfly, a nuclear-powered drone with rotors, is planned to launch in July 2028 and arrive in 2034. It will fly "
                     "from place to place in Titan's thick air and low gravity, studying the PREBIOTIC CHEMISTRY -- the chemistry "
                     "that might come before life. Balloons and even a boat for Titan's lakes have also been proposed."
                 ),
@@ -419,7 +419,7 @@ UNIT3 = [
             "Enceladus: ~500 km; Cassini (2005) found south-polar plumes ~250 kg/s with salts -> ocean.",
             "Titan: 5,150 km; nitrogen + ~5% methane; tholin haze; methane/ethane lakes and rain; 94 K (-179 C).",
             "Huygens landed on Titan January 14, 2005 -- the only landing in the outer Solar System; worked ~90 minutes.",
-            "Dragonfly: drone to Titan, launch 2027, prebiotic chemistry.",
+            "Dragonfly: drone to Titan, launch July 2028, arrive 2034, prebiotic chemistry.",
             "Triton: 2,720 km, density 2.1, retrograde orbit, coldest surface visited, Voyager 2 eruptions 1989, probably captured.",
         ],
         "quick_check": [
@@ -470,7 +470,7 @@ UNIT3 = [
                 "term": "Huygens & Dragonfly",
                 "badge": ("2005", "Jan 14", BLUE),
                 "analogy": "A parachuting robot landing on an icy beach, and a robot dragonfly to follow.",
-                "explanation": "Huygens (carried by Cassini) landed on Titan January 14, 2005 -- the only outer Solar System landing -- and found ice 'boulders' under an orange sky. Dragonfly, a drone, launches in 2027.",
+                "explanation": "Huygens (carried by Cassini) landed on Titan January 14, 2005 -- the only outer Solar System landing -- and found ice 'boulders' under an orange sky. Dragonfly, a drone, launches in July 2028.",
                 "why": "Mission dates are favorite test questions.",
             },
             {
