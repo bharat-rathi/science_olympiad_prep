@@ -501,9 +501,9 @@ HOVERCRAFT_PATH_CHAPTERS = [
         "PRACTICE: (1) A 0.8 kg craft on 0.1 m^2. Cushion pressure? (78 Pa.) (2) Two 6 ohm "
         "resistors in parallel? (3 ohm.) In series? (12 ohm.) (3) 9.0 V across a 4.5 ohm motor: "
         "current and power? (2.0 A, 18 W.) (4) Air leaves a duct of 20 cm^2 at 10 m/s and the "
-        "duct narrows to 10 cm^2. New speed? (20 m/s.) (5) Why can't you use a 9 V battery and "
-        "two 1.5 V cells in series? (12.0 V is the maximum -- 9 + 3 = 12 V is right at it; any "
-        "more is illegal, and lithium cells are banned outright.) (6) Pressure in psi of 150 Pa? "
+        "duct narrows to 10 cm^2. New speed? (20 m/s.) (5) Is a 9 V battery plus three 1.5 V "
+        "cells in series legal? (No: 13.5 V is over the 12.0 V limit. With two cells it is "
+        "12.0 V, just legal.) (6) Pressure in psi of 150 Pa? "
         "(About 0.022 psi.)",
     ),
     (
