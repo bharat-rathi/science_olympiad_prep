@@ -331,3 +331,263 @@ BOTANY_CHAPTERS = [
         "cane and sugar beets, vegetable oils (soy, palm, canola), and many medicines.",
     ),
 ]
+
+# The Hovercraft learning path: 9 topics in order, each building on the ones
+# before it. Written from the 2027 Rules Manual (specs and scoring above) and
+# standard introductory physics (OpenStax University Physics: pressure,
+# fluid flow, DC circuits). Each chapter: key terms, a plain-language start,
+# competition-depth detail, and a short worked check.
+HOVERCRAFT_PATH_CHAPTERS = [
+    (
+        "Hovercraft 1 of 9: Pressure x Area = Lift",
+        "Why a cushion of slightly-raised air pressure can hold up the whole craft, and how to "
+        "size the hull footprint for your nickel load.",
+        "Study notes: Hovercraft path 1 -- pressure times area equals lift",
+        "KEY TERMS: FORCE -- a push or pull, measured in newtons (N); 1 N is about the weight of "
+        "a 100 g mass. AREA -- the size of a surface, in square meters (m^2); 1 m^2 = 10,000 "
+        "cm^2. PRESSURE -- force spread over an area, P = F / A. PASCAL (Pa) -- 1 N per m^2. "
+        "GAUGE PRESSURE -- pressure above the surrounding air, which is what does the lifting.\n\n"
+        "START HERE: the air under your hull only needs to be a tiny bit above room pressure. "
+        "Every square centimeter of the footprint pushes up a little, and added together over the "
+        "whole hull that is enough to carry the craft. Lift = cushion pressure x footprint area. "
+        "The craft rises until the lift equals its weight.\n\n"
+        "AT COMPETITION DEPTH: weight W = m x g (g = 9.8 m/s^2). The cushion gauge pressure needed "
+        "is P = W / A. Example: a 600 g craft (W = 5.9 N) on a 30 cm x 30 cm footprint (A = 0.09 "
+        "m^2) needs only P = 5.9 / 0.09 = about 65 Pa -- less than 0.1% of atmospheric pressure "
+        "(101,325 Pa). Add 4 full nickel rolls (+800 g, W = 13.7 N total) and P rises to about "
+        "150 Pa. Doubling the footprint area halves the pressure the fan must hold. The 40 cm cube "
+        "limit caps the footprint at 40 x 40 cm (0.16 m^2), so the biggest legal square hull "
+        "needs the least pressure. Load the nickels near the center of the footprint so the "
+        "pressure is even and the craft rides level.\n\n"
+        "CHECK: a 1.0 kg craft on a 0.12 m^2 footprint. P = (1.0 x 9.8) / 0.12 = about 82 Pa. "
+        "If the fan can only hold 60 Pa, the most it can lift on that hull is 60 x 0.12 = 7.2 N "
+        "= about 730 g.",
+    ),
+    (
+        "Hovercraft 2 of 9: Skirt Leak vs Fan Power",
+        "Air always escapes under the edge of the hull; the fan has to keep up. How the gap, "
+        "skirt and fan power trade off.",
+        "Study notes: Hovercraft path 2 -- skirt leak vs fan power tradeoff",
+        "KEY TERMS: SKIRT -- flexible material (trash bag, thin vinyl) around the hull edge that "
+        "traps the cushion. HOVER GAP -- the small gap between the skirt and the track where air "
+        "leaks out. FLOW RATE -- volume of air per second (m^3/s). PLENUM -- the space under the "
+        "hull the lift fan pressurizes.\n\n"
+        "START HERE: a hovercraft is a leaky balloon. The fan pushes air in; the gap lets air out. "
+        "It hovers when air comes in as fast as it escapes, at the pressure needed for lift. A "
+        "bigger gap leaks more, so the fan must work harder. A good skirt keeps the gap small "
+        "while still clearing bumps and seams in the track.\n\n"
+        "AT COMPETITION DEPTH: air escaping through the gap speeds up to roughly v = sqrt(2P / "
+        "rho) (rho, air density, = about 1.2 kg/m^3). At P = 100 Pa, v = about 13 m/s. Leak flow "
+        "= gap height x hull perimeter x v (times a discharge factor of roughly 0.6). The power "
+        "the air needs is pressure x flow rate. Example: 120 cm perimeter, 2 mm gap, 100 Pa: flow "
+        "= 0.002 x 1.2 x 13 x 0.6 = about 0.019 m^3/s, air power = 100 x 0.019 = about 1.9 W. "
+        "Small fans are maybe 20-40% efficient, so expect to spend several watts of battery "
+        "power on lift. Halve the gap and you roughly halve the lift power. Tradeoffs: a lower "
+        "gap snags on rail joints; too tight a skirt drags (friction ruins time calibration); "
+        "heavier loads raise P, which raises both v and the power. Test hover with your heaviest "
+        "planned load, not an empty craft. The rules allow touching the track surface and the "
+        "inside of the rails, so a light skirt brushing the floor is legal, but dragging still "
+        "slows you.\n\n"
+        "CHECK: if your craft hovers fine empty but sinks with 3 rolls, the fan can't hold the "
+        "higher pressure at that leak rate. Fixes: bigger footprint (lowers P), tighter skirt "
+        "(less leak), or more lift power -- in that order of cost.",
+    ),
+    (
+        "Hovercraft 3 of 9: Thrust Line & Center of Mass",
+        "Why the craft yaws, noses down, or veers into a rail -- and how lining up the thrust "
+        "with the center of mass fixes it.",
+        "Study notes: Hovercraft path 3 -- thrust line and center of mass",
+        "KEY TERMS: CENTER OF MASS (CM) -- the balance point of the loaded craft. THRUST LINE -- "
+        "the line along which the propeller pushes. TORQUE -- a turning effect, force x "
+        "perpendicular distance. YAW -- turning left/right; PITCH -- nose up/down; ROLL -- tipping "
+        "side to side.\n\n"
+        "START HERE: if the push from the propeller doesn't go through the balance point, it "
+        "spins the craft as well as pushing it. Push off to one side and it yaws. Push above the "
+        "balance point and it tips nose down; below and nose up. On an almost frictionless "
+        "cushion, even a small turning push keeps adding up.\n\n"
+        "AT COMPETITION DEPTH: yaw torque = thrust x sideways offset. 0.3 N of thrust 1 cm off "
+        "center gives 0.003 N-m -- enough to swing a hovering craft into a rail within a meter. "
+        "Rails keep you on the track, but every rail rub adds friction and noise to your run "
+        "time. Find the CM by balancing the loaded craft on a pencil along both axes, then mount "
+        "the thrust motor on the centerline. Nickels move the CM: 4 rolls are about 800 g, often "
+        "more than the craft itself, so put the nickel tray centered on the lift footprint and "
+        "centerline, and keep the load in the same place for every calibration run (a shifted "
+        "load changes both trim and time). A high thrust line pitches the nose down, which can "
+        "dig the front skirt in; keep it low and near the CM height. Propeller torque also "
+        "reacts on the hull (the motor tries to spin the craft the other way), and the lift fan's "
+        "spin can yaw the craft too -- small vertical fins in the thrust stream or a slightly "
+        "angled motor trim it out. The front-mounted timing dowel adds a little mass ahead of "
+        "the CM; account for it.\n\n"
+        "CHECK: your craft drifts right every run. Is the thrust motor right of the CM, or is the "
+        "load heavy on the left? Re-balance, shift the motor toward the CM, and retest -- one "
+        "change at a time.",
+    ),
+    (
+        "Hovercraft 4 of 9: Power = Voltage x Current",
+        "The circuit behind the craft: batteries, switches, motors and resistors, and how to "
+        "budget power within the 12.0 V limit.",
+        "Study notes: Hovercraft path 4 -- power equals voltage times current",
+        "KEY TERMS: VOLTAGE (V, volts) -- the electrical push. CURRENT (I, amps) -- the flow of "
+        "charge. RESISTANCE (R, ohms) -- opposition to current. POWER (P, watts) -- energy per "
+        "second. OHM'S LAW: V = I x R. POWER: P = V x I (= I^2 x R = V^2 / R). CAPACITY (mAh) -- "
+        "how much charge a battery holds.\n\n"
+        "START HERE: the battery pushes (voltage), the motor draws current, and power is the two "
+        "multiplied. More power to the thrust motor means more speed. Your speed knob is the "
+        "voltage that reaches the motor.\n\n"
+        "AT COMPETITION DEPTH: legal parts are batteries, wires, mechanical switches, relays, "
+        "resistors/potentiometers/rheostats, capacitors, and up to 2 motors -- no ICs (except "
+        "inside a commercial motor), no lithium or lead batteries, no more than 12.0 V between any "
+        "two points by the labels. Cells in SERIES add voltage (4 x 1.5 V alkaline = 6.0 V; 8 x "
+        "1.2 V NiMH = 9.6 V); in PARALLEL they keep the voltage and add capacity. Example: a "
+        "motor drawing 0.8 A at 6.0 V uses 4.8 W. A 2000 mAh pack at 0.8 A lasts about 2.5 hours "
+        "-- plenty for a 6-18 s run, but voltage SAGS as cells drain, and that changes your run "
+        "time. A series resistor slows the motor: with a 3 ohm resistor and 0.8 A, it drops V = "
+        "0.8 x 3 = 2.4 V and burns P = 0.8^2 x 3 = about 1.9 W as heat, so use a resistor rated "
+        "above that. Common layout: one motor for lift at full voltage, one for thrust through a "
+        "selectable resistor or potentiometer so you can dial speed for the Target Time. Every "
+        "motor needs a hand-operated mechanical switch.\n\n"
+        "CHECK: 6.0 V pack, thrust motor resistance about 5 ohms. I = 6 / 5 = 1.2 A, P = 7.2 W. "
+        "Add a 5 ohm series resistor: I = 6 / 10 = 0.6 A; the motor gets 3.0 V and 1.8 W -- a "
+        "quarter of the power for half the voltage. (Real motors draw less once spinning; the "
+        "trend holds.)",
+    ),
+    (
+        "Hovercraft 5 of 9: Building a Calibration Log",
+        "The impounded notes that win the Time Score: what to record on every test run and how "
+        "to turn it into a lookup chart.",
+        "Study notes: Hovercraft path 5 -- creating a calibration log for the course",
+        "KEY TERMS: CALIBRATION -- measuring how an input (load, resistor setting) changes an "
+        "output (run time). VARIABLE -- something you change on purpose; CONTROL -- something you "
+        "keep the same. TREND LINE -- a smooth line through your data used to read off "
+        "in-between values.\n\n"
+        "START HERE: on competition day the Target Time is a surprise (6.0-18.0 s), there are no "
+        "practice runs, and you get only 2 runs in 8 minutes. The only way to hit it is to have "
+        "already measured, at home, what setting gives what time. That record is your "
+        "calibration log, and you may impound it with the vehicle.\n\n"
+        "AT COMPETITION DEPTH: build a 185 cm timed course matching the track: 45 cm between "
+        "rails, start and finish lines, a timer triggered by the front dowel (phone slow-motion "
+        "video works). For every run record: date, battery set and its voltage before the run, "
+        "speed setting (resistor/pot position), nickel load (full rolls, half roll, loose), "
+        "floor surface, run time, and notes (rail rubs, stalls). Change ONE variable at a time. "
+        "Do at least 3 runs per setting and use the average; the spread tells you how repeatable "
+        "the craft is. Make a table of settings across the 6-18 s range and graph time vs. "
+        "setting. Remember Mass Score: carrying all 4.5 rolls + 20 loose nickels is 20 points, "
+        "so calibrate WITH the load you plan to carry and use speed settings to hit the time. "
+        "Track battery voltage too -- note how run time drifts as the pack drains, and plan to "
+        "start with fresh, identical cells. On the day: read the TT, look up the setting, run, "
+        "then use run 1's error to nudge the setting for run 2.\n\n"
+        "CHECK: your log shows setting C = 9.6 s, setting D = 11.4 s. TT = 10.5 s is halfway "
+        "between, so a pot position halfway from C to D is your first guess. Run 1 comes in at "
+        "10.9 s -- move slightly toward C for run 2.",
+    ),
+    (
+        "Hovercraft 6 of 9: Quick Questions on Fluids & Circuits",
+        "Drill the short calculations that come up while designing and debugging -- the kind "
+        "older Hovercraft events and Circuit Lab test on paper.",
+        "Study notes: Hovercraft path 6 -- preparing for short written items on fluids and circuits",
+        "NOTE: under the 2027 rules Hovercraft is build-and-run only (no written test). Earlier "
+        "versions of the event had a written portion, and these items are exactly what you need "
+        "to reason about your own craft, answer a supervisor's questions, and carry over to "
+        "Circuit Lab.\n\n"
+        "FLUIDS QUICK FACTS: P = F / A. 1 atm = 101,325 Pa = 14.7 psi. Weight = m x g. Air "
+        "density = about 1.2 kg/m^3. Bernoulli: along a streamline, faster air has lower pressure "
+        "(P + 1/2 rho v^2 stays constant). Continuity: flow rate Q = A x v is the same through a "
+        "pipe, so a narrower duct means faster air. Newton's third law: the propeller pushes air "
+        "back, the air pushes the craft forward.\n\n"
+        "CIRCUITS QUICK FACTS: V = I x R; P = V x I. Series: resistances add, same current "
+        "everywhere, voltages share out. Parallel: same voltage across each branch, currents "
+        "add, 1/R_total = 1/R1 + 1/R2. Battery energy (Wh) = V x Ah. A switch in series with a "
+        "motor controls only that motor.\n\n"
+        "PRACTICE: (1) A 0.8 kg craft on 0.1 m^2. Cushion pressure? (78 Pa.) (2) Two 6 ohm "
+        "resistors in parallel? (3 ohm.) In series? (12 ohm.) (3) 9.0 V across a 4.5 ohm motor: "
+        "current and power? (2.0 A, 18 W.) (4) Air leaves a duct of 20 cm^2 at 10 m/s and the "
+        "duct narrows to 10 cm^2. New speed? (20 m/s.) (5) Why can't you use a 9 V battery and "
+        "two 1.5 V cells in series? (12.0 V is the maximum -- 9 + 3 = 12 V is right at it; any "
+        "more is illegal, and lithium cells are banned outright.) (6) Pressure in psi of 150 Pa? "
+        "(About 0.022 psi.)",
+    ),
+    (
+        "Hovercraft 7 of 9: Run Time & Stopping Accuracy",
+        "Techniques for repeatable run times: steady speed, clean starts, and a vehicle that "
+        "finishes every time.",
+        "Study notes: Hovercraft path 7 -- course time and stop accuracy techniques",
+        "KEY TERMS: TARGET TIME (TT) -- the run time you aim for. TIME SCORE -- 40 x (1 - |t - TT| "
+        "/ TT), only for a complete run. TERMINAL SPEED -- the speed where drag (and friction) "
+        "balances thrust. REPEATABILITY -- how closely runs at the same setting agree.\n\n"
+        "START HERE: a complete run is 40 points before timing even counts, so first make the "
+        "craft finish every single time. Then make it finish at the same time every time. Only "
+        "then worry about dialing exact times.\n\n"
+        "AT COMPETITION DEPTH: timing is from the dowel crossing the start line to it crossing "
+        "the finish, over 185.0 cm. Average speed = 185 / TT: at 6.0 s that's about 31 cm/s; at "
+        "18.0 s, about 10 cm/s. Slow runs are the hardest: low thrust means rail rubs, floor "
+        "seams and drafts matter more, and a 3 s stall makes the run incomplete (as does not "
+        "finishing by 2 x TT). For long TTs, keep some thrust and add drag (a small air brake, "
+        "more load) rather than starving the motor. The finish has a cushioned barrier, so you "
+        "don't need to brake -- but the vehicle must cross the line. Start with the craft placed "
+        "the same distance behind the start line each time so its speed at the line is "
+        "consistent; with almost no friction it may still be accelerating through the timed "
+        "section. Use fresh batteries and the same load as your log. Score sensitivity: at TT = "
+        "10 s, each 0.1 s of error costs 0.4 points; at TT = 6 s it costs about 0.67 -- short "
+        "targets punish error more. Budget the 8 minutes: power up, check hover, set speed, run "
+        "1, adjust from its error, run 2. Never touch the vehicle mid-run -- that run scores "
+        "zero.\n\n"
+        "CHECK: TT = 12.0 s, run 1 = 12.8 s. TS = 40 x (1 - 0.8/12) = about 37.3. If you speed up "
+        "by the right amount and hit 12.1 s on run 2, TS = about 39.7 -- your best run counts.",
+    ),
+    (
+        "Hovercraft 8 of 9: Design Principles for Air-Levitated Craft",
+        "Putting it together: a reference design and the checklist that keeps you legal, "
+        "level, and repeatable.",
+        "Study notes: Hovercraft path 8 -- design principles for air-levitated craft",
+        "KEY TERMS: HULL -- the base platform (foam board, Depron, corrugated plastic). LIFT FAN "
+        "-- blows down into the plenum. THRUST PROPELLER -- blows backward to drive the craft. "
+        "INTEGRATED DESIGN -- one fan whose air is split between lift and thrust. DUCT/SHROUD -- "
+        "a ring around a propeller (also the required safety shield).\n\n"
+        "START HERE: a good hovercraft is light, flat, balanced and boringly consistent. The "
+        "simplest proven layout: a light foam hull close to the 40 x 40 cm limit, a bag skirt, "
+        "one lift fan in the middle, one shrouded thrust propeller at the back on the "
+        "centerline, a centered tray for the nickel rolls, and the timing dowel at the front.\n\n"
+        "AT COMPETITION DEPTH: (1) Footprint: bigger area = lower cushion pressure = less lift "
+        "power, but everything must fit inside a 40.0 cm cube while levitated (including the "
+        "dowel, which must reach 20.0 cm above the track within 3.0 cm of the front). (2) Mass: "
+        "keep the craft itself light so the nickels are the bulk of the load -- every gram of "
+        "structure is a gram the fan lifts without scoring. (3) Skirt: bag or perimeter skirt, "
+        "small hover gap, no snagging. (4) Two motors max: separate lift and thrust gives "
+        "independent control; one integrated fan is lighter but couples speed to hover height. "
+        "(5) Speed control: a selectable resistor or pot on the thrust motor only, so hover "
+        "stays steady while speed changes. (6) Safety (fail = participation points only): every "
+        "propeller/impeller shielded so a 3/8\" dowel can't touch it, commercial labeled "
+        "batteries only, no lithium/lead, max 12.0 V, a reachable mechanical on/off switch for "
+        "every motor. (7) Nickel holder: rolls can't be opened, taped or glued -- use a snug "
+        "tray or clips; anything falling off is a construction violation and fallen nickels "
+        "don't count. (8) Bring spares (props, skirt material, a second battery set) in impound.\n\n"
+        "CHECK: run the pre-event checklist -- fits the 40 cm cube? dowel 1/4\"+ thick, 20 cm "
+        "high, within 3 cm of front? all props shielded? switches reachable? batteries legal "
+        "and stored separately for impound? calibration log packed?",
+    ),
+    (
+        "Hovercraft 9 of 9: Connecting to Circuit Lab & Electric Vehicle",
+        "The same physics shows up in other events -- how Hovercraft prep carries over, and "
+        "what to borrow from them.",
+        "Study notes: Hovercraft path 9 -- connecting Hovercraft to Circuit Lab and Electric Vehicle",
+        "WHY THIS MATTERS: Science Olympiad events overlap. Teammates in related events can "
+        "share test tracks, timing setups, meters and know-how.\n\n"
+        "CIRCUIT LAB: Hovercraft's electrical side is a Circuit Lab problem in miniature -- "
+        "Ohm's law, series and parallel batteries and resistors, power and energy, switches, "
+        "and reading a multimeter. Measuring your motor's actual current at each speed setting "
+        "is a great hands-on Circuit Lab drill, and Circuit Lab practice makes you faster at "
+        "picking resistor values for Hovercraft.\n\n"
+        "ELECTRIC VEHICLE (and similar target-time/target-distance builds): the same "
+        "calibration mindset -- a lookup chart from logged test runs, one variable at a time, "
+        "fresh batteries, and adjusting run 2 from run 1's error. The big difference: a wheeled "
+        "vehicle has rolling friction and can brake precisely, while a hovercraft glides with "
+        "almost no friction, so it reaches a speed set by thrust vs. air drag and keeps "
+        "drifting. That makes steady, repeatable thrust even more important for Hovercraft.\n\n"
+        "PHYSICS CARRY-OVER: Newton's laws (thrust, acceleration, terminal speed), center of "
+        "mass and stability (also key in Boomilever-style and flight events), and pressure and "
+        "fluid flow (relevant to Ping Pong Parachute and flight events).\n\n"
+        "CHECK: explain to a Circuit Lab teammate why adding a series resistor slows your "
+        "thrust motor, using V = I x R and P = V x I. Then explain to an Electric Vehicle "
+        "teammate why your hovercraft can't stop on a mark the way their car can.",
+    ),
+]
