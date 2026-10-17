@@ -14,6 +14,7 @@ from app.content.official_rules import RULES_2027, apply_official_rules
 from app.content.study_notes_2027 import (
     BOTANY_CHAPTERS,
     HOVERCRAFT_CHAPTERS,
+    HOVERCRAFT_PATH_CHAPTERS,
     METEOROLOGY_SEVERE_WEATHER,
     RULES_URL,
     THERMODYNAMICS_CHAPTERS,
@@ -698,7 +699,9 @@ def seed_hovercraft_content() -> None:
     scioly.org wiki page (coach-supplied PDF), which had no 2027 build or
     scoring details, plus two chapters written from the 2027 Rules Manual
     (content/study_notes_2027.py) covering the build specs and the Target
-    Time / nickel scoring. Synced on every startup (content/sync.py).
+    Time / nickel scoring, then a 9-topic learning path (lift, skirt leak,
+    thrust line, power, calibration log, fluids/circuits drills, run timing,
+    design, cross-event links). Synced on every startup (content/sync.py).
     """
     db = SessionLocal()
     try:
@@ -736,7 +739,12 @@ def seed_hovercraft_content() -> None:
             ),
         )
 
-        for chapter_name, chapter_description, resource_title, chapter_text in HOVERCRAFT_CHAPTERS:
+        # The two rules chapters first, then the 9-topic learning path in order
+        # (chapters list by id, so creation order is display order).
+        for chapter_name, chapter_description, resource_title, chapter_text in (
+            *HOVERCRAFT_CHAPTERS,
+            *HOVERCRAFT_PATH_CHAPTERS,
+        ):
             sync_chapter(db, topic, chapter_name, chapter_description, resource_title, RULES_URL, chapter_text)
 
         db.commit()
