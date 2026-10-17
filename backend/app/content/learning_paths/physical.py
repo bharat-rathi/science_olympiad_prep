@@ -317,7 +317,7 @@ CRIME_BUSTERS = [
         "Data Recording & Observation",
         "Keeping clear records that earn points and avoid mistakes.",
         "OBSERVATION -- what you directly see, smell, or measure. DATA TABLE -- an organized grid of "
-        "results. QUALITATIVE vs QUANTITATIVE -- descriptions vs numbers.",
+        "results. QUALITATIVE / QUANTITATIVE -- descriptions vs numbers.",
         "Write results down the moment you see them, in a table you set up before starting. "
         "Memory fails under time pressure.",
         "Set up a table before the event: rows for each unknown; columns for appearance, water "
@@ -417,7 +417,7 @@ FOOD_SCIENCE = [
         "Lab Techniques: Measuring, Temperature & Timing",
         "Accurate measuring and control of conditions.",
         "GRADUATED CYLINDER -- measures liquid volume (read the meniscus bottom at eye level). BALANCE "
-        "-- measures mass. PRECISION vs ACCURACY -- repeatable vs correct.",
+        "-- measures mass. PRECISION / ACCURACY -- repeatable vs correct.",
         "Food Science scores depend on careful measuring: exact volumes, correct temperatures, and "
         "consistent timing.",
         "Read graduated cylinders at eye level at the bottom of the meniscus. Tare the balance with "

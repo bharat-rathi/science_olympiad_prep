@@ -3,8 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Assessment, ConceptTerm, Diagram, Lesson, Resource, Topic } from "../api/client";
 import AskQuestions from "../components/AskQuestions";
 import { LessonReader, QuickCheck, StudyPlanView, WordBank } from "../components/LessonView";
+import PathLesson from "../components/PathLesson";
 import TopicChat from "../components/TopicChat";
 import TopicOverview from "../components/TopicOverview";
+import { parsePathLesson, parsePathName } from "../lib/pathLesson";
 
 function sourceTag(c: ConceptTerm): string {
   if (c.origin === "sourced") return "from the source reader";
@@ -35,6 +37,8 @@ export default function StudentPractice() {
   // e.g. the Solar System learning chapters live here, not on Home.
   const [chapters, setChapters] = useState<Topic[]>([]);
   const [parent, setParent] = useState<Topic | null>(null);
+  // The parent event's chapters, for a learning-path topic's prev/next links.
+  const [siblings, setSiblings] = useState<Topic[]>([]);
 
   useEffect(() => {
     setAccessError("");
@@ -71,6 +75,11 @@ export default function StudentPractice() {
   }, [topic?.parent_topic_id]);
 
   useEffect(() => {
+    setSiblings([]);
+    if (parent) api.listSubTopics(parent.id).then(setSiblings).catch(() => setSiblings([]));
+  }, [parent]);
+
+  useEffect(() => {
     if (!zoomed) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setZoomed(null);
@@ -93,6 +102,22 @@ export default function StudentPractice() {
 
   const chapterLesson = lesson?.kind === "lesson" ? lesson : null;
   const plan = lesson?.kind === "plan" ? lesson : null;
+  // Learning-path topic ("<Event> N of M: Title") with sectioned study notes.
+  const pathPosition = parsePathName(topic.name);
+  const isPathTopic = !!parent && pathPosition?.event === parent.name;
+  const pathNotes = isPathTopic ? sourceNotes.find((r) => r.title.startsWith("Study notes:")) : undefined;
+  const pathContent = pathNotes ? parsePathLesson(pathNotes.raw_text) : null;
+  const orderedSiblings = siblings
+    .map((c) => ({ c, pos: parsePathName(c.name) }))
+    .filter((x) => x.pos && x.pos.event === parent?.name)
+    .sort((a, b) => a.pos!.number - b.pos!.number)
+    .map((x) => x.c);
+  // On an event page: its learning path, in order, apart from other chapters.
+  const pathChapters = chapters
+    .map((c) => ({ c, pos: parsePathName(c.name) }))
+    .filter((x) => x.pos && x.pos.event === topic.name)
+    .sort((a, b) => a.pos!.number - b.pos!.number);
+  const otherChapters = chapters.filter((c) => !pathChapters.some((x) => x.c.id === c.id));
   const learningLive = topic.content_published && (concepts.length > 0 || !!topic.story_md);
   // A structured lesson replaces the older Story / Source notes views (they
   // hold the same text), so students see each piece of content once.
@@ -102,11 +127,11 @@ export default function StudentPractice() {
     { key: "flashcards", label: `Flashcards (${concepts.length})`, show: learningLive && concepts.length > 0 },
     { key: "quiz", label: "Quick check", show: !!chapterLesson && chapterLesson.quick_check.length > 0 },
     { key: "story", label: "Story", show: !chapterLesson && learningLive && !!topic.story_md },
-    { key: "notes", label: "Source notes", show: !chapterLesson && sourceNotes.length > 0 },
+    { key: "notes", label: "Source notes", show: !chapterLesson && !pathContent && sourceNotes.length > 0 },
   ];
   const available = views.filter((v) => v.show);
   const activeView = available.some((v) => v.key === view) ? view : available[0]?.key;
-  const nothingYet = available.length === 0 && chapters.length === 0;
+  const nothingYet = available.length === 0 && chapters.length === 0 && !pathContent;
   const hasLessons = !!topic.has_lesson || !!parent?.has_lesson;
 
   return (
@@ -122,7 +147,12 @@ export default function StudentPractice() {
             Unit {chapterLesson.unit}: {chapterLesson.unit_title}
           </span>
         )}
-        <h1>{topic.name}</h1>
+        {pathContent && pathPosition && (
+          <span className="lesson-unit">
+            {parent?.name} &middot; Topic {pathPosition.number} of {pathPosition.total}
+          </span>
+        )}
+        <h1>{pathContent && pathPosition ? pathPosition.title : topic.name}</h1>
         <p className="muted">{topic.description}</p>
         <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[topic.assessment_type]}`}>
           {ASSESSMENT_TYPE_LABELS[topic.assessment_type]}
@@ -142,11 +172,39 @@ export default function StudentPractice() {
 
       {plan && <StudyPlanView plan={plan} chapters={chapters} parentName={topic.name} />}
 
-      {!plan && chapters.length > 0 && (
+      {pathContent && pathPosition && (
+        <PathLesson content={pathContent} position={pathPosition} siblings={orderedSiblings} />
+      )}
+
+      {!plan && pathChapters.length > 0 && (
         <>
-          <h2>Chapters</h2>
+          <h2>{pathChapters.length} topics, in order</h2>
+          <p className="muted">Each one builds on the ones before it.</p>
+          <ol className="path-list">
+            {pathChapters.map(({ c, pos }) => (
+              <li key={c.id}>
+                <Link to={`/student/${c.id}`}>
+                  <div className="card hoverable row" style={{ flex: 1, flexWrap: "nowrap", alignItems: "flex-start" }}>
+                    <span className="path-step-number">{pos!.number}</span>
+                    <div>
+                      <span className="card-title" style={{ display: "block" }}>
+                        {pos!.title}
+                      </span>
+                      {c.description && <p className="muted" style={{ margin: "4px 0 0" }}>{c.description}</p>}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+
+      {!plan && otherChapters.length > 0 && (
+        <>
+          <h2>{pathChapters.length > 0 ? "More chapters" : "Chapters"}</h2>
           <div className="grid-2" style={{ marginBottom: 24 }}>
-            {chapters.map((c, i) => (
+            {otherChapters.map((c, i) => (
               <Link to={`/student/${c.id}`} key={c.id} style={{ textDecoration: "none", color: "inherit" }}>
                 <div className="card hoverable">
                   <span className="muted">Chapter {i + 1}</span>
