@@ -46,11 +46,15 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
   }
 
   const publishedCount = topics.filter((t) => t.content_published).length;
+  // The student landing page (no coach prop) lists what students can open:
+  // official events and anything a coach has published. The coach page
+  // lists every topic, drafts included.
+  const listed = coach ? topics : topics.filter((t) => t.open_to_all_students || t.content_published);
 
   // Group events by category, in the fixed category order; only categories
   // that hold at least one topic get a filter chip and a section.
   const sections: [string, Topic[]][] = [...EVENT_CATEGORIES, OTHER_CATEGORY]
-    .map((c): [string, Topic[]] => [c, topics.filter((t) => eventCategory(t.event_name) === c)])
+    .map((c): [string, Topic[]] => [c, listed.filter((t) => eventCategory(t.event_name) === c)])
     .filter(([, sectionTopics]) => sectionTopics.length > 0);
   const categories = ["All", ...sections.map(([c]) => c)];
   const shownSections = category === "All" ? sections : sections.filter(([c]) => c === category);
@@ -91,7 +95,7 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
             </Link>
           )}
           <Link to={`/student/${t.id}`}>
-            <button className="primary">Student view</button>
+            <button className="primary">{coach ? "Student view" : "Start studying"}</button>
           </Link>
         </div>
       </div>
@@ -101,10 +105,11 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
   return (
     <div>
       <div className="hero">
-        <h1>Empower Your Future Scientists</h1>
+        <h1>{coach ? "Coach dashboard" : "Empower Your Future Scientists"}</h1>
         <p>
-          Pick a topic to coach or practice. A topic's video coverage is used only where it's
-          actually useful -- see each concept's source tag once you're inside a topic.
+          {coach
+            ? "Build out topics, publish them, and manage your students. Use Events in the menu to see what students see."
+            : "Pick an event and work through its topics in order -- each one builds on the ones before it."}
         </p>
       </div>
 
@@ -152,7 +157,7 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
           <div className="grid-2">{sectionTopics.map(renderCard)}</div>
         </div>
       ))}
-      {topics.length === 0 && <p className="muted">No topics yet.</p>}
+      {listed.length === 0 && <p className="muted">No topics yet.</p>}
 
       {coach ? (
         showNew ? (
@@ -186,9 +191,7 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
             + New topic
           </button>
         )
-      ) : (
-        <p className="muted">Only coaches can add topics.</p>
-      )}
+      ) : null}
 
       {coach && (
         <>

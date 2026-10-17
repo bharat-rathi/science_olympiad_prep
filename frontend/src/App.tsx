@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { Link, NavLink, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import CoachTopicBuilder from "./pages/CoachTopicBuilder";
@@ -40,22 +40,34 @@ export default function App() {
 
   if (loading) return null;
 
-  // Every page requires identifying yourself now -- coach (Google) or
-  // student (username+PIN, see routers/students.py) -- there's no more
-  // anonymous browsing of topics.
-  if (!coach && !student) {
-    return <Login needsBootstrap={needsBootstrap} />;
-  }
-
+  // The landing page is the student view, open without signing in; coaches
+  // reach their side through the Coach button (top left), which asks them to
+  // sign in first. Students can still sign in to see topics assigned to them.
   return (
-    <AuthedApp coach={coach} student={student} logout={logout} refreshAuth={refreshAuth} />
+    <AuthedApp
+      coach={coach}
+      student={student}
+      needsBootstrap={needsBootstrap}
+      logout={logout}
+      refreshAuth={refreshAuth}
+    />
   );
 }
 
-// A student who is logged in (just not as a coach) hitting a coach-only
-// route sees this instead of being bounced back to Login -- they're already
-// authenticated, just the wrong role.
-function CoachOnly({ coach, children }: { coach: Coach | null; children: React.ReactNode }) {
+// Coach-only routes: a visitor who isn't signed in gets the sign-in page; a
+// signed-in student sees this instead -- authenticated, just the wrong role.
+function CoachOnly({
+  coach,
+  student,
+  needsBootstrap,
+  children,
+}: {
+  coach: Coach | null;
+  student: Student | null;
+  needsBootstrap: boolean;
+  children: React.ReactNode;
+}) {
+  if (!coach && !student) return <Login needsBootstrap={needsBootstrap} />;
   if (!coach) {
     return (
       <div className="auth-shell">
@@ -71,78 +83,77 @@ function CoachOnly({ coach, children }: { coach: Coach | null; children: React.R
 function AuthedApp({
   coach,
   student,
+  needsBootstrap,
   logout,
   refreshAuth,
 }: {
   coach: Coach | null;
   student: Student | null;
+  needsBootstrap: boolean;
   logout: () => void;
   refreshAuth: () => void;
 }) {
   const identityName = coach ? coach.name || "Pending sign-in" : student?.name || "";
+  const guard = (page: React.ReactNode) => (
+    <CoachOnly coach={coach} student={student} needsBootstrap={needsBootstrap}>
+      {page}
+    </CoachOnly>
+  );
 
   return (
     <>
       <nav className="top-nav">
-        <span className="brand">
+        <NavLink to="/coach" className="coach-button">
+          Coach
+        </NavLink>
+        <Link to="/" className="brand">
           <span className="brand-mark">🧪</span> OlympiadPrep
-        </span>
+        </Link>
         <NavLink to="/" end>
-          Home
+          Events
         </NavLink>
         {coach && <NavLink to="/students">Students</NavLink>}
         {coach && <NavLink to="/settings">AI Settings</NavLink>}
         <span style={{ marginLeft: "auto" }} className="nav-user">
-          <span className="avatar">{(identityName || "?").slice(0, 1).toUpperCase()}</span>
-          <span className="muted nav-user-name">{identityName}</span>
-          <button onClick={logout}>Logout</button>
+          {coach || student ? (
+            <>
+              <span className="avatar">{(identityName || "?").slice(0, 1).toUpperCase()}</span>
+              <span className="muted nav-user-name">{identityName}</span>
+              <button onClick={logout}>Logout</button>
+            </>
+          ) : (
+            <a href="/api/auth/google/login">
+              <button>Student sign in</button>
+            </a>
+          )}
         </span>
       </nav>
       <div className="app-shell">
         <Routes>
-          <Route path="/" element={<Home coach={coach} onCoachAdded={refreshAuth} />} />
+          <Route path="/" element={<Home coach={null} onCoachAdded={refreshAuth} />} />
+          <Route path="/coach" element={guard(<Home coach={coach} onCoachAdded={refreshAuth} />)} />
           <Route
             path="/coach/:topicId"
-            element={
-              <CoachOnly coach={coach}>
-                <CoachTopicBuilder />
-              </CoachOnly>
-            }
+            element={guard(<CoachTopicBuilder />)}
           />
           <Route
             path="/coach/:topicId/assessment"
-            element={
-              <CoachOnly coach={coach}>
-                <CoachAssessment />
-              </CoachOnly>
-            }
+            element={guard(<CoachAssessment />)}
           />
           <Route
             path="/coach/:topicId/schedule"
-            element={
-              <CoachOnly coach={coach}>
-                <CoachSchedule />
-              </CoachOnly>
-            }
+            element={guard(<CoachSchedule />)}
           />
           <Route
             path="/students"
-            element={
-              <CoachOnly coach={coach}>
-                <CoachStudents />
-              </CoachOnly>
-            }
+            element={guard(<CoachStudents />)}
           />
           <Route path="/student/:topicId" element={<StudentPractice />} />
           <Route path="/student/:topicId/present" element={<TopicPresentation />} />
           <Route path="/student/:topicId/test/:assessmentId" element={<StudentTest />} />
           <Route
             path="/settings"
-            element={
-              <CoachOnly coach={coach}>
-                <AiSettings />
-              </CoachOnly>
-            }
+            element={guard(<AiSettings />)}
           />
         </Routes>
       </div>

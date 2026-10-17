@@ -111,6 +111,19 @@ nav.top-nav .brand {
   color: var(--navy);
 }
 
+/* The Coach entry point, kept apart from the student nav at the far left. */
+nav.top-nav a.coach-button {
+  border: 1px solid var(--border-strong);
+  color: var(--navy);
+  margin-right: 12px;
+}
+
+nav.top-nav a.coach-button.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--accent-contrast);
+}
+
 .brand-mark {
   width: 32px;
   height: 32px;
