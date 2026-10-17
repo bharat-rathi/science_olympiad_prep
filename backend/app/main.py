@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app import auth, models
 from app.config import settings
 from app.content.deterministic import publish_deterministic_content
+from app.content.learning_paths import EVENT_PATHS
 from app.content.official_rules import RULES_2027, apply_official_rules
 from app.content.study_notes_2027 import (
     BOTANY_CHAPTERS,
@@ -1234,6 +1235,39 @@ def seed_solar_system_learning_chapters() -> None:
     content, no LLM calls. Registered after seed_official_topics so the
     "Solar System" parent row already exists; see app/content/solar_system."""
     seed_solar_system_learning_content()
+
+
+@app.on_event("startup")
+def seed_event_learning_paths() -> None:
+    """Each event's ordered learning path (content/learning_paths): one
+    chapter per topic, numbered "<Event> N of M", each building on the ones
+    before it. Solar System is not in EVENT_PATHS and is never touched here;
+    Hovercraft's path is seeded by seed_hovercraft_content. Synced on every
+    startup (content/sync.py)."""
+    db = SessionLocal()
+    try:
+        for event_name, lessons in EVENT_PATHS.items():
+            event = (
+                db.query(models.Topic)
+                .filter(models.Topic.name == event_name, models.Topic.parent_topic_id.is_(None))
+                .first()
+            )
+            if event is None:
+                continue
+            total = len(lessons)
+            for number, (title, description, text) in enumerate(lessons, start=1):
+                sync_chapter(
+                    db,
+                    event,
+                    f"{event_name} {number} of {total}: {title}",
+                    description,
+                    f"Study notes: {event_name} path {number} -- {title}",
+                    RULES_URL,
+                    text,
+                )
+        db.commit()
+    finally:
+        db.close()
 
 
 @app.on_event("startup")

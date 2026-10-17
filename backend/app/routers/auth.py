@@ -105,7 +105,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(coach)
         session_token = auth.create_session(db, coach)
-        response = RedirectResponse(f"{settings.public_base_url}/")
+        response = RedirectResponse(f"{settings.public_base_url}/coach")
         auth.set_session_cookie(response, request, session_token)
         return response
 
@@ -128,7 +128,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(coach)
         session_token = auth.create_session(db, coach)
-        response = RedirectResponse(f"{settings.public_base_url}/")
+        response = RedirectResponse(f"{settings.public_base_url}/coach")
         auth.set_session_cookie(response, request, session_token)
         return response
 

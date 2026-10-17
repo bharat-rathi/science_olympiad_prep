@@ -63,6 +63,8 @@ export interface Topic {
   overview_notes: string;
   // True when the topic has a structured lesson or study plan (getLesson).
   has_lesson: boolean;
+  // Number of chapters under the event (set by listTopics; 0 elsewhere).
+  chapter_count: number;
 }
 
 export interface LessonSection {
