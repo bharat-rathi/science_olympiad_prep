@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ASSESSMENT_TYPE_LABELS, ASSESSMENT_TYPE_TAG_CLASS, Coach, Topic } from "../api/client";
+import { EVENT_CATEGORIES, eventCategory, OTHER_CATEGORY } from "../lib/eventCategories";
 
 export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onCoachAdded: () => void }) {
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [category, setCategory] = useState<string>("All");
   const [showNew, setShowNew] = useState(false);
   const [eventName, setEventName] = useState("");
   const [name, setName] = useState("");
@@ -45,6 +47,57 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
 
   const publishedCount = topics.filter((t) => t.content_published).length;
 
+  // Group events by category, in the fixed category order; only categories
+  // that hold at least one topic get a filter chip and a section.
+  const sections: [string, Topic[]][] = [...EVENT_CATEGORIES, OTHER_CATEGORY]
+    .map((c): [string, Topic[]] => [c, topics.filter((t) => eventCategory(t.event_name) === c)])
+    .filter(([, sectionTopics]) => sectionTopics.length > 0);
+  const categories = ["All", ...sections.map(([c]) => c)];
+  const shownSections = category === "All" ? sections : sections.filter(([c]) => c === category);
+
+  function renderCard(t: Topic) {
+    return (
+      <div className="card hoverable accent-top stack" key={t.id}>
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <span className="card-title">{t.name}</span>
+            <div className="muted">
+              {t.event_name}
+              {t.created_by ? ` · added by ${t.created_by}` : ""}
+            </div>
+          </div>
+          {/* Live/Draft is a coach concept -- a student only ever sees
+              topics they can open (incl. events holding open-to-all
+              chapters whose own page is unpublished). */}
+          {coach && (
+            <span className={`tag ${t.content_published ? "success" : "general"}`}>
+              {t.content_published ? "Live" : "Draft"}
+            </span>
+          )}
+        </div>
+        {t.description && <p className="muted" style={{ margin: 0 }}>{t.description}</p>}
+        {t.chapter_count > 0 && (
+          <span className="muted">
+            {t.chapter_count} {t.chapter_count === 1 ? "lesson" : "lessons"}
+          </span>
+        )}
+        <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[t.assessment_type]}`} style={{ alignSelf: "flex-start" }}>
+          {ASSESSMENT_TYPE_LABELS[t.assessment_type]}
+        </span>
+        <div className="row">
+          {coach && (
+            <Link to={`/coach/${t.id}`}>
+              <button>Coach view</button>
+            </Link>
+          )}
+          <Link to={`/student/${t.id}`}>
+            <button className="primary">Student view</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="hero">
@@ -85,45 +138,21 @@ export default function Home({ coach, onCoachAdded }: { coach: Coach | null; onC
         </div>
       )}
 
-      <h2>Topics</h2>
-      <div className="grid-2">
-        {topics.map((t) => (
-          <div className="card hoverable accent-top stack" key={t.id}>
-            <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <span className="card-title">{t.name}</span>
-                <div className="muted">
-                  {t.event_name}
-                  {t.created_by ? ` · added by ${t.created_by}` : ""}
-                </div>
-              </div>
-              {/* Live/Draft is a coach concept -- a student only ever sees
-                  topics they can open (incl. events holding open-to-all
-                  chapters whose own page is unpublished). */}
-              {coach && (
-                <span className={`tag ${t.content_published ? "success" : "general"}`}>
-                  {t.content_published ? "Live" : "Draft"}
-                </span>
-              )}
-            </div>
-            {t.description && <p className="muted" style={{ margin: 0 }}>{t.description}</p>}
-            <span className={`tag ${ASSESSMENT_TYPE_TAG_CLASS[t.assessment_type]}`} style={{ alignSelf: "flex-start" }}>
-              {ASSESSMENT_TYPE_LABELS[t.assessment_type]}
-            </span>
-            <div className="row">
-              {coach && (
-                <Link to={`/coach/${t.id}`}>
-                  <button>Coach view</button>
-                </Link>
-              )}
-              <Link to={`/student/${t.id}`}>
-                <button className="primary">Student view</button>
-              </Link>
-            </div>
-          </div>
+      <h2>Events</h2>
+      <div className="row" style={{ flexWrap: "wrap", marginBottom: 16 }}>
+        {categories.map((c) => (
+          <button key={c} className={c === category ? "primary" : ""} onClick={() => setCategory(c)}>
+            {c}
+          </button>
         ))}
-        {topics.length === 0 && <p className="muted">No topics yet.</p>}
       </div>
+      {shownSections.map(([section, sectionTopics]) => (
+        <div key={section}>
+          <h3>{section}</h3>
+          <div className="grid-2">{sectionTopics.map(renderCard)}</div>
+        </div>
+      ))}
+      {topics.length === 0 && <p className="muted">No topics yet.</p>}
 
       {coach ? (
         showNew ? (

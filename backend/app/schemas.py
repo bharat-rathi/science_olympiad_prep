@@ -82,6 +82,8 @@ class TopicOut(BaseModel):
     # True when the topic carries a structured lesson or study plan
     # (GET /api/topics/{id}/lesson).
     has_lesson: bool = False
+    # Number of chapters under this event; filled in by GET /api/topics only.
+    chapter_count: int = 0
 
     @staticmethod
     def from_model(topic) -> "TopicOut":

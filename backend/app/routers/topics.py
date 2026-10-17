@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import auth, models, schemas
@@ -42,7 +43,17 @@ def list_topics(request: Request, db: Session = Depends(get_db), include_sub_top
         # list, chapters included, when that's genuinely useful.
         query = query.filter(models.Topic.parent_topic_id.is_(None))
     topics = query.order_by(models.Topic.id).all()
-    return [schemas.TopicOut.from_model(t) for t in topics]
+    # Chapter counts for the Home cards ("12 lessons").
+    chapter_counts = dict(
+        db.query(models.Topic.parent_topic_id, func.count(models.Topic.id))
+        .filter(models.Topic.parent_topic_id.isnot(None))
+        .group_by(models.Topic.parent_topic_id)
+        .all()
+    )
+    out = [schemas.TopicOut.from_model(t) for t in topics]
+    for topic in out:
+        topic.chapter_count = chapter_counts.get(topic.id, 0)
+    return out
 
 
 @router.post("", response_model=schemas.TopicOut)
